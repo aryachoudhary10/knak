@@ -21,7 +21,8 @@ function NameLabel({ text, y, world }: { text: string; y: number; world: THREE.V
     const d = p.distanceTo(world);
     // Labels behind the camera would otherwise be projected onto the screen edges.
     camera.getWorldDirection(look);
-    const ahead = toLabel.subVectors(world, camera.position).dot(look) > 0.3;
+    camera.getWorldPosition(toLabel);
+    const ahead = toLabel.subVectors(world, toLabel).dot(look) > 0.3;
     const show = inside && ahead && d < 7;
     el.current.style.opacity = show ? String(Math.min(1, (7 - d) / 2)) : "0";
   });
