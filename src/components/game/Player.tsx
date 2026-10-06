@@ -26,7 +26,7 @@ function syncKeys() {
 /** Run the current on-screen prompt: sit, stand, or open the menu. */
 export function interact() {
   const s = useGame.getState();
-  if (s.phase !== "playing" || s.menuOpen) return;
+  if (s.phase !== "playing" || s.menuOpen || s.intro) return;
   if (s.seatedChairId) {
     s.stand();
     return;
@@ -109,7 +109,7 @@ export default function Player() {
       camera.position.set(c.x, SEATED_EYE, c.z);
       runtime.playerPos.set(c.x, 0.9, c.z);
     } else {
-      const canMove = s.phase === "playing" && !s.menuOpen;
+      const canMove = s.phase === "playing" && !s.menuOpen && !s.intro;
       const mx = canMove ? s.move.x : 0;
       const my = canMove ? s.move.y : 0;
       const len = Math.hypot(mx, my);
@@ -134,8 +134,9 @@ export default function Player() {
       bob.current += moving ? dt * (s.running ? 11 : 8) : 0;
       const bobY = moving ? Math.sin(bob.current) * 0.035 : 0;
       tmp.current.set(p.x, p.y + EYE + bobY, p.z);
-      camera.position.lerp(tmp.current, 1 - Math.exp(-dt * 30));
+      if (!s.intro) camera.position.lerp(tmp.current, 1 - Math.exp(-dt * 30));
     }
+    if (s.intro) return; // the Director flies the camera during the arrival
     camera.rotation.set(pitch, yaw, 0, "YXZ");
 
     // Find what the visitor is looking at.

@@ -25,6 +25,10 @@ type GameState = {
   cart: CartLine[];
   isTouch: boolean;
   pointerLocked: boolean;
+  /** The cinematic glide from the street to the door is playing. */
+  intro: boolean;
+  subtitle: { speaker: string; text: string } | null;
+  soundOn: boolean;
 
   rerollCharacter: () => void;
   enter: () => void;
@@ -40,7 +44,12 @@ type GameState = {
   removeFromCart: (itemId: string) => void;
   setTouch: (isTouch: boolean) => void;
   setPointerLocked: (locked: boolean) => void;
+  endIntro: () => void;
+  say: (speaker: string, text: string, ms: number) => void;
+  toggleSound: () => void;
 };
+
+let subtitleTimer: ReturnType<typeof setTimeout> | undefined;
 
 const PITCH_LIMIT = Math.PI / 2.4;
 
@@ -57,9 +66,12 @@ export const useGame = create<GameState>((set, get) => ({
   cart: [],
   isTouch: false,
   pointerLocked: false,
+  intro: false,
+  subtitle: null,
+  soundOn: true,
 
   rerollCharacter: () => set({ character: randomCharacter() }),
-  enter: () => set({ phase: "playing" }),
+  enter: () => set({ phase: "playing", intro: true }),
   setMove: (x, y) => {
     const m = get().move;
     if (m.x !== x || m.y !== y) set({ move: { x, y } });
@@ -96,4 +108,11 @@ export const useGame = create<GameState>((set, get) => ({
     })),
   setTouch: (isTouch) => set({ isTouch }),
   setPointerLocked: (pointerLocked) => set({ pointerLocked }),
+  endIntro: () => set({ intro: false, yaw: 0, pitch: 0 }),
+  say: (speaker, text, ms) => {
+    set({ subtitle: { speaker, text } });
+    clearTimeout(subtitleTimer);
+    subtitleTimer = setTimeout(() => set({ subtitle: null }), ms + 800);
+  },
+  toggleSound: () => set((s) => ({ soundOn: !s.soundOn })),
 }));

@@ -8,6 +8,7 @@ import { useMats } from "@/game/materials";
 import { signTexture } from "@/game/textures";
 import { DOOR, FACADE } from "@/game/layout";
 import { runtime } from "@/game/runtime";
+import { doorChime } from "@/game/audio";
 
 const H = FACADE.height;
 const W = FACADE.halfWidth;
@@ -114,7 +115,7 @@ function Topiary({ x }: { x: number }) {
       <mesh position={[0, 0.55, 0]} material={m.stone}>
         <cylinderGeometry args={[0.4, 0.22, 0.62, 20]} />
       </mesh>
-      <mesh position={[0, 0.88, 0]} material={m.stoneShade}>
+      <mesh position={[0, 0.88, 0]} rotation={[Math.PI / 2, 0, 0]} material={m.stoneShade}>
         <torusGeometry args={[0.4, 0.04, 8, 24]} />
       </mesh>
       <mesh position={[0, 1.45, 0]} scale={[1, 1.35, 1]} material={m.leaf}>
@@ -133,7 +134,9 @@ function DoorLeaf({ side }: { side: -1 | 1 }) {
   useFrame((_, dt) => {
     const p = runtime.playerPos;
     const near = Math.hypot(p.x, p.z + 0.2) < 4.2;
+    const before = open.current;
     open.current = THREE.MathUtils.damp(open.current, near ? 1 : 0, 3.2, dt);
+    if (side < 0 && before < 0.05 && open.current >= 0.05) doorChime();
     if (ref.current) ref.current.rotation.y = -side * open.current * 1.45;
   });
   // side = -1 is the left leaf hinged at x = -w, extending toward +x.

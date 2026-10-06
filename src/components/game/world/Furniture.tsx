@@ -2,35 +2,58 @@
 
 import { CylinderCollider, CuboidCollider, RigidBody } from "@react-three/rapier";
 import { useMats } from "@/game/materials";
+import { balusterGeo, plateGeo, squareClothGeo, tableclothGeo, tubeGeo, wineGlassGeo } from "@/game/geometry";
 import { CHAIRS, TABLES, type Table, type Chair } from "@/game/layout";
 
-const glassMat = { color: "#ffffff", transparent: true, opacity: 0.35, roughness: 0.05, metalness: 0.1 } as const;
+const TOP = 0.76;
 
-function PlaceSetting({ x, z, angle }: { x: number; z: number; angle: number }) {
+function PlaceSetting({ x, z, angle, y = TOP }: { x: number; z: number; angle: number; y?: number }) {
   const m = useMats();
   return (
-    <group position={[x, 0.765, z]} rotation={[0, angle, 0]}>
-      <mesh material={m.linen}>
-        <cylinderGeometry args={[0.13, 0.11, 0.015, 24]} />
+    <group position={[x, y + 0.012, z]} rotation={[0, angle, 0]}>
+      <mesh geometry={plateGeo(0.14)} material={m.porcelain} />
+      <mesh geometry={plateGeo(0.1)} material={m.porcelain} position={[0, 0.016, 0]} />
+      {/* folded napkin */}
+      <mesh position={[0, 0.034, 0]} rotation={[0, 0.5, 0]} material={m.linen}>
+        <boxGeometry args={[0.07, 0.02, 0.1]} />
       </mesh>
-      <mesh position={[0, 0.012, 0]} material={m.linen}>
-        <cylinderGeometry args={[0.09, 0.08, 0.01, 24]} />
+      <mesh position={[0.18, 0.002, 0]} material={m.silver}>
+        <boxGeometry args={[0.014, 0.004, 0.19]} />
       </mesh>
-      <mesh position={[0.17, 0.003, 0]} material={m.zinc}>
-        <boxGeometry args={[0.015, 0.004, 0.18]} />
+      <mesh position={[-0.18, 0.002, 0]} material={m.silver}>
+        <boxGeometry args={[0.016, 0.004, 0.2]} />
       </mesh>
-      <mesh position={[-0.17, 0.003, 0]} material={m.zinc}>
-        <boxGeometry args={[0.015, 0.004, 0.18]} />
+      <mesh position={[0.16, 0, -0.17]} geometry={wineGlassGeo()} material={m.glass} />
+      <mesh position={[0.06, 0, -0.2]} geometry={wineGlassGeo()} material={m.glass} scale={[0.85, 0.8, 0.85]} />
+    </group>
+  );
+}
+
+/** Glass hurricane candle and a few roses in a bud vase. */
+function Centrepiece({ x, z, y = TOP }: { x: number; z: number; y?: number }) {
+  const m = useMats();
+  return (
+    <group position={[x, y + 0.01, z]}>
+      <mesh geometry={balusterGeo()} material={m.brass} scale={[0.6, 0.5, 0.6]} />
+      <mesh position={[0, 0.1, 0]} material={m.linen}>
+        <cylinderGeometry args={[0.018, 0.018, 0.07, 12]} />
       </mesh>
-      <group position={[0.14, 0, -0.16]}>
-        <mesh position={[0, 0.05, 0]}>
-          <cylinderGeometry args={[0.004, 0.004, 0.1, 6]} />
-          <meshStandardMaterial {...glassMat} />
+      <mesh position={[0, 0.145, 0]} material={m.flame}>
+        <sphereGeometry args={[0.009, 8, 8]} />
+      </mesh>
+      <mesh position={[0, 0.13, 0]} material={m.glass}>
+        <cylinderGeometry args={[0.045, 0.04, 0.16, 20, 1, true]} />
+      </mesh>
+      <group position={[0.1, 0, 0.04]}>
+        <mesh position={[0, 0.06, 0]} material={m.glass}>
+          <cylinderGeometry args={[0.018, 0.025, 0.12, 14]} />
         </mesh>
-        <mesh position={[0, 0.14, 0]}>
-          <cylinderGeometry args={[0.04, 0.025, 0.1, 12, 1, true]} />
-          <meshStandardMaterial {...glassMat} />
-        </mesh>
+        {[[0, 0.15, 0], [0.025, 0.14, 0.012], [-0.02, 0.135, -0.01]].map((p, i) => (
+          <mesh key={i} position={p as [number, number, number]}>
+            <icosahedronGeometry args={[0.022, 1]} />
+            <meshStandardMaterial color={i === 1 ? "#f2e2d0" : "#a31f34"} roughness={0.7} />
+          </mesh>
+        ))}
       </group>
     </group>
   );
@@ -42,22 +65,21 @@ function TableMesh({ t }: { t: Table }) {
     const r = t.radius ?? 0.4;
     return (
       <group position={[t.x, 0, t.z]}>
-        <mesh position={[0, 0.74, 0]} material={m.marble} castShadow>
-          <cylinderGeometry args={[r, r, 0.04, 32]} />
+        <mesh position={[0, 0.74, 0]} material={m.marble} castShadow receiveShadow>
+          <cylinderGeometry args={[r, r, 0.03, 48]} />
         </mesh>
-        <mesh position={[0, 0.37, 0]} material={m.blackIron}>
-          <cylinderGeometry args={[0.035, 0.05, 0.72, 10]} />
+        <mesh position={[0, 0.74, 0]} rotation={[Math.PI / 2, 0, 0]} material={m.brass}>
+          <torusGeometry args={[r, 0.008, 6, 48]} />
         </mesh>
-        <mesh position={[0, 0.02, 0]} material={m.blackIron}>
-          <cylinderGeometry args={[0.24, 0.26, 0.04, 16]} />
+        <mesh position={[0, 0.37, 0]} material={m.blackIron} castShadow>
+          <cylinderGeometry args={[0.03, 0.045, 0.72, 12]} />
         </mesh>
-        <mesh position={[0, 0.82, 0]}>
-          <cylinderGeometry args={[0.04, 0.05, 0.12, 12]} />
-          <meshStandardMaterial {...glassMat} />
-        </mesh>
-        <mesh position={[0, 0.92, 0]} material={m.leaf}>
-          <icosahedronGeometry args={[0.07, 1]} />
-        </mesh>
+        {[0, 1, 2].map((i) => (
+          <mesh key={i} position={[Math.cos((i * Math.PI * 2) / 3) * 0.16, 0.04, Math.sin((i * Math.PI * 2) / 3) * 0.16]} rotation={[0, -(i * Math.PI * 2) / 3, Math.PI / 2 - 0.25]} material={m.blackIron}>
+            <cylinderGeometry args={[0.015, 0.02, 0.36, 8]} />
+          </mesh>
+        ))}
+        <Centrepiece x={0} z={0} y={0.745} />
       </group>
     );
   }
@@ -66,73 +88,59 @@ function TableMesh({ t }: { t: Table }) {
     const d = t.d ?? 0.9;
     return (
       <group position={[t.x, 0, t.z]}>
-        <mesh position={[0, 0.74, 0]} material={m.linen} castShadow>
-          <boxGeometry args={[w, 0.04, d]} />
+        <mesh position={[0, TOP - 0.13, 0]} geometry={squareClothGeo(w, d, 0.28)} material={m.linen} castShadow receiveShadow />
+        <mesh position={[0, 0.3, 0]} material={m.walnut}>
+          <boxGeometry args={[0.08, 0.6, 0.08]} />
         </mesh>
-        <mesh position={[0, 0.56, 0]} material={m.linen}>
-          <boxGeometry args={[w + 0.02, 0.36, d + 0.02]} />
+        <mesh position={[0, 0.015, 0]} material={m.blackIron}>
+          <boxGeometry args={[0.45, 0.03, 0.45]} />
         </mesh>
-        <mesh position={[0, 0.2, 0]} material={m.darkWood}>
-          <boxGeometry args={[0.1, 0.4, 0.1]} />
-        </mesh>
-        <PlaceSetting x={-0.28} z={0} angle={-Math.PI / 2} />
-        <PlaceSetting x={0.28} z={0} angle={Math.PI / 2} />
+        <PlaceSetting x={-0.25} z={0} angle={-Math.PI / 2} />
+        <PlaceSetting x={0.25} z={0} angle={Math.PI / 2} />
+        <Centrepiece x={0} z={0.25} />
       </group>
     );
   }
   const r = t.radius ?? 0.55;
   return (
     <group position={[t.x, 0, t.z]}>
-      <mesh position={[0, 0.745, 0]} material={m.linen} castShadow>
-        <cylinderGeometry args={[r, r, 0.03, 40]} />
-      </mesh>
-      <mesh position={[0, 0.5, 0]} material={m.linen}>
-        <cylinderGeometry args={[r + 0.01, r + 0.08, 0.48, 40, 1, true]} />
-      </mesh>
-      <mesh position={[0, 0.13, 0]} material={m.blackIron}>
-        <cylinderGeometry args={[0.06, 0.25, 0.26, 12]} />
-      </mesh>
+      <mesh geometry={tableclothGeo(r, TOP, 0.62)} material={m.linen} castShadow receiveShadow />
+      <Centrepiece x={0} z={0} />
     </group>
   );
 }
 
 export function ChairMesh({ chair }: { chair: Chair }) {
   const m = useMats();
+  const cane = m.caneBack;
   const seat = chair.outdoor ? m.cane : m.burgundy;
+  const frame = tubeGeo(
+    "chair-back",
+    [
+      [-0.17, 0, -0.26], [-0.16, 0.46, -0.17], [-0.18, 0.72, -0.21], [-0.12, 0.9, -0.24], [0, 0.94, -0.245],
+      [0.12, 0.9, -0.24], [0.18, 0.72, -0.21], [0.16, 0.46, -0.17], [0.17, 0, -0.26],
+    ],
+    0.016,
+  );
+  const legL = tubeGeo("chair-leg-l", [[-0.15, 0.46, 0.13], [-0.165, 0.25, 0.16], [-0.18, 0, 0.2]], 0.016);
+  const legR = tubeGeo("chair-leg-r", [[0.15, 0.46, 0.13], [0.165, 0.25, 0.16], [0.18, 0, 0.2]], 0.016);
   return (
     <group position={[chair.x, 0, chair.z]} rotation={[0, chair.rot, 0]}>
-      {/* seat */}
-      <mesh position={[0, 0.46, 0]} material={m.rattan}>
-        <cylinderGeometry args={[0.22, 0.22, 0.04, 20]} />
+      <mesh position={[0, 0.455, 0]} rotation={[Math.PI / 2, 0, 0]} material={m.rattan}>
+        <torusGeometry args={[0.215, 0.02, 8, 32]} />
       </mesh>
-      <mesh position={[0, 0.5, 0]} material={seat}>
-        <cylinderGeometry args={[0.2, 0.21, 0.05, 20]} />
+      <mesh position={[0, 0.48, 0]} material={seat} castShadow>
+        <cylinderGeometry args={[0.2, 0.21, 0.05, 32]} />
       </mesh>
-      {/* legs */}
-      {[
-        [0.15, 0.15], [-0.15, 0.15], [0.15, -0.15], [-0.15, -0.15],
-      ].map(([x, z], i) => (
-        <mesh key={i} position={[x, 0.22, z]} rotation={[z * 0.25, 0, -x * 0.25]} material={m.rattan}>
-          <cylinderGeometry args={[0.018, 0.016, 0.46, 6]} />
-        </mesh>
-      ))}
-      {/* bentwood back hoop and cane panel */}
-      <group position={[0, 0.48, -0.2]} rotation={[-0.12, 0, 0]}>
-        <mesh position={[0, 0.27, 0]} material={m.rattan}>
-          <torusGeometry args={[0.2, 0.022, 8, 24, Math.PI]} />
-        </mesh>
-        {[-0.2, 0.2].map((x) => (
-          <mesh key={x} position={[x, 0.13, 0]} material={m.rattan}>
-            <cylinderGeometry args={[0.022, 0.022, 0.27, 6]} />
-          </mesh>
-        ))}
-        <mesh position={[0, 0.3, 0.005]} material={m.cane}>
-          <circleGeometry args={[0.18, 20, 0, Math.PI]} />
-        </mesh>
-        <mesh position={[0, 0.17, 0.005]} material={m.cane}>
-          <planeGeometry args={[0.36, 0.26]} />
-        </mesh>
-      </group>
+      <mesh position={[0, 0.18, -0.02]} rotation={[Math.PI / 2, 0, 0]} material={m.rattan}>
+        <torusGeometry args={[0.18, 0.012, 6, 32]} />
+      </mesh>
+      <mesh geometry={frame} material={m.rattan} castShadow />
+      <mesh geometry={legL} material={m.rattan} />
+      <mesh geometry={legR} material={m.rattan} />
+      <mesh position={[0, 0.71, -0.215]} rotation={[-0.15, 0, 0]} material={cane}>
+        <planeGeometry args={[0.3, 0.3]} />
+      </mesh>
     </group>
   );
 }
@@ -145,7 +153,7 @@ export default function Furniture() {
           t.shape === "rect" ? (
             <CuboidCollider key={t.id} args={[(t.w ?? 0.9) / 2, 0.4, (t.d ?? 0.9) / 2]} position={[t.x, 0.4, t.z]} />
           ) : (
-            <CylinderCollider key={t.id} args={[0.4, (t.radius ?? 0.5) + 0.02]} position={[t.x, 0.4, t.z]} />
+            <CylinderCollider key={t.id} args={[0.4, (t.radius ?? 0.5) + 0.04]} position={[t.x, 0.4, t.z]} />
           ),
         )}
       </RigidBody>

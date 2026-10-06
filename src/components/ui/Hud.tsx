@@ -12,6 +12,8 @@ export default function Hud() {
   const character = useGame((s) => s.character);
   const cartCount = useGame((s) => s.cart.reduce((n, l) => n + l.qty, 0));
   const openMenu = useGame((s) => s.openMenu);
+  const soundOn = useGame((s) => s.soundOn);
+  const toggleSound = useGame((s) => s.toggleSound);
 
   return (
     <div className="pointer-events-none absolute inset-0 z-10 select-none">
@@ -21,6 +23,18 @@ export default function Hud() {
           <Avatar c={character} size={32} />
           <span className="font-display text-lg tracking-[0.3em] text-[#e6c77a]">KNAK</span>
         </div>
+        <div className="flex items-center gap-2">
+        <button
+          onClick={toggleSound}
+          aria-label={soundOn ? "Mute sound" : "Turn sound on"}
+          className="pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full border border-[#c9a24a]/50 bg-[#1c1410]/70 text-[#e6c77a] backdrop-blur"
+        >
+          {soundOn ? (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 5 6 9H2v6h4l5 4V5z" /><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14" /></svg>
+          ) : (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 5 6 9H2v6h4l5 4V5z" /><path d="m23 9-6 6M17 9l6 6" /></svg>
+          )}
+        </button>
         {cartCount > 0 && (
           <button
             onClick={() => {
@@ -32,6 +46,7 @@ export default function Hud() {
             Your order · {cartCount}
           </button>
         )}
+        </div>
       </div>
 
       {/* crosshair */}

@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { Canvas } from "@react-three/fiber";
-import { Environment, Lightformer, PerformanceMonitor } from "@react-three/drei";
+import { PerformanceMonitor } from "@react-three/drei";
 import { Physics } from "@react-three/rapier";
 import * as THREE from "three";
 import Street from "./world/Street";
@@ -12,6 +12,12 @@ import Furniture from "./world/Furniture";
 import Counter from "./world/Counter";
 import People from "./world/People";
 import Player from "./Player";
+import Director from "./Director";
+import Effects from "./Effects";
+import Lighting from "./Lighting";
+import IntroOverlay from "@/components/ui/IntroOverlay";
+import Subtitles from "@/components/ui/Subtitles";
+import { isHighQuality } from "@/game/quality";
 import Hud from "@/components/ui/Hud";
 import Welcome from "@/components/ui/Welcome";
 import MenuCard from "@/components/ui/MenuCard";
@@ -49,6 +55,7 @@ export default function Experience() {
   );
   const isTouch = useGame((s) => s.isTouch);
   const phase = useGame((s) => s.phase);
+  const intro = useGame((s) => s.intro);
   usePointerLook();
 
   useEffect(() => {
@@ -62,24 +69,18 @@ export default function Experience() {
       <Canvas
         dpr={dpr}
         camera={{ fov: 72, near: 0.05, far: 400, position: [0, 1.6, 7.5] }}
-        gl={{ antialias: !isTouch, powerPreference: "high-performance" }}
+        shadows={isHighQuality() ? "soft" : false}
+        gl={{ antialias: false, powerPreference: "high-performance", stencil: false }}
         onCreated={({ gl }) => {
-          gl.toneMapping = THREE.ACESFilmicToneMapping;
-          gl.toneMappingExposure = 1.05;
+          // Tone mapping happens in the post-processing chain.
+          gl.toneMapping = THREE.NoToneMapping;
         }}
         onPointerDown={() => requestLook()}
       >
         <PerformanceMonitor onDecline={() => setDpr((d) => Math.max(0.75, d - 0.25))} onIncline={() => setDpr((d) => Math.min(isTouch ? 1.5 : 2, d + 0.25))} />
         <color attach="background" args={["#2a2230"]} />
-        <fog attach="fog" args={["#3a2c33", 30, 90]} />
-        <hemisphereLight args={["#ffe2bd", "#2a1d14", 0.55]} />
-        <ambientLight intensity={0.12} color="#ffdcb0" />
-        <directionalLight position={[-10, 14, 18]} intensity={0.45} color="#c9b6d8" />
-        <Environment resolution={64} frames={1} background={false}>
-          <Lightformer form="rect" intensity={2.2} color="#ffd29a" position={[0, 5, -6]} scale={[10, 2, 1]} rotation-x={Math.PI / 2} />
-          <Lightformer form="rect" intensity={1.2} color="#ffe8c8" position={[-6, 2, 0]} scale={[4, 6, 1]} rotation-y={Math.PI / 2} />
-          <Lightformer form="rect" intensity={0.8} color="#7a5a8a" position={[6, 3, 4]} scale={[6, 4, 1]} rotation-y={-Math.PI / 2} />
-        </Environment>
+        <fog attach="fog" args={["#3a2c33", 35, 110]} />
+        <Lighting />
         <Suspense fallback={null}>
           <Physics gravity={[0, -9.81, 0]} timeStep="vary">
             <Street />
@@ -90,10 +91,14 @@ export default function Experience() {
             <People />
             <Player />
           </Physics>
+          <Director />
+          <Effects />
         </Suspense>
       </Canvas>
-      {phase === "playing" && <Hud />}
-      {phase === "playing" && isTouch && <TouchControls />}
+      {phase === "playing" && intro && <IntroOverlay />}
+      {phase === "playing" && !intro && <Hud />}
+      <Subtitles />
+      {phase === "playing" && !intro && isTouch && <TouchControls />}
       <MenuCard />
       {phase === "welcome" && <Welcome />}
     </div>

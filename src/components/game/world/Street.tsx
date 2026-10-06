@@ -49,7 +49,7 @@ export default function Street() {
   const m = useMats();
   return (
     <group>
-      <Sky distance={4500} sunPosition={[-40, 2, -100]} turbidity={9} rayleigh={2.6} mieCoefficient={0.006} mieDirectionalG={0.85} />
+      <Sky distance={4500} sunPosition={[-40, -0.8, -100]} turbidity={9} rayleigh={2.6} mieCoefficient={0.006} mieDirectionalG={0.85} />
       {/* pavement */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 4.5]} receiveShadow material={m.paving}>
         <planeGeometry args={[30, 9]} />
