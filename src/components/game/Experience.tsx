@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { Canvas } from "@react-three/fiber";
+import { MotionConfig } from "motion/react";
 import { PerformanceMonitor } from "@react-three/drei";
 import { Physics } from "@react-three/rapier";
 import * as THREE from "three";
@@ -65,42 +66,44 @@ export default function Experience() {
   }, []);
 
   return (
-    <div className="fixed inset-0 bg-[#120d0a]">
-      <Canvas
-        dpr={dpr}
-        camera={{ fov: 72, near: 0.05, far: 400, position: [0, 1.6, 7.5] }}
-        shadows={isHighQuality()}
-        gl={{ antialias: false, powerPreference: "high-performance", stencil: false }}
-        onCreated={({ gl }) => {
-          // Tone mapping happens in the post-processing chain.
-          gl.toneMapping = THREE.NoToneMapping;
-        }}
-        onPointerDown={() => requestLook()}
-      >
-        <PerformanceMonitor onDecline={() => setDpr((d) => Math.max(0.75, d - 0.25))} onIncline={() => setDpr((d) => Math.min(isTouch ? 1.5 : 2, d + 0.25))} />
-        <color attach="background" args={["#2a2230"]} />
-        <fog attach="fog" args={["#3a2c33", 35, 110]} />
-        <Lighting />
-        <Suspense fallback={null}>
-          <Physics gravity={[0, -9.81, 0]} timeStep="vary">
-            <Street />
-            <Facade />
-            <Interior />
-            <Furniture />
-            <Counter />
-            <People />
-            <Player />
-          </Physics>
-          <Director />
-          <Effects />
-        </Suspense>
-      </Canvas>
-      {phase === "playing" && intro && <IntroOverlay />}
-      {phase === "playing" && !intro && <Hud />}
-      <Subtitles />
-      {phase === "playing" && !intro && isTouch && <TouchControls />}
-      <MenuCard />
-      {phase === "welcome" && <Welcome />}
-    </div>
+    <MotionConfig reducedMotion="user">
+      <div className="fixed inset-0 bg-[#120d0a]">
+        <Canvas
+          dpr={dpr}
+          camera={{ fov: 72, near: 0.05, far: 400, position: [0, 1.6, 7.5] }}
+          shadows={isHighQuality()}
+          gl={{ antialias: false, powerPreference: "high-performance", stencil: false }}
+          onCreated={({ gl }) => {
+            // Tone mapping happens in the post-processing chain.
+            gl.toneMapping = THREE.NoToneMapping;
+          }}
+          onPointerDown={() => requestLook()}
+        >
+          <PerformanceMonitor onDecline={() => setDpr((d) => Math.max(0.75, d - 0.25))} onIncline={() => setDpr((d) => Math.min(isTouch ? 1.5 : 2, d + 0.25))} />
+          <color attach="background" args={["#2a2230"]} />
+          <fog attach="fog" args={["#3a2c33", 35, 110]} />
+          <Lighting />
+          <Suspense fallback={null}>
+            <Physics gravity={[0, -9.81, 0]} timeStep="vary">
+              <Street />
+              <Facade />
+              <Interior />
+              <Furniture />
+              <Counter />
+              <People />
+              <Player />
+            </Physics>
+            <Director />
+            <Effects />
+          </Suspense>
+        </Canvas>
+        {phase === "playing" && intro && <IntroOverlay />}
+        {phase === "playing" && !intro && <Hud />}
+        <Subtitles />
+        {phase === "playing" && !intro && isTouch && <TouchControls />}
+        <MenuCard />
+        {phase === "welcome" && <Welcome />}
+      </div>
+    </MotionConfig>
   );
 }
