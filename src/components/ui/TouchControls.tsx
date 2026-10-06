@@ -53,7 +53,7 @@ export default function TouchControls() {
           useGame.getState().setMove(0, 0);
         }}
       >
-        <div className="pointer-events-none absolute bottom-10 left-8 h-32 w-32 rounded-full border-2 border-[#e6c77a]/60 bg-[#1c1410]/30 backdrop-blur-sm">
+        <div className="pointer-events-none absolute bottom-10 left-8 h-32 w-32 rounded-full border-2 border-[#e6c77a]/60 bg-[#1c1410]/30">
           <div
             className="absolute left-1/2 top-1/2 h-14 w-14 rounded-full border-2 border-[#e6c77a] bg-[#6e1a24]/80 shadow-lg"
             style={{

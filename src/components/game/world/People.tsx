@@ -30,7 +30,7 @@ function NameLabel({ text, y, world }: { text: string; y: number; world: THREE.V
     <Html position={[0, y, 0]} center zIndexRange={[10, 0]} pointerEvents="none">
       <div
         ref={el}
-        className="whitespace-nowrap rounded-full border border-[#c9a24a]/70 bg-[#1c1410]/75 px-3 py-0.5 font-display text-[14px] tracking-wide text-[#f3e3b5] shadow-lg backdrop-blur-sm"
+        className="whitespace-nowrap rounded-full border border-[#c9a24a]/70 bg-[#1c1410]/85 px-3 py-0.5 font-display text-[14px] tracking-wide text-[#f3e3b5] shadow-lg"
         style={{ opacity: 0 }}
       >
         {text}

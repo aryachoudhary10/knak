@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
+import { useFrame, useThree } from "@react-three/fiber";
 import { Environment } from "@react-three/drei";
 import * as THREE from "three";
 import { isHighQuality } from "@/game/quality";
@@ -46,11 +47,34 @@ function FacadeWash({ x }: { x: number }) {
   );
 }
 
+/**
+ * Nothing that casts a shadow moves (people don't cast them), so the shadow maps are drawn for the
+ * first frames after the room appears and then reused, instead of re-rendering the scene four extra times a frame.
+ */
+function FrozenShadows() {
+  const get = useThree((s) => s.get);
+  const frames = useRef(0);
+  useEffect(
+    () => () => {
+      get().gl.shadowMap.autoUpdate = true;
+    },
+    [get],
+  );
+  useFrame(({ gl }) => {
+    if (frames.current > 30) return;
+    frames.current++;
+    gl.shadowMap.autoUpdate = false;
+    gl.shadowMap.needsUpdate = true;
+  });
+  return null;
+}
+
 /** HDR image lighting for believable reflections, plus soft shadow-casting lights under the chandeliers. */
 export default function Lighting() {
   const hq = isHighQuality();
   return (
     <>
+      {hq && <FrozenShadows />}
       <Environment files="/hdri/lobby.exr" environmentIntensity={0.16} background={false} />
       <hemisphereLight args={["#9db0d6", "#2a1d14", 0.12]} />
       {/* dusk light on the street, casting long soft shadows */}

@@ -51,9 +51,9 @@ export function requestLook() {
 }
 
 export default function Experience() {
-  const [dpr, setDpr] = useState(() =>
-    typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches ? 1.25 : 1.5,
-  );
+  // Sharpness is traded for a steady frame rate: start modest, rise only while frames stay fast.
+  const [dpr, setDpr] = useState(() => (typeof window === "undefined" ? 1 : Math.min(window.devicePixelRatio, 1.25)));
+  const [ao, setAo] = useState(true);
   const isTouch = useGame((s) => s.isTouch);
   const phase = useGame((s) => s.phase);
   const intro = useGame((s) => s.intro);
@@ -79,7 +79,15 @@ export default function Experience() {
           }}
           onPointerDown={() => requestLook()}
         >
-          <PerformanceMonitor onDecline={() => setDpr((d) => Math.max(0.75, d - 0.25))} onIncline={() => setDpr((d) => Math.min(isTouch ? 1.5 : 2, d + 0.25))} />
+          <PerformanceMonitor
+            flipflops={4}
+            onDecline={() => {
+              // Drop ambient occlusion first; only then lower the resolution.
+              if (ao) setAo(false);
+              else setDpr((d) => Math.max(0.8, d - 0.15));
+            }}
+            onIncline={() => setDpr((d) => Math.min(window.devicePixelRatio, isTouch ? 1.25 : 1.5, d + 0.15))}
+          />
           <color attach="background" args={["#2a2230"]} />
           <fog attach="fog" args={["#3a2c33", 35, 110]} />
           <Lighting />
@@ -94,7 +102,7 @@ export default function Experience() {
               <Player />
             </Physics>
             <Director />
-            <Effects />
+            <Effects ao={ao} />
           </Suspense>
         </Canvas>
         {phase === "playing" && intro && <IntroOverlay />}

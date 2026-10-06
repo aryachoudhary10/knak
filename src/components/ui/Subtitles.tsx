@@ -17,7 +17,7 @@ export default function Subtitles() {
             animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
             exit={{ opacity: 0, y: -6, filter: "blur(4px)" }}
             transition={{ duration: 0.35, ease: "easeOut" }}
-            className="max-w-2xl rounded-xl bg-black/55 px-5 py-3 text-center text-[15px] leading-relaxed text-[#f6efe2] shadow-xl backdrop-blur-sm sm:text-base"
+            className="max-w-2xl rounded-xl bg-black/55 px-5 py-3 text-center text-[15px] leading-relaxed text-[#f6efe2] shadow-xl sm:text-base"
           >
             <span className="font-display text-lg italic text-[#ecd08a]">{sub.speaker}: </span>
             {/* Words appear at roughly speaking pace. */}
