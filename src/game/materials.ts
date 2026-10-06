@@ -51,11 +51,12 @@ function build() {
     glassWarm: std({ color: "#2a1c0c", emissive: "#ffb257", emissiveIntensity: 2.2, roughness: 0.2, toneMapped: false }),
     glassDim: std({ color: "#20160c", emissive: "#ffb060", emissiveIntensity: 0.6, roughness: 0.15 }),
     flame: std({ color: "#fff3d0", emissive: "#ffcf80", emissiveIntensity: 6, toneMapped: false }),
+    lampShade: std({ color: "#f3dcb4", emissive: "#ffbf72", emissiveIntensity: 1.35, roughness: 0.9, side: THREE.DoubleSide, toneMapped: false }),
     bulb: std({ color: "#fff6e0", emissive: "#ffd9a0", emissiveIntensity: 4, toneMapped: false }),
     crystal: hq
       ? phys({ color: "#ffffff", transmission: 0.9, roughness: 0, ior: 2.0, thickness: 0.02, metalness: 0, envMapIntensity: 2.5, transparent: true })
       : std({ color: "#fff6e0", emissive: "#ffd9a0", emissiveIntensity: 0.6, transparent: true, opacity: 0.7, roughness: 0.05 }),
-    checker: std({ map: cloneTex(checkerTexture(), 16 / 1.6, 20 / 1.6), normalMap: floorNormal, normalScale: new THREE.Vector2(0.25, 0.25), roughness: 0.42, metalness: 0 }),
+    checker: std({ map: cloneTex(checkerTexture(), 16 / 0.9, 20 / 0.9), normalMap: floorNormal, normalScale: new THREE.Vector2(0.25, 0.25), roughness: 0.42, metalness: 0 }),
     marble: std({ map: marbleTexture(), roughness: 0.38 }),
     paving: std({ map: cloneTex(pavingTexture(), 10, 5), roughness: 0.9 }),
     road: std({ color: "#34332f", roughness: 0.6 }),

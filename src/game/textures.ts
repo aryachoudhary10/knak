@@ -2,7 +2,7 @@ import * as THREE from "three";
 
 const cache = new Map<string, THREE.Texture>();
 
-function canvasTexture(key: string, w: number, h: number, draw: (ctx: CanvasRenderingContext2D) => void) {
+export function canvasTexture(key: string, w: number, h: number, draw: (ctx: CanvasRenderingContext2D) => void) {
   const hit = cache.get(key);
   if (hit) return hit;
   const canvas = document.createElement("canvas");
@@ -17,7 +17,7 @@ function canvasTexture(key: string, w: number, h: number, draw: (ctx: CanvasRend
   return tex;
 }
 
-function veins(ctx: CanvasRenderingContext2D, w: number, h: number, color: string, count: number, seed: number) {
+export function veins(ctx: CanvasRenderingContext2D, w: number, h: number, color: string, count: number, seed: number) {
   let s = seed;
   const rnd = () => ((s = (s * 16807) % 2147483647) / 2147483647);
   ctx.strokeStyle = color;
@@ -107,10 +107,11 @@ export function checkerTexture() {
     const cloud = fbm(n, u * 0.6 + 7, v * 0.6, 64, 4) * 0.5 + 0.5;
     let r: number, g: number, b: number;
     if (dark) {
-      const base = mix(14, 30, cloud);
-      r = mix(base, 225, fine * 0.85); g = mix(base, 222, fine * 0.85); b = mix(base + 2, 215, fine * 0.85);
+      // Warm charcoal rather than pure black: softer contrast reads as aged marble, not a game board.
+      const base = mix(34, 52, cloud);
+      r = mix(base + 4, 190, fine * 0.6); g = mix(base, 184, fine * 0.6); b = mix(base - 3, 172, fine * 0.6);
     } else {
-      const base = mix(226, 244, cloud);
+      const base = mix(214, 232, cloud);
       r = mix(base, 150, fine * 0.55); g = mix(base - 3, 148, fine * 0.55); b = mix(base - 8, 146, fine * 0.55);
     }
     // thin grout line at tile edges

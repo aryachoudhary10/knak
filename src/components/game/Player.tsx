@@ -46,6 +46,8 @@ export default function Player() {
   const bob = useRef(0);
   const seatedRef = useRef<string | null>(null);
   const tmp = useRef(new THREE.Vector3());
+  // What the camera actually shows: eased toward the input so turns and steps glide like a camera on a gimbal.
+  const view = useRef({ yaw: 0, pitch: 0, roll: 0, vx: 0, vz: 0, ready: false });
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -109,6 +111,17 @@ export default function Player() {
 
     const yaw = s.yaw;
     const pitch = s.pitch;
+    const cam = view.current;
+    if (!cam.ready || s.intro) {
+      cam.yaw = yaw;
+      cam.pitch = pitch;
+      cam.ready = true;
+    }
+    // Ease the view toward the input. Sitting down turns slowly; mouse and touch stay responsive.
+    const turnRate = s.seatedChairId ? 6 : 22;
+    const prevYaw = cam.yaw;
+    cam.yaw = THREE.MathUtils.damp(cam.yaw, yaw, turnRate, dt);
+    cam.pitch = THREE.MathUtils.damp(cam.pitch, pitch, turnRate, dt);
 
     if (s.seatedChairId) {
       const c = CHAIR_BY_ID[s.seatedChairId];
@@ -131,19 +144,31 @@ export default function Player() {
         vx = (fwdX * my + rightX * mx) * k;
         vz = (fwdZ * my + rightZ * mx) * k;
       }
+      // Ease into and out of walking instead of starting and stopping dead.
+      const accel = len > 0.05 ? 9 : 12;
+      cam.vx = THREE.MathUtils.damp(cam.vx, vx, accel, dt);
+      cam.vz = THREE.MathUtils.damp(cam.vz, vz, accel, dt);
+      vx = cam.vx;
+      vz = cam.vz;
       const v = rb.linvel();
       rb.setLinvel({ x: vx, y: v.y, z: vz }, true);
 
       const p = rb.translation();
       runtime.playerPos.set(p.x, p.y, p.z);
-      const moving = Math.hypot(vx, vz) > 0.1;
-      bob.current += moving ? dt * (s.running ? 11 : 8) : 0;
-      const bobY = moving ? Math.sin(bob.current) * 0.035 : 0;
-      tmp.current.set(p.x, p.y + EYE + bobY, p.z);
+      // A gentle step rhythm that fades in with speed, plus a slow breath when standing still.
+      const pace = Math.min(1, Math.hypot(vx, vz) / WALK);
+      bob.current += dt * (s.running ? 10 : 7.2) * pace;
+      const bobY = Math.sin(bob.current * 2) * 0.018 * pace + Math.sin(runtime.now * 1.3) * 0.004;
+      tmp.current.set(p.x + Math.cos(bob.current) * 0.012 * pace * Math.cos(yaw), p.y + EYE + bobY, p.z - Math.cos(bob.current) * 0.012 * pace * Math.sin(yaw));
       if (!s.intro) camera.position.lerp(tmp.current, 1 - Math.exp(-dt * 30));
     }
     if (s.intro) return; // the Director flies the camera during the arrival
-    camera.rotation.set(pitch, yaw, 0, "YXZ");
+    // Lean slightly into turns and sideways steps, like a handheld film camera.
+    const turnSpeed = (cam.yaw - prevYaw) / Math.max(dt, 1e-3);
+    const strafe = s.seatedChairId ? 0 : s.move.x;
+    const rollTarget = THREE.MathUtils.clamp(turnSpeed * 0.012 - strafe * 0.012, -0.03, 0.03);
+    cam.roll = THREE.MathUtils.damp(cam.roll, rollTarget, 5, dt);
+    camera.rotation.set(cam.pitch, cam.yaw, cam.roll, "YXZ");
 
     // Find what the visitor is looking at.
     if (s.phase !== "playing" || s.menuOpen) return;
