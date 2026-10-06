@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-sans);
+  --font-display: var(--font-display);
+  --font-serif: var(--font-display);
+}
+
+html,
+body {
+  background: #120d0a;
+  color: #f6efe2;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  overscroll-behavior: none;
+}
