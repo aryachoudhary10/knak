@@ -1,11 +1,60 @@
 "use client";
 
 import { CylinderCollider, CuboidCollider, RigidBody } from "@react-three/rapier";
+import * as THREE from "three";
 import { useMats } from "@/game/materials";
 import { balusterGeo, plateGeo, squareClothGeo, tableclothGeo, tubeGeo, wineGlassGeo } from "@/game/geometry";
 import { CHAIRS, TABLES, type Table, type Chair } from "@/game/layout";
 
 const TOP = 0.76;
+
+/** A warm pool of light painted onto the cloth: the look of a lamp lighting its table, without a real light. */
+let poolMat: THREE.MeshBasicMaterial | null = null;
+function glowPool() {
+  if (poolMat) return poolMat;
+  const c = document.createElement("canvas");
+  c.width = c.height = 128;
+  const g = c.getContext("2d")!;
+  const grad = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+  grad.addColorStop(0, "rgba(255,190,110,0.55)");
+  grad.addColorStop(0.45, "rgba(255,170,90,0.18)");
+  grad.addColorStop(1, "rgba(255,160,80,0)");
+  g.fillStyle = grad;
+  g.fillRect(0, 0, 128, 128);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  poolMat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false });
+  return poolMat;
+}
+
+function GlowPool({ size, y = TOP + 0.004 }: { size: number; y?: number }) {
+  return (
+    <mesh position={[0, y, 0]} rotation={[-Math.PI / 2, 0, 0]} material={glowPool()} renderOrder={2}>
+      <planeGeometry args={[size, size]} />
+    </mesh>
+  );
+}
+
+/** Brass table lamp with a pleated silk shade, the signature of a grand café banquette. */
+function TableLamp({ x, z }: { x: number; z: number }) {
+  const m = useMats();
+  return (
+    <group position={[x, TOP + 0.005, z]}>
+      <mesh position={[0, 0.01, 0]} material={m.brass}>
+        <cylinderGeometry args={[0.055, 0.065, 0.02, 20]} />
+      </mesh>
+      <mesh position={[0, 0.16, 0]} material={m.brass}>
+        <cylinderGeometry args={[0.008, 0.01, 0.3, 8]} />
+      </mesh>
+      <mesh position={[0, 0.33, 0]} material={m.lampShade}>
+        <cylinderGeometry args={[0.06, 0.1, 0.13, 12, 1, true]} />
+      </mesh>
+      <mesh position={[0, 0.3, 0]} material={m.bulb}>
+        <sphereGeometry args={[0.018, 8, 8]} />
+      </mesh>
+    </group>
+  );
+}
 
 function PlaceSetting({ x, z, angle, y = TOP }: { x: number; z: number; angle: number; y?: number }) {
   const m = useMats();
@@ -98,6 +147,8 @@ function TableMesh({ t }: { t: Table }) {
         <PlaceSetting x={-0.25} z={0} angle={-Math.PI / 2} />
         <PlaceSetting x={0.25} z={0} angle={Math.PI / 2} />
         <Centrepiece x={0} z={0.25} />
+        <TableLamp x={0} z={-0.28} />
+        <GlowPool size={1.15} />
       </group>
     );
   }
@@ -106,6 +157,7 @@ function TableMesh({ t }: { t: Table }) {
     <group position={[t.x, 0, t.z]}>
       <mesh geometry={tableclothGeo(r, TOP, 0.62)} material={m.linen} castShadow receiveShadow />
       <Centrepiece x={0} z={0} />
+      <GlowPool size={r * 1.9} />
     </group>
   );
 }

@@ -75,8 +75,8 @@ export default function Lighting() {
   return (
     <>
       {hq && <FrozenShadows />}
-      <Environment files="/hdri/lobby.exr" environmentIntensity={0.16} background={false} />
-      <hemisphereLight args={["#9db0d6", "#2a1d14", 0.12]} />
+      <Environment files="/hdri/lobby.exr" environmentIntensity={0.13} background={false} />
+      <hemisphereLight args={["#9db0d6", "#2a1d14", 0.08]} />
       {/* dusk light on the street, casting long soft shadows */}
       <directionalLight
         position={[-12, 9, 16]}

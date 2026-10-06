@@ -4,10 +4,12 @@ import { useMemo } from "react";
 import { CuboidCollider, RigidBody } from "@react-three/rapier";
 import * as THREE from "three";
 import { useMats } from "@/game/materials";
+import { luxuryMats } from "@/game/luxury";
 import { windowViewTexture } from "@/game/textures";
 import { curtainGeo } from "@/game/geometry";
 import { DOOR, ROOM } from "@/game/layout";
 import Chandelier from "./Chandelier";
+import Ceiling from "./Ceiling";
 
 const W = ROOM.maxX - ROOM.minX;
 const D = ROOM.maxZ - ROOM.minZ;
@@ -189,13 +191,47 @@ function Banquette() {
   );
 }
 
-/** Satin marble: a live mirror reflection re-rendered the whole room every frame, so the floor keeps a soft sheen instead. */
+const BORDER = 0.6;
+const RUNNER = { w: 1.6, z0: -0.45, z1: -13.7 } as const;
+
+/**
+ * Cabochon marble edged in brass inside a Nero Marquina border, with a burgundy runner from the door to the
+ * counter. Satin, not mirror-polished: a live reflection would cost a second render of the room every frame.
+ */
 function Floor() {
   const m = useMats();
+  const lux = luxuryMats();
+  const fieldW = W - BORDER * 2;
+  const fieldD = D - 0.4 - BORDER * 2;
+  const fieldZ = (ROOM.minZ + ROOM.maxZ - 0.4) / 2;
+  const runLen = RUNNER.z0 - RUNNER.z1;
+  const { field, border, runner } = useMemo(
+    () => ({ field: lux.cabochon(fieldW / 1.0, fieldD / 1.0), border: lux.nero(W, D), runner: lux.runner(runLen) }),
+    [lux, fieldW, fieldD, runLen],
+  );
   return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.005, CZ]} receiveShadow material={m.checker}>
-      <planeGeometry args={[W, D]} />
-    </mesh>
+    <group>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.003, CZ]} receiveShadow material={border}>
+        <planeGeometry args={[W, D]} />
+      </mesh>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.005, fieldZ]} receiveShadow material={field}>
+        <planeGeometry args={[fieldW, fieldD]} />
+      </mesh>
+      {/* brass fillet between field and border */}
+      {[-1, 1].map((s) => (
+        <group key={s}>
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[s * (fieldW / 2 + 0.02), 0.0065, fieldZ]} material={m.brass}>
+            <planeGeometry args={[0.035, fieldD + 0.08]} />
+          </mesh>
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.0065, fieldZ + s * (fieldD / 2 + 0.02)]} material={m.brass}>
+            <planeGeometry args={[fieldW + 0.08, 0.035]} />
+          </mesh>
+        </group>
+      ))}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.009, (RUNNER.z0 + RUNNER.z1) / 2]} receiveShadow material={runner}>
+        <planeGeometry args={[RUNNER.w, runLen]} />
+      </mesh>
+    </group>
   );
 }
 
@@ -208,31 +244,8 @@ export default function Interior() {
   return (
     <group>
       <Floor />
-      {/* ceiling: coffers, cornice and roses */}
-      <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, H, CZ]} material={m.ceiling}>
-        <planeGeometry args={[W, D]} />
-      </mesh>
-      {[ROOM.minX + 0.2, ROOM.maxX - 0.2].map((x) => (
-        <group key={x}>
-          <mesh position={[x, H - 0.18, CZ]} material={m.gilt}>
-            <boxGeometry args={[0.4, 0.36, D]} />
-          </mesh>
-          <mesh position={[x + (x < 0 ? 0.25 : -0.25), H - 0.32, CZ]} material={m.panel}>
-            <boxGeometry args={[0.12, 0.1, D]} />
-          </mesh>
-        </group>
-      ))}
-      <mesh position={[0, H - 0.18, ROOM.minZ + 0.2]} material={m.gilt}>
-        <boxGeometry args={[W, 0.36, 0.4]} />
-      </mesh>
-      <mesh position={[0, H - 0.18, ROOM.maxZ - 0.6]} material={m.gilt}>
-        <boxGeometry args={[W, 0.36, 0.4]} />
-      </mesh>
-      {[-11.8, -6.6].map((z) => (
-        <mesh key={z} position={[0, H - 0.12, z]} material={m.panel}>
-          <boxGeometry args={[W, 0.24, 0.35]} />
-        </mesh>
-      ))}
+      <Ceiling />
+      {/* plaster roses above the chandeliers */}
       {[-4.2, -9.2, -14.2].map((z) => (
         <group key={z} position={[0, H - 0.01, z]}>
           <mesh rotation={[Math.PI / 2, 0, 0]} material={m.panel}>
@@ -241,9 +254,6 @@ export default function Interior() {
           <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, -0.02, 0]} material={m.gilt}>
             <torusGeometry args={[0.55, 0.03, 8, 48]} />
           </mesh>
-          <group position={[0, 0, 0]} rotation={[Math.PI / 2, 0, 0]}>
-            <Frame w={4.2} h={3.6} t={0.05} material={m.gilt} />
-          </group>
         </group>
       ))}
 
