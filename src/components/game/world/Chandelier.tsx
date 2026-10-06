@@ -101,7 +101,7 @@ export default function Chandelier({ position, ceiling, light = true }: { positi
       <mesh position={[0, -0.8, 0]} material={m.crystal}>
         <sphereGeometry args={[0.05, 12, 10]} />
       </mesh>
-      {light && <pointLight ref={lamp} color="#ffc98a" intensity={26} distance={18} decay={1.5} position={[0, 0.1, 0]} />}
+      {light && <pointLight ref={lamp} color="#ffc98a" intensity={13} distance={14} decay={1.8} position={[0, 0.1, 0]} />}
     </group>
   );
 }
