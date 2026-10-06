@@ -4,6 +4,7 @@ import { useProgress } from "@react-three/drei";
 import { useGame } from "@/game/store";
 import Avatar from "./Avatar";
 import { requestLook } from "@/components/game/Experience";
+import { startAudio } from "@/game/audio";
 
 export default function Welcome() {
   const character = useGame((s) => s.character);
@@ -34,6 +35,9 @@ export default function Welcome() {
         <button
           disabled={!ready}
           onClick={() => {
+            startAudio();
+            // Load voices early so the first greeting has a good one.
+            if (typeof speechSynthesis !== "undefined") speechSynthesis.getVoices();
             enter();
             requestAnimationFrame(() => requestLook());
           }}

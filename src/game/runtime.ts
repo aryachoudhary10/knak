@@ -5,4 +5,10 @@ export const runtime = {
   playerPos: new THREE.Vector3(),
   /** Requested teleport (used when standing up from a chair). */
   teleport: null as THREE.Vector3 | null,
+  /** Clock time when the host started her greeting (seconds), or -1. */
+  greetAt: -1,
+  /** Clock time when the cashier last spoke, or -1. */
+  cashierAt: -1,
+  /** Set to a copy of elapsed time every frame so DOM code can stamp events. */
+  now: 0,
 };
