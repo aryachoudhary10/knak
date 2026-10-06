@@ -83,7 +83,7 @@ export const STAFF: Npc[] = [
   {
     id: "host",
     character: { name: "Amélie", skin: "#e2b48f", hair: "#3b2416", hairStyle: "bun", top: "#1c1c1f", bottom: "#1c1c1f" },
-    x: -1.7, z: -2.7, rot: facing(-1.7, -2.7, 0, 2), pose: "stand", role: "Host", label: "Amélie · Host",
+    x: -1.5, z: -3.4, rot: facing(-1.5, -3.4, 0, 2), pose: "stand", role: "Host", label: "Amélie · Host",
   },
   {
     id: "cashier",
