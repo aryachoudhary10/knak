@@ -37,7 +37,7 @@ function roundTable(id: string, x: number, z: number, chairs: number, startAngle
 
 // Right column: square tables against the burgundy banquette.
 [-3.0, -5.4, -7.8, -10.2, -12.6].forEach((z, i) => {
-  const x = 6.1;
+  const x = 6.45;
   TABLES.push({ id: `R${i}`, x, z, shape: "rect", w: 0.9, d: 0.9 });
   const cx = x - 0.95;
   CHAIRS.push({ id: `R${i}-c0`, x: cx, z, rot: facing(cx, z, x, z) });

@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { MeshReflectorMaterial } from "@react-three/drei";
 import { CuboidCollider, RigidBody } from "@react-three/rapier";
 import * as THREE from "three";
+import { isHighQuality } from "@/game/quality";
 import { useMats } from "@/game/materials";
 import { checkerTexture, windowViewTexture } from "@/game/textures";
 import { curtainGeo } from "@/game/geometry";
@@ -72,8 +73,8 @@ function Mirror({ side, z, width, height, y }: { side: "left" | "right"; z: numb
       <mesh position={[0, height / 2, 0.02]} material={m.gilt}>
         <boxGeometry args={[width + 0.22, height + 0.18, 0.06]} />
       </mesh>
-      <mesh position={[0, height, 0.02]} material={m.gilt}>
-        <cylinderGeometry args={[width / 2 + 0.11, width / 2 + 0.11, 0.06, 40, 1, false, -Math.PI / 2, Math.PI]} />
+      <mesh position={[0, height, 0.02]} rotation={[Math.PI / 2, 0, 0]} material={m.gilt}>
+        <cylinderGeometry args={[width / 2 + 0.11, width / 2 + 0.11, 0.06, 40, 1, false, Math.PI / 2, Math.PI]} />
       </mesh>
       <mesh position={[0, height / 2, 0.055]} material={m.mirror}>
         <planeGeometry args={[width, height]} />
@@ -134,6 +135,7 @@ function TallWindow({ z }: { z: number }) {
 
 function Sconce({ side, z }: { side: "left" | "right"; z: number }) {
   const m = useMats();
+  const hq = isHighQuality();
   return (
     <OnWall side={side} z={z} y={2.45}>
       <mesh position={[0, 0, 0.14]} material={m.gilt}>
@@ -156,6 +158,7 @@ function Sconce({ side, z }: { side: "left" | "right"; z: number }) {
           </mesh>
         </group>
       ))}
+      {hq && <pointLight position={[0, 0.25, 0.45]} color="#ffc27e" intensity={2.2} distance={4} decay={2} />}
     </OnWall>
   );
 }
@@ -215,9 +218,9 @@ function Floor() {
         blur={[300, 80]}
         resolution={1024}
         mixBlur={1}
-        mixStrength={1.6}
+        mixStrength={0.7}
         mixContrast={1}
-        roughness={0.35}
+        roughness={0.5}
         depthScale={0.4}
         minDepthThreshold={0.6}
         maxDepthThreshold={1.2}

@@ -30,3 +30,8 @@ Open http://localhost:3000.
 - `src/data/menu.ts`: sample menu (moves to Supabase so prices can be edited from the admin screen)
 
 Everything is built from code (no downloaded 3D models yet), so the whole scene loads in one small bundle.
+
+## Credits
+
+- People and their animations: [Microsoft Rocketbox Avatar Library](https://github.com/microsoft/Microsoft-Rocketbox) (MIT, see `public/models/LICENSE-rocketbox.txt`), converted to compressed GLB.
+- Lighting environment: Poly Haven HDRI via `@pmndrs/assets` (CC0).
