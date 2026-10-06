@@ -69,7 +69,7 @@ export default function Experience() {
       <Canvas
         dpr={dpr}
         camera={{ fov: 72, near: 0.05, far: 400, position: [0, 1.6, 7.5] }}
-        shadows={isHighQuality() ? "soft" : false}
+        shadows={isHighQuality()}
         gl={{ antialias: false, powerPreference: "high-performance", stencil: false }}
         onCreated={({ gl }) => {
           // Tone mapping happens in the post-processing chain.
