@@ -215,12 +215,12 @@ function Floor() {
         map={map}
         normalMap={m.floorNormal}
         normalScale={new THREE.Vector2(0.15, 0.15)}
-        blur={[300, 80]}
-        resolution={1024}
+        blur={[600, 240]}
+        resolution={512}
         mixBlur={1}
-        mixStrength={0.7}
+        mixStrength={0.18}
         mixContrast={1}
-        roughness={0.5}
+        roughness={0.55}
         depthScale={0.4}
         minDepthThreshold={0.6}
         maxDepthThreshold={1.2}

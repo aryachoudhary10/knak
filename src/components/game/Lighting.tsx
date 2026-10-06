@@ -19,7 +19,7 @@ function DownLight({ z, hq }: { z: number; hq: boolean }) {
         target={target}
         angle={1.15}
         penumbra={1}
-        intensity={hq ? 22 : 16}
+        intensity={hq ? 11 : 9}
         distance={14}
         decay={1.4}
         color="#ffd2a0"
@@ -51,7 +51,7 @@ export default function Lighting() {
   const hq = isHighQuality();
   return (
     <>
-      <Environment files="/hdri/lobby.exr" environmentIntensity={0.22} background={false} />
+      <Environment files="/hdri/lobby.exr" environmentIntensity={0.16} background={false} />
       <hemisphereLight args={["#9db0d6", "#2a1d14", 0.12]} />
       {/* dusk light on the street, casting long soft shadows */}
       <directionalLight
