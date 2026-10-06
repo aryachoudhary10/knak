@@ -99,7 +99,6 @@ function Lantern({ x }: { x: number }) {
         <mesh position={[0, -0.36, 0]} material={m.blackIron}>
           <coneGeometry args={[0.06, 0.12, 4]} />
         </mesh>
-        <pointLight color="#ffb86b" intensity={6} distance={6} decay={2} position={[0, -0.15, 0.1]} />
       </group>
     </group>
   );

@@ -1,12 +1,10 @@
 "use client";
 
 import { useMemo } from "react";
-import { MeshReflectorMaterial } from "@react-three/drei";
 import { CuboidCollider, RigidBody } from "@react-three/rapier";
 import * as THREE from "three";
-import { isHighQuality } from "@/game/quality";
 import { useMats } from "@/game/materials";
-import { checkerTexture, windowViewTexture } from "@/game/textures";
+import { windowViewTexture } from "@/game/textures";
 import { curtainGeo } from "@/game/geometry";
 import { DOOR, ROOM } from "@/game/layout";
 import Chandelier from "./Chandelier";
@@ -135,7 +133,6 @@ function TallWindow({ z }: { z: number }) {
 
 function Sconce({ side, z }: { side: "left" | "right"; z: number }) {
   const m = useMats();
-  const hq = isHighQuality();
   return (
     <OnWall side={side} z={z} y={2.45}>
       <mesh position={[0, 0, 0.14]} material={m.gilt}>
@@ -158,7 +155,6 @@ function Sconce({ side, z }: { side: "left" | "right"; z: number }) {
           </mesh>
         </group>
       ))}
-      {hq && <pointLight position={[0, 0.25, 0.45]} color="#ffc27e" intensity={2.2} distance={4} decay={2} />}
     </OnWall>
   );
 }
@@ -193,40 +189,12 @@ function Banquette() {
   );
 }
 
+/** Satin marble: a live mirror reflection re-rendered the whole room every frame, so the floor keeps a soft sheen instead. */
 function Floor() {
   const m = useMats();
-  const map = useMemo(() => {
-    const t = checkerTexture().clone();
-    t.needsUpdate = true;
-    t.repeat.set(W / 1.6, D / 1.6);
-    return t;
-  }, []);
-  if (!m.hq) {
-    return (
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.005, CZ]} receiveShadow material={m.checker}>
-        <planeGeometry args={[W, D]} />
-      </mesh>
-    );
-  }
   return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.005, CZ]} receiveShadow>
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.005, CZ]} receiveShadow material={m.checker}>
       <planeGeometry args={[W, D]} />
-      <MeshReflectorMaterial
-        map={map}
-        normalMap={m.floorNormal}
-        normalScale={new THREE.Vector2(0.15, 0.15)}
-        blur={[600, 240]}
-        resolution={512}
-        mixBlur={1}
-        mixStrength={0.18}
-        mixContrast={1}
-        roughness={0.55}
-        depthScale={0.4}
-        minDepthThreshold={0.6}
-        maxDepthThreshold={1.2}
-        metalness={0}
-        mirror={0}
-      />
     </mesh>
   );
 }

@@ -32,6 +32,9 @@ export const GUEST_AVATARS: AvatarId[] = ["guest_f1", "guest_m2", "guest_f3", "g
 /** Walk speed of the in-place walk clip, so feet don't slide. */
 export const WALK_SPEED: Record<Gender, number> = { female: 1.21, male: 1.01 };
 
+const frustum = new THREE.Frustum();
+const view = new THREE.Matrix4();
+
 const avatarUrl = (id: AvatarId) => `/models/people/${id}.glb`;
 const animUrl = (g: Gender) => `/models/anims/${g}.glb`;
 
@@ -54,9 +57,10 @@ export function Human({ avatar, pick, seed = 0 }: HumanProps) {
     root.traverse((o) => {
       const mesh = o as THREE.SkinnedMesh;
       if (!mesh.isMesh) return;
-      mesh.castShadow = hq;
+      // Shadows are baked once (see Lighting), so moving people don't cast them.
+      mesh.castShadow = false;
       mesh.receiveShadow = hq;
-      // Skinned bounds come from the bind pose, so seated people would be culled at screen edges.
+      // Skinned bounds come from the bind pose, so culling is done per person in the frame loop instead.
       mesh.frustumCulled = false;
     });
     return root;
@@ -64,6 +68,9 @@ export function Human({ avatar, pick, seed = 0 }: HumanProps) {
 
   const mixer = useMemo(() => new THREE.AnimationMixer(model), [model]);
   const current = useRef<{ name: Clip; action: THREE.AnimationAction } | null>(null);
+  const root = useRef<THREE.Group>(null);
+  const pending = useRef(0);
+  const bounds = useMemo(() => new THREE.Sphere(new THREE.Vector3(), 1.2), []);
 
   useEffect(() => {
     if (process.env.NODE_ENV === "production") return;
@@ -80,7 +87,19 @@ export function Human({ avatar, pick, seed = 0 }: HumanProps) {
     [mixer],
   );
 
-  useFrame((_, dt) => {
+  useFrame(({ camera }, dt) => {
+    const holder = root.current;
+    if (!holder) return;
+    // People off screen are hidden and not animated; people far away animate at half rate.
+    bounds.center.set(0, 0.9, 0);
+    holder.localToWorld(bounds.center);
+    frustum.setFromProjectionMatrix(view.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse));
+    holder.visible = frustum.intersectsSphere(bounds);
+    pending.current += Math.min(dt, 0.1);
+    if (!holder.visible) return;
+    const far = bounds.center.distanceToSquared(camera.position) > 12 * 12;
+    if (far && pending.current < 1 / 30) return;
+
     const name = pick();
     if (current.current?.name !== name) {
       const clip = animations.find((a) => a.name === name);
@@ -96,10 +115,15 @@ export function Human({ avatar, pick, seed = 0 }: HumanProps) {
         current.current = { name, action };
       }
     }
-    mixer.update(Math.min(dt, 0.1));
+    mixer.update(Math.min(pending.current, 0.1));
+    pending.current = 0;
   });
 
-  return <primitive object={model} />;
+  return (
+    <group ref={root}>
+      <primitive object={model} />
+    </group>
+  );
 }
 
 export function preloadPeople() {
