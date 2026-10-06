@@ -4,7 +4,8 @@ import { seeded, randomCharacter, type Character } from "@/lib/character";
 export const ROOM = { minX: -8, maxX: 8, minZ: -20, maxZ: 0, height: 6 } as const;
 export const DOOR = { halfWidth: 1.2, height: 3.4 } as const;
 export const FACADE = { halfWidth: 10, height: 8.2, thickness: 0.4 } as const;
-export const SPAWN = { x: 0, y: 1.1, z: 7.5 } as const;
+/** Capsule centre resting on the pavement (half height 0.55 + radius 0.3), so the visitor never drops in. */
+export const SPAWN = { x: 0, y: 0.86, z: 7.5 } as const;
 export const COUNTER = { z: -15.6, halfWidth: 3.6, depth: 0.9, height: 1.1 } as const;
 /** Where the visitor stands to order. */
 export const COUNTER_SPOT = { x: 0, z: COUNTER.z + 1.4 } as const;

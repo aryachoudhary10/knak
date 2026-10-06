@@ -101,6 +101,12 @@ export default function Player() {
       runtime.teleport = null;
     }
 
+    // Safety net: a long first frame (the browser compiling shaders) can push the body through the ground.
+    if (rb.translation().y < -1) {
+      rb.setTranslation(SPAWN, true);
+      rb.setLinvel({ x: 0, y: 0, z: 0 }, true);
+    }
+
     const yaw = s.yaw;
     const pitch = s.pitch;
 
@@ -179,6 +185,7 @@ export default function Player() {
       friction={0}
       linearDamping={0.5}
       canSleep={false}
+      ccd
     >
       <CapsuleCollider args={[0.55, 0.3]} />
     </RigidBody>

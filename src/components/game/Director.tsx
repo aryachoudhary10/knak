@@ -21,15 +21,16 @@ export default function Director() {
   const path = useMemo(
     () =>
       new THREE.CatmullRomCurve3([
-        new THREE.Vector3(-1.5, 7.2, 25),
-        new THREE.Vector3(2.6, 4.6, 17),
-        new THREE.Vector3(1.2, 2.5, 11),
-        new THREE.Vector3(0, 1.6, 7.5),
+        // A walk across the road at eye height, so the arrival never looks like a drop from the sky.
+        new THREE.Vector3(-0.8, 1.62, 21),
+        new THREE.Vector3(0.9, 1.62, 15.5),
+        new THREE.Vector3(0.4, 1.62, 11),
+        new THREE.Vector3(0, 1.62, 7.5),
       ]),
     [],
   );
   const look = useMemo(() => new THREE.Vector3(), []);
-  const lookFrom = useMemo(() => new THREE.Vector3(0, 7.3, 0), []);
+  const lookFrom = useMemo(() => new THREE.Vector3(0, 4.2, 0), []);
   const lookTo = useMemo(() => new THREE.Vector3(0, 1.95, 0), []);
 
   // Skip the intro with any key or click.
