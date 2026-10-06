@@ -35,3 +35,4 @@ Everything is built from code (no downloaded 3D models yet), so the whole scene 
 
 - People and their animations: [Microsoft Rocketbox Avatar Library](https://github.com/microsoft/Microsoft-Rocketbox) (MIT, see `public/models/LICENSE-rocketbox.txt`), converted to compressed GLB.
 - Lighting environment: Poly Haven HDRI via `@pmndrs/assets` (CC0).
+- UI motion: [motion-primitives](https://github.com/ibelick/motion-primitives) (MIT), in `src/components/motion-primitives`.

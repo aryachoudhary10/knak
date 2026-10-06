@@ -1,65 +1,357 @@
 {
-  "source": "Microsoft Rocketbox Avatar Library (MIT), github.com/microsoft/Microsoft-Rocketbox - see LICENSE-rocketbox.txt",
-  "units": "metres",
-  "upAxis": "Y",
-  "forward": "+Z (models face +Z; walk clip moves along +Z before root-motion stripping)",
-  "scale": 1,
-  "rotationFix": [0, 0, 0],
-  "notes": [
-    "All avatar GLBs are already in metres and Y-up (FBX2glTF converted cm/Z-up). Use scale 1 and no rotation; the feet sit at y=0 at the model origin.",
-    "Files use EXT_meshopt_compression + KHR_mesh_quantization + EXT_texture_webp: call useGLTF(url, false, true) / GLTFLoader.setMeshoptDecoder(MeshoptDecoder).",
-    "Clone each avatar with SkeletonUtils.clone() (three/examples/jsm/utils/SkeletonUtils.js) before reusing it; plain .clone() breaks skinning.",
-    "Animation GLBs contain only the Bip01 skeleton + clips; bind with new AnimationMixer(avatarRoot) and mixer.clipAction(clip). Track names match avatar node names exactly (GLTFLoader turns spaces into underscores on both sides, e.g. Bip01_Pelvis).",
-    "Sit clips: Bip01 (pelvis) is at ~0.61 m (female) / ~0.58 m (male) above the origin; place the model origin on the floor at the chair centre, chair seat height ~0.45-0.48 m, table top ~0.75 m with its near edge ~0.25-0.30 m in front (+Z) of the origin.",
-    "walk is in place (Bip01 horizontal translation removed). Original root speed: female 1.21 m/s, male 1.01 m/s; move the object at that speed along its local +Z to avoid foot sliding.",
-    "Hair/eyelash (and glasses) materials are alphaMode BLEND, double-sided (three: transparent=true, depthWrite=false). Specular maps from the source are not used; metalness 0, roughness 0.6 (head) / 0.8 (body)."
-  ],
-  "avatars": [
-    { "id": "hostess_amelie", "file": "people/hostess_amelie.glb", "gender": "female", "role": "hostess", "name": "Amélie", "source": "Business_Female_04", "heightM": 1.73, "scale": 1, "rotationFix": [0, 0, 0], "triangles": 8270 },
-    { "id": "cashier_louis",  "file": "people/cashier_louis.glb",  "gender": "male",   "role": "cashier", "name": "Louis",  "source": "Business_Male_04",   "heightM": 1.80, "scale": 1, "rotationFix": [0, 0, 0], "triangles": 7326 },
-    { "id": "waiter_theo",    "file": "people/waiter_theo.glb",    "gender": "male",   "role": "waiter",  "name": "Theo",   "source": "Business_Male_06",   "heightM": 1.81, "scale": 1, "rotationFix": [0, 0, 0], "triangles": 6950 },
-    { "id": "barista_nisha",  "file": "people/barista_nisha.glb",  "gender": "female", "role": "barista", "name": "Nisha",  "source": "Female_Adult_13",    "heightM": 1.75, "scale": 1, "rotationFix": [0, 0, 0], "triangles": 8708 },
-    { "id": "guest_f1", "file": "people/guest_f1.glb", "gender": "female", "role": "guest", "source": "Business_Female_01", "look": "black trouser suit, white blouse; dark skin",           "heightM": 1.74, "scale": 1, "rotationFix": [0, 0, 0], "triangles": 8966 },
-    { "id": "guest_f2", "file": "people/guest_f2.glb", "gender": "female", "role": "guest", "source": "Business_Female_02", "look": "burgundy blazer, striped top, glasses; blonde bob",   "heightM": 1.73, "scale": 1, "rotationFix": [0, 0, 0], "triangles": 8640 },
-    { "id": "guest_f3", "file": "people/guest_f3.glb", "gender": "female", "role": "guest", "source": "Female_Adult_11",    "look": "brown knit dress with belt, boots; dark hair",        "heightM": 1.74, "scale": 1, "rotationFix": [0, 0, 0], "triangles": 8896 },
-    { "id": "guest_f4", "file": "people/guest_f4.glb", "gender": "female", "role": "guest", "source": "Female_Adult_15",    "look": "blue fitted blouse, black pencil skirt, boots",        "heightM": 1.74, "scale": 1, "rotationFix": [0, 0, 0], "triangles": 9832 },
-    { "id": "guest_m1", "file": "people/guest_m1.glb", "gender": "male",   "role": "guest", "source": "Business_Male_05",   "look": "grey check suit, purple shirt; brown skin",           "heightM": 1.80, "scale": 1, "rotationFix": [0, 0, 0], "triangles": 7164 },
-    { "id": "guest_m2", "file": "people/guest_m2.glb", "gender": "male",   "role": "guest", "source": "Business_Male_02",   "look": "navy suit and tie",                                    "heightM": 1.82, "scale": 1, "rotationFix": [0, 0, 0], "triangles": 7448 },
-    { "id": "guest_m3", "file": "people/guest_m3.glb", "gender": "male",   "role": "guest", "source": "Male_Adult_03",      "look": "older man, tweed blazer, burgundy shirt",              "heightM": 1.81, "scale": 1, "rotationFix": [0, 0, 0], "triangles": 7200 },
-    { "id": "guest_m4", "file": "people/guest_m4.glb", "gender": "male",   "role": "guest", "source": "Male_Adult_07",      "look": "grey blazer over shirt, jeans (smart casual)",         "heightM": 1.82, "scale": 1, "rotationFix": [0, 0, 0], "triangles": 7588 }
-  ],
-  "animations": {
-    "female": {
-      "file": "anims/female.glb",
-      "clips": {
-        "sit_idle":   { "duration": 26.23, "loop": true,  "source": "f_sit_table_idle_neutral_01" },
-        "sit_idle_2": { "duration": 22.27, "loop": true,  "source": "f_sit_table_idle_neutral_02" },
-        "sit_idle_3": { "duration": 27.67, "loop": true,  "source": "f_sit_table_idle_relaxed_01" },
-        "sit_talk":   { "duration": 15.13, "loop": true,  "source": "f_sit_table_gestic_thoughtful" },
-        "sit_shrug":  { "duration": 1.33,  "loop": false, "source": "f_sit_table_gestic_shrug_01" },
-        "stand_idle": { "duration": 15.53, "loop": true,  "source": "f_idle_neutral_01" },
-        "talk":       { "duration": 27.33, "loop": true,  "source": "f_gestic_talk_neutral_01" },
-        "wave":       { "duration": 5.53,  "loop": false, "source": "f_wave_01" },
-        "invite_sit": { "duration": 4.17,  "loop": false, "source": "f_invite_sit" },
-        "walk":       { "duration": 1.2,   "loop": true,  "source": "f_walk_neutral_01", "inPlace": true, "rootSpeedMps": 1.21 },
-        "drink":      { "duration": 11.9,  "loop": true,  "source": "f_drink_drinking", "note": "standing drink (no seated drink exists in the library)" }
-      }
-    },
-    "male": {
-      "file": "anims/male.glb",
-      "clips": {
-        "sit_idle":   { "duration": 45.7,  "loop": true,  "source": "m_sit_table_idle_neutral_01" },
-        "sit_idle_2": { "duration": 36.43, "loop": true,  "source": "m_sit_table_idle_neutral_02" },
-        "sit_idle_3": { "duration": 44.33, "loop": true,  "source": "m_sit_table_idle_relaxed_01" },
-        "sit_talk":   { "duration": 16.67, "loop": true,  "source": "m_sit_table_gestic_thoughtful" },
-        "sit_shrug":  { "duration": 3.5,   "loop": false, "source": "m_sit_table_gestic_shrug_01" },
-        "stand_idle": { "duration": 11.67, "loop": true,  "source": "m_idle_neutral_01" },
-        "talk":       { "duration": 35.57, "loop": true,  "source": "m_gestic_talk_neutral_01" },
-        "wave":       { "duration": 2.83,  "loop": false, "source": "m_wave_01" },
-        "invite_sit": { "duration": 4.33,  "loop": false, "source": "m_invite_sit" },
-        "walk":       { "duration": 1.2,   "loop": true,  "source": "m_walk_neutral_01", "inPlace": true, "rootSpeedMps": 1.01 },
-        "drink":      { "duration": 35.0,  "loop": true,  "source": "m_drink_drinking", "note": "standing drink (no seated drink exists in the library)" }
-      }
-    }
+ "source": "Microsoft Rocketbox Avatar Library (MIT), github.com/microsoft/Microsoft-Rocketbox - see LICENSE-rocketbox.txt",
+ "units": "metres",
+ "upAxis": "Y",
+ "forward": "+Z (models face +Z; walk clip moves along +Z before root-motion stripping)",
+ "scale": 1,
+ "rotationFix": [
+  0,
+  0,
+  0
+ ],
+ "notes": [
+  "All avatar GLBs are already in metres and Y-up (FBX2glTF converted cm/Z-up). Use scale 1 and no rotation; the feet sit at y=0 at the model origin.",
+  "Files use EXT_meshopt_compression + KHR_mesh_quantization + EXT_texture_webp: call useGLTF(url, false, true) / GLTFLoader.setMeshoptDecoder(MeshoptDecoder).",
+  "Clone each avatar with SkeletonUtils.clone() (three/examples/jsm/utils/SkeletonUtils.js) before reusing it; plain .clone() breaks skinning.",
+  "Animation GLBs contain only the Bip01 skeleton + clips; bind with new AnimationMixer(avatarRoot) and mixer.clipAction(clip). Track names match avatar node names exactly (GLTFLoader turns spaces into underscores on both sides, e.g. Bip01_Pelvis).",
+  "Sit clips: Bip01 (pelvis) is at ~0.61 m (female) / ~0.58 m (male) above the origin; place the model origin on the floor at the chair centre, chair seat height ~0.45-0.48 m, table top ~0.75 m with its near edge ~0.25-0.30 m in front (+Z) of the origin.",
+  "walk is in place (Bip01 horizontal translation removed). Original root speed: female 1.21 m/s, male 1.01 m/s; move the object at that speed along its local +Z to avoid foot sliding.",
+  "Materials (v2): '<code>_skin_head' = face/neck skin + painted hair cap (2048px colour + normal, 1024px metallicRoughness map); '<code>_body' = clothing + hands (1024px colour/normal/metallicRoughness). Roughness comes from the source specular maps (skin ~0.38-0.85, cloth ~0.45-0.88), metalness 0. Needs an environment map (scene.environment, e.g. drei <Environment>) for the skin sheen to read.",
+  "Hair/eyelashes are drawn twice from the same geometry: '<code>_hair_core' (alphaMode MASK, cutoff 0.5, double-sided, writes depth) plus '<code>_hair_fringe' (BLEND, double-sided, depthWrite false) for soft edges. Do not override these to opaque; if you traverse materials, leave alphaTest/transparent as loaded. guest_f2 also has '<code>_glasses' (BLEND).",
+  "Skin material names: f014_skin_head, f015_skin_head, f020_skin_head, m008_skin_head, m015_skin_head, m016_skin_head, m025_skin_head, f011_skin_head, f019_skin_head, f018_skin_head, m004_skin_head, m013_skin_head (match with name.endsWith('_skin_head'))."
+ ],
+ "avatars": [
+  {
+   "id": "hostess_amelie",
+   "file": "people/hostess_amelie.glb",
+   "gender": "female",
+   "role": "hostess",
+   "name": "Amélie",
+   "source": "Business_Female_04",
+   "heightM": 1.73,
+   "scale": 1,
+   "rotationFix": [
+    0,
+    0,
+    0
+   ],
+   "triangles": 8270,
+   "sizeKB": 924
+  },
+  {
+   "id": "cashier_louis",
+   "file": "people/cashier_louis.glb",
+   "gender": "male",
+   "role": "cashier",
+   "name": "Louis",
+   "source": "Business_Male_04",
+   "heightM": 1.8,
+   "scale": 1,
+   "rotationFix": [
+    0,
+    0,
+    0
+   ],
+   "triangles": 7326,
+   "sizeKB": 1038
+  },
+  {
+   "id": "waiter_theo",
+   "file": "people/waiter_theo.glb",
+   "gender": "male",
+   "role": "waiter",
+   "name": "Theo",
+   "source": "Business_Male_06",
+   "heightM": 1.81,
+   "scale": 1,
+   "rotationFix": [
+    0,
+    0,
+    0
+   ],
+   "triangles": 6950,
+   "sizeKB": 916
+  },
+  {
+   "id": "barista_nisha",
+   "file": "people/barista_nisha.glb",
+   "gender": "female",
+   "role": "barista",
+   "name": "Nisha",
+   "source": "Female_Adult_13",
+   "heightM": 1.75,
+   "scale": 1,
+   "rotationFix": [
+    0,
+    0,
+    0
+   ],
+   "triangles": 8708,
+   "sizeKB": 1250
+  },
+  {
+   "id": "guest_f1",
+   "file": "people/guest_f1.glb",
+   "gender": "female",
+   "role": "guest",
+   "source": "Business_Female_01",
+   "look": "black trouser suit, white blouse; dark skin",
+   "heightM": 1.74,
+   "scale": 1,
+   "rotationFix": [
+    0,
+    0,
+    0
+   ],
+   "triangles": 8966,
+   "sizeKB": 1318
+  },
+  {
+   "id": "guest_f2",
+   "file": "people/guest_f2.glb",
+   "gender": "female",
+   "role": "guest",
+   "source": "Business_Female_02",
+   "look": "burgundy blazer, striped top, glasses; blonde bob",
+   "heightM": 1.73,
+   "scale": 1,
+   "rotationFix": [
+    0,
+    0,
+    0
+   ],
+   "triangles": 8640,
+   "sizeKB": 1860
+  },
+  {
+   "id": "guest_f3",
+   "file": "people/guest_f3.glb",
+   "gender": "female",
+   "role": "guest",
+   "source": "Female_Adult_11",
+   "look": "brown knit dress with belt, boots; dark hair",
+   "heightM": 1.74,
+   "scale": 1,
+   "rotationFix": [
+    0,
+    0,
+    0
+   ],
+   "triangles": 8896,
+   "sizeKB": 1412
+  },
+  {
+   "id": "guest_f4",
+   "file": "people/guest_f4.glb",
+   "gender": "female",
+   "role": "guest",
+   "source": "Female_Adult_15",
+   "look": "blue fitted blouse, black pencil skirt, boots",
+   "heightM": 1.74,
+   "scale": 1,
+   "rotationFix": [
+    0,
+    0,
+    0
+   ],
+   "triangles": 9832,
+   "sizeKB": 1553
+  },
+  {
+   "id": "guest_m1",
+   "file": "people/guest_m1.glb",
+   "gender": "male",
+   "role": "guest",
+   "source": "Business_Male_05",
+   "look": "grey check suit, purple shirt; brown skin",
+   "heightM": 1.8,
+   "scale": 1,
+   "rotationFix": [
+    0,
+    0,
+    0
+   ],
+   "triangles": 7164,
+   "sizeKB": 1360
+  },
+  {
+   "id": "guest_m2",
+   "file": "people/guest_m2.glb",
+   "gender": "male",
+   "role": "guest",
+   "source": "Business_Male_02",
+   "look": "navy suit and tie",
+   "heightM": 1.82,
+   "scale": 1,
+   "rotationFix": [
+    0,
+    0,
+    0
+   ],
+   "triangles": 7448,
+   "sizeKB": 1187
+  },
+  {
+   "id": "guest_m3",
+   "file": "people/guest_m3.glb",
+   "gender": "male",
+   "role": "guest",
+   "source": "Male_Adult_03",
+   "look": "older man, tweed blazer, burgundy shirt",
+   "heightM": 1.81,
+   "scale": 1,
+   "rotationFix": [
+    0,
+    0,
+    0
+   ],
+   "triangles": 7200,
+   "sizeKB": 1777
+  },
+  {
+   "id": "guest_m4",
+   "file": "people/guest_m4.glb",
+   "gender": "male",
+   "role": "guest",
+   "source": "Male_Adult_07",
+   "look": "grey blazer over shirt, jeans (smart casual)",
+   "heightM": 1.82,
+   "scale": 1,
+   "rotationFix": [
+    0,
+    0,
+    0
+   ],
+   "triangles": 7588,
+   "sizeKB": 1379
   }
+ ],
+ "animations": {
+  "female": {
+   "file": "anims/female.glb",
+   "clips": {
+    "sit_idle": {
+     "duration": 26.23,
+     "loop": true,
+     "source": "f_sit_table_idle_neutral_01"
+    },
+    "sit_idle_2": {
+     "duration": 22.27,
+     "loop": true,
+     "source": "f_sit_table_idle_neutral_02"
+    },
+    "sit_idle_3": {
+     "duration": 27.67,
+     "loop": true,
+     "source": "f_sit_table_idle_relaxed_01"
+    },
+    "sit_talk": {
+     "duration": 15.13,
+     "loop": true,
+     "source": "f_sit_table_gestic_thoughtful"
+    },
+    "sit_shrug": {
+     "duration": 1.33,
+     "loop": false,
+     "source": "f_sit_table_gestic_shrug_01"
+    },
+    "stand_idle": {
+     "duration": 15.53,
+     "loop": true,
+     "source": "f_idle_neutral_01"
+    },
+    "talk": {
+     "duration": 27.33,
+     "loop": true,
+     "source": "f_gestic_talk_neutral_01"
+    },
+    "wave": {
+     "duration": 5.53,
+     "loop": false,
+     "source": "f_wave_01"
+    },
+    "invite_sit": {
+     "duration": 4.17,
+     "loop": false,
+     "source": "f_invite_sit"
+    },
+    "walk": {
+     "duration": 1.2,
+     "loop": true,
+     "source": "f_walk_neutral_01",
+     "inPlace": true,
+     "rootSpeedMps": 1.21
+    },
+    "drink": {
+     "duration": 11.9,
+     "loop": true,
+     "source": "f_drink_drinking",
+     "note": "standing drink (no seated drink exists in the library)"
+    }
+   }
+  },
+  "male": {
+   "file": "anims/male.glb",
+   "clips": {
+    "sit_idle": {
+     "duration": 45.7,
+     "loop": true,
+     "source": "m_sit_table_idle_neutral_01"
+    },
+    "sit_idle_2": {
+     "duration": 36.43,
+     "loop": true,
+     "source": "m_sit_table_idle_neutral_02"
+    },
+    "sit_idle_3": {
+     "duration": 44.33,
+     "loop": true,
+     "source": "m_sit_table_idle_relaxed_01"
+    },
+    "sit_talk": {
+     "duration": 16.67,
+     "loop": true,
+     "source": "m_sit_table_gestic_thoughtful"
+    },
+    "sit_shrug": {
+     "duration": 3.5,
+     "loop": false,
+     "source": "m_sit_table_gestic_shrug_01"
+    },
+    "stand_idle": {
+     "duration": 11.67,
+     "loop": true,
+     "source": "m_idle_neutral_01"
+    },
+    "talk": {
+     "duration": 35.57,
+     "loop": true,
+     "source": "m_gestic_talk_neutral_01"
+    },
+    "wave": {
+     "duration": 2.83,
+     "loop": false,
+     "source": "m_wave_01"
+    },
+    "invite_sit": {
+     "duration": 4.33,
+     "loop": false,
+     "source": "m_invite_sit"
+    },
+    "walk": {
+     "duration": 1.2,
+     "loop": true,
+     "source": "m_walk_neutral_01",
+     "inPlace": true,
+     "rootSpeedMps": 1.01
+    },
+    "drink": {
+     "duration": 35.0,
+     "loop": true,
+     "source": "m_drink_drinking",
+     "note": "standing drink (no seated drink exists in the library)"
+    }
+   }
+  }
+ }
 }
