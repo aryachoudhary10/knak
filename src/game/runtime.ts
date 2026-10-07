@@ -15,4 +15,6 @@ export const runtime = {
   promptAnchor: null as THREE.Vector3 | null,
   /** The prompt's DOM node, positioned every frame from the 3D anchor. */
   promptEl: null as HTMLElement | null,
+  /** The spoken line's DOM node, held above the speaker's head every frame. */
+  speechEl: null as HTMLElement | null,
 };

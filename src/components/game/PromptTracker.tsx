@@ -4,6 +4,11 @@ import { useMemo } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { runtime } from "@/game/runtime";
+import { useGame } from "@/game/store";
+import { STAFF } from "@/game/layout";
+
+/** Just above a standing person's head. */
+const HEAD = 1.98;
 
 /**
  * Pins the contextual prompt to the thing it is about: a hairline and dot beside Amélie, the counter or a table.
@@ -11,7 +16,23 @@ import { runtime } from "@/game/runtime";
  */
 export default function PromptTracker() {
   const v = useMemo(() => new THREE.Vector3(), []);
+  const head = useMemo(() => new THREE.Vector3(), []);
   useFrame(({ camera, size }) => {
+    // The spoken line rides above the speaker's head, kept on screen, and fades out if they are behind you or far off.
+    const speech = runtime.speechEl;
+    const who = useGame.getState().subtitle?.who;
+    const npc = who ? STAFF.find((n) => n.id === who) : undefined;
+    if (speech && npc) {
+      head.set(npc.x, (npc.y ?? 0) + HEAD, npc.z);
+      const far = head.distanceTo(camera.position);
+      head.project(camera);
+      const half = Math.min(size.width * 0.36, 170) + 8;
+      const x = THREE.MathUtils.clamp((head.x * 0.5 + 0.5) * size.width, half, size.width - half);
+      const y = THREE.MathUtils.clamp((-head.y * 0.5 + 0.5) * size.height, 150, size.height - 40);
+      speech.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+      speech.style.opacity = head.z > 1 || far > 16 ? "0" : "1";
+    } else if (speech) speech.style.opacity = "0";
+
     const el = runtime.promptEl;
     if (!el) return;
     const a = runtime.promptAnchor;

@@ -33,7 +33,8 @@ type GameState = {
   pointerLocked: boolean;
   /** The cinematic glide from the street to the door is playing. */
   intro: boolean;
-  subtitle: { speaker: string; text: string } | null;
+  /** A line being spoken, and the id of the person saying it (shown above their head). */
+  subtitle: { speaker: string; text: string; who: string } | null;
   soundOn: boolean;
 
   rerollCharacter: () => void;
@@ -52,7 +53,7 @@ type GameState = {
   setTouch: (isTouch: boolean) => void;
   setPointerLocked: (locked: boolean) => void;
   endIntro: () => void;
-  say: (speaker: string, text: string, ms: number) => void;
+  say: (who: string, speaker: string, text: string, ms: number) => void;
   toggleSound: () => void;
 };
 
@@ -118,8 +119,8 @@ export const useGame = create<GameState>((set, get) => ({
   setTouch: (isTouch) => set({ isTouch }),
   setPointerLocked: (pointerLocked) => set({ pointerLocked }),
   endIntro: () => set({ intro: false, yaw: 0, pitch: 0 }),
-  say: (speaker, text, ms) => {
-    set({ subtitle: { speaker, text } });
+  say: (who, speaker, text, ms) => {
+    set({ subtitle: { speaker, text, who } });
     clearTimeout(subtitleTimer);
     subtitleTimer = setTimeout(() => set({ subtitle: null }), ms + 800);
   },

@@ -12,11 +12,11 @@ const HOST_LINE =
   "Bonsoir, and welcome to KNAK! I'm Amélie. Please, take any table you like, or see Louis at the counter whenever you're ready to order.";
 const CASHIER_LINE = "Bonsoir! Here is our carte. Everything is cooked fresh and sent out hot for delivery. Take your time.";
 
-/** Amélie's welcome: she waves, speaks and the line appears as a subtitle. Also what "Speak" replays. */
+/** Amélie's welcome: she waves, speaks and the line appears above her head. Also what "Speak" replays. */
 export function greetGuest() {
   runtime.greetAt = runtime.now;
   const ms = speak(HOST_LINE, { prefer: "female", pitch: 1.1 });
-  useGame.getState().say("Amélie", HOST_LINE, ms);
+  useGame.getState().say("host", "Amélie", HOST_LINE, ms);
 }
 
 const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
@@ -61,7 +61,7 @@ export default function Director() {
         if (s.menuOpen && !prev.menuOpen && runtime.cashierAt < 0) {
           runtime.cashierAt = runtime.now;
           const ms = speak(CASHIER_LINE, { prefer: "male", pitch: 0.95 });
-          s.say("Louis", CASHIER_LINE, ms);
+          s.say("cashier", "Louis", CASHIER_LINE, ms);
         }
         if (s.soundOn !== prev.soundOn) setMuted(!s.soundOn);
       }),
