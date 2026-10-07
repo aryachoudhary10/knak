@@ -188,7 +188,7 @@ function Carte() {
           {view.name === "sent" && (
             <motion.div key="sent" {...swap} className="flex flex-1 flex-col items-center justify-center px-8 text-center">
               <p className="eyebrow text-stone">Order No. {view.ref}</p>
-              <p className="mt-6 font-display text-6xl italic">Dhanyavaad.</p>
+              <p className="mt-6 font-display text-5xl italic sm:text-6xl">Dhanyavaad.</p>
               <p className="mt-6 max-w-sm font-display text-lg leading-relaxed text-ink/80">Your table’s order is with the kitchen. We will let you know the moment it leaves for your door.</p>
               {view.to && <p className="mt-4 max-w-sm font-sans text-[12px] font-light leading-relaxed text-stone">Delivering to {view.to}</p>}
               <p className="eyebrow mt-10 text-[9px] text-stone">{formatINR(view.total)} · payment to be confirmed by KNAK</p>
