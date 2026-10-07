@@ -6,6 +6,7 @@ import { useGame } from "@/game/store";
 import Avatar from "./Avatar";
 import { requestLook } from "@/components/game/Experience";
 import { startAudio } from "@/game/audio";
+import { useAuth } from "@/game/auth";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 const rise = (delay: number) => ({
@@ -23,6 +24,10 @@ export default function Welcome() {
   const { active, progress } = useProgress();
   const warm = useGame((s) => s.warm);
   const ready = (!active || progress >= 100) && warm;
+  const auth = useAuth((s) => s.status);
+  const profile = useAuth((s) => s.profile);
+  const openAuth = useAuth((s) => s.open);
+  const known = auth === "signedIn" && !!profile?.name;
 
   const go = () => {
     startAudio();
@@ -53,7 +58,17 @@ export default function Welcome() {
       <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-ink/45 sm:bg-transparent sm:bg-[linear-gradient(90deg,rgba(14,11,9,0.88)_0%,rgba(14,11,9,0.6)_38%,rgba(14,11,9,0.15)_75%,rgba(14,11,9,0.05)_100%)]" />
       <header className="flex items-center justify-between">
         <p className="font-display text-[15px] tracking-[0.5em] text-ivory/80">KNAK</p>
-        <p className="eyebrow hidden text-ivory/50 sm:block">Grand Café · Paris</p>
+        {auth === "signedOut" && (
+          <button onClick={() => openAuth("invite")} className="text-action text-[10px] text-ivory/80 hover:text-ivory">
+            Sign in <span className="arrow">→</span>
+          </button>
+        )}
+        {auth === "signedIn" && (
+          <button onClick={() => openAuth("address")} className="text-action text-[10px] text-ivory/60 hover:text-ivory">
+            {profile?.name ? profile.name.split(" ")[0] : "Your details"}
+          </button>
+        )}
+        {(auth === "off" || auth === "loading") && <p className="eyebrow hidden text-ivory/50 sm:block">Grand Café · Paris</p>}
       </header>
 
       <main className="flex flex-1 flex-col justify-center sm:max-w-xl">
@@ -70,11 +85,11 @@ export default function Welcome() {
         <motion.div {...rise(0.75)} className="mt-12 h-px w-12 bg-champagne/60" />
 
         <motion.div {...rise(0.85)} className="mt-10">
-          <p className="eyebrow text-ivory/50">This evening’s guest</p>
+          <p className="eyebrow text-ivory/50">{known ? "Welcome back" : "This evening’s guest"}</p>
           <div className="mt-4 flex items-center gap-5">
             <Avatar c={character} size={52} />
             <div>
-              <p className="font-display text-2xl">{character.name}</p>
+              <p className="font-display text-2xl">{known ? profile!.name.split(" ")[0] : character.name}</p>
               <button onClick={reroll} className="text-action mt-1 text-[10px] text-ivory/60 hover:text-ivory">
                 Change appearance
               </button>

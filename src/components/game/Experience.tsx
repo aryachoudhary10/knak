@@ -28,6 +28,8 @@ import Hud from "@/components/ui/Hud";
 import TimeDebug from "@/components/ui/TimeDebug";
 import Welcome from "@/components/ui/Welcome";
 import MenuCard from "@/components/ui/MenuCard";
+import AuthPanel from "@/components/ui/AuthPanel";
+import { useAuth } from "@/game/auth";
 import TouchControls from "@/components/ui/TouchControls";
 import { useGame } from "@/game/store";
 import { runtime } from "@/game/runtime";
@@ -71,6 +73,7 @@ export default function Experience() {
 
   useEffect(() => {
     useGame.getState().setTouch(window.matchMedia("(pointer: coarse)").matches);
+    useAuth.getState().init();
     // Handy for debugging and automated screenshots in development.
     if (process.env.NODE_ENV !== "production") Object.assign(window, { __knak: useGame, __runtime: runtime, __clock: useClock });
   }, []);
@@ -124,6 +127,7 @@ export default function Experience() {
         <Subtitles />
         {phase === "playing" && !intro && isTouch && <TouchControls />}
         <MenuCard />
+        <AuthPanel />
         <AnimatePresence>{phase === "welcome" && <Welcome key="welcome" />}</AnimatePresence>
       </div>
     </MotionConfig>

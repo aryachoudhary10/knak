@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useGame } from "@/game/store";
 import { CATEGORIES, MENU, formatINR, menuById, type MenuItem } from "@/data/menu";
 import { requestLook } from "@/components/game/Experience";
+import { profileComplete, useAuth } from "@/game/auth";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 const swap = {
@@ -14,7 +15,7 @@ const swap = {
   transition: { duration: 0.4, ease: EASE },
 };
 
-type View = { name: "carte" } | { name: "dish"; id: string } | { name: "table" } | { name: "sent"; ref: string };
+type View = { name: "carte" } | { name: "dish"; id: string } | { name: "table" } | { name: "sent"; ref: string; to: string | null };
 
 export default function MenuCard() {
   const open = useGame((s) => s.menuOpen);
@@ -78,8 +79,15 @@ function Carte() {
     requestAnimationFrame(() => requestLook());
   };
   const complete = () => {
+    const auth = useAuth.getState();
+    // Orders go to a door, so a guest signs in and leaves an address first (unless sign-in isn't set up yet).
+    if (auth.status !== "off" && (auth.status !== "signedIn" || !profileComplete(auth.profile))) {
+      auth.open("order");
+      return;
+    }
+    const p = auth.profile;
     clearCart();
-    setView({ name: "sent", ref: String(1000 + Math.floor(Math.random() * 9000)) });
+    setView({ name: "sent", ref: String(1000 + Math.floor(Math.random() * 9000)), to: p ? `${p.address}, ${p.pincode}` : null });
   };
 
   return (
@@ -151,6 +159,7 @@ function Carte() {
               <p className="eyebrow text-stone">Order No. {view.ref}</p>
               <p className="mt-6 font-display text-6xl italic">Merci.</p>
               <p className="mt-6 max-w-sm font-display text-lg leading-relaxed text-ink/80">Your table’s order is with the kitchen. We will let you know the moment it leaves for your door.</p>
+              {view.to && <p className="mt-4 max-w-sm font-sans text-[12px] font-light leading-relaxed text-stone">Delivering to {view.to}</p>}
               <p className="eyebrow mt-10 text-[9px] text-stone">Preview · delivery details and payment arrive in the next phase</p>
               <button onClick={done} className="text-action mt-12 text-ink">
                 Return to the room <span className="arrow">→</span>
@@ -314,13 +323,35 @@ function TableView({ total, onBack, onComplete }: { total: number; onBack: () =>
           <p className="eyebrow text-stone">Total</p>
           <p className="font-sans text-lg tabular-nums">{formatINR(total)}</p>
         </div>
+        <DeliverTo />
         <div className="mt-8 flex items-center justify-between gap-6">
-          <p className="max-w-[16rem] font-sans text-[11px] font-light leading-relaxed text-stone">Prepared fresh and delivered hot. Delivery details and payment follow.</p>
+          <p className="max-w-[16rem] font-sans text-[11px] font-light leading-relaxed text-stone">Prepared fresh and delivered hot. Payment follows.</p>
           <button onClick={onComplete} disabled={cart.length === 0} className="text-action text-bordeaux">
             Complete order <span className="arrow">→</span>
           </button>
         </div>
       </footer>
+    </div>
+  );
+}
+
+/** Where the order will go, with a quiet way to change it for this order and the next. */
+function DeliverTo() {
+  const status = useAuth((s) => s.status);
+  const profile = useAuth((s) => s.profile);
+  const open = useAuth((s) => s.open);
+  if (status !== "signedIn" || !profileComplete(profile)) return null;
+  return (
+    <div className="mt-6 flex items-baseline justify-between gap-6">
+      <div className="min-w-0">
+        <p className="eyebrow text-stone">Deliver to</p>
+        <p className="mt-2 truncate font-sans text-[12px] text-ink/80">
+          {profile.name} · {profile.address}, {profile.pincode}
+        </p>
+      </div>
+      <button onClick={() => open("address")} className="text-action shrink-0 text-[10px] text-stone hover:text-ink">
+        Change
+      </button>
     </div>
   );
 }
