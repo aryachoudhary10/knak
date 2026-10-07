@@ -9,14 +9,10 @@ import { peers } from "@/game/live";
 import { runtime } from "@/game/runtime";
 import { setInsideAmount, setMuted, speak } from "@/game/audio";
 import { useAuth } from "@/game/auth";
-import { currentHour } from "@/game/clock";
 
 const INTRO_SECONDS = 8.5;
-/** Bonjour until five in the afternoon (restaurant time), Bonsoir after. */
-const salut = () => {
-  const h = currentHour();
-  return h >= 5 && h < 17 ? "Bonjour" : "Bonsoir";
-};
+/** KNAK is in India: guests are welcomed with Namaste at any hour. */
+const salut = () => "Namaste";
 
 /** Amélie greets a signed-in guest by the first name in their profile, anyone else warmly but generically. */
 function hostLine() {
@@ -24,7 +20,7 @@ function hostLine() {
   const rest = "I'm Amélie. Please, take any table you like, or see Louis at the counter whenever you're ready to order.";
   return first ? `${salut()}, ${first}! Welcome to KNAK. ${rest}` : `${salut()}, and welcome to KNAK! ${rest}`;
 }
-const cashierLine = () => `${salut()}! Here is our carte. Everything is cooked fresh and sent out hot for delivery. Take your time.`;
+const cashierLine = () => `${salut()}! Here is our menu. Everything is cooked fresh and sent out hot for delivery. Take your time.`;
 
 /** Amélie's welcome: she waves, speaks and the line appears above her head. Also what "Speak" replays. */
 export function greetGuest() {

@@ -86,7 +86,7 @@ export default function Welcome() {
         {...rise(0.4)}
         className="relative flex w-full items-center justify-between"
       >
-        <p className="eyebrow text-[9px] text-ivory/55">Grand Café · Paris</p>
+        <p className="eyebrow text-[9px] text-ivory/55">Grand Café</p>
         {auth === "signedOut" && (
           <button
             onClick={() => openAuth("invite")}
@@ -131,7 +131,7 @@ export default function Welcome() {
           {...rise(1.4)}
           className="mt-6 max-w-[17rem] font-display text-[17px] italic leading-snug text-ivory/75 sm:max-w-none sm:text-xl"
         >
-          A grand café of Paris, brought to your door.
+          A Parisian grand café, brought to your door.
         </motion.p>
 
         {/* line, lozenge, line */}
