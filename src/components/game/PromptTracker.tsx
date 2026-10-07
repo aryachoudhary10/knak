@@ -7,8 +7,8 @@ import { runtime } from "@/game/runtime";
 import { useGame } from "@/game/store";
 import { STAFF } from "@/game/layout";
 
-/** Just above a standing person's head. */
-const HEAD = 1.98;
+/** About a standing person's head. */
+const HEAD = 1.7;
 
 /**
  * Pins the contextual prompt to the thing it is about: a hairline and dot beside Amélie, the counter or a table.
@@ -26,9 +26,10 @@ export default function PromptTracker() {
       head.set(npc.x, (npc.y ?? 0) + HEAD, npc.z);
       const far = head.distanceTo(camera.position);
       head.project(camera);
-      const half = Math.min(size.width * 0.36, 170) + 8;
-      const x = THREE.MathUtils.clamp((head.x * 0.5 + 0.5) * size.width, half, size.width - half);
-      const y = THREE.MathUtils.clamp((-head.y * 0.5 + 0.5) * size.height, 150, size.height - 40);
+      // Beside the head on the side with more room, the way the name labels sit beside a person.
+      const x = THREE.MathUtils.clamp((head.x * 0.5 + 0.5) * size.width, 24, size.width - 24);
+      const y = THREE.MathUtils.clamp((-head.y * 0.5 + 0.5) * size.height, 70, size.height - 260);
+      speech.dataset.flip = x > size.width * 0.55 ? "1" : "0";
       speech.style.transform = `translate3d(${x}px, ${y}px, 0)`;
       speech.style.opacity = head.z > 1 || far > 16 ? "0" : "1";
     } else if (speech) speech.style.opacity = "0";
@@ -48,7 +49,10 @@ export default function PromptTracker() {
     el.dataset.mode = "anchored";
     el.dataset.flip = x > size.width * 0.6 ? "1" : "0";
     el.style.transform = `translate3d(${x}px, ${y}px, 0)`;
-    el.style.opacity = v.z > 1 ? "0" : "1";
+    // While that same person is talking their line takes the label's place, so the two never overlap.
+    const g = useGame.getState();
+    const talking = (g.prompt?.kind === "speak" && who === "host") || (g.prompt?.kind === "order" && who === "cashier");
+    el.style.opacity = v.z > 1 || talking ? "0" : "1";
   });
   return null;
 }

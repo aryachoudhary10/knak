@@ -5,9 +5,12 @@ import { useGame } from "@/game/store";
 import { runtime } from "@/game/runtime";
 import { Reveal } from "./Reveal";
 
+/** The same role lines the prompts use, so a speaker reads exactly like their label. */
+const ROLE: Record<string, string> = { host: "Your host", cashier: "Maître de comptoir" };
+
 /**
- * What staff say, held just above the speaker's head and following them on screen (SpeechTracker moves it every
- * frame). No box: the speaker's name, the line, and a hairline down to the person.
+ * What staff say, set like their name labels: a dot by the speaker's head and a hairline out to the name in the
+ * display serif, their role, a rule, then the line itself. PromptTracker moves it with the speaker every frame.
  */
 export default function Subtitles() {
   const sub = useGame((s) => s.subtitle);
@@ -16,24 +19,29 @@ export default function Subtitles() {
       ref={(el) => {
         runtime.speechEl = el;
       }}
-      className="pointer-events-none absolute left-0 top-0 z-20 opacity-0 transition-opacity duration-300 will-change-transform"
+      className="group pointer-events-none absolute left-0 top-0 z-20 opacity-0 transition-opacity duration-300 will-change-transform"
     >
       <AnimatePresence>
         {sub && (
           <motion.div
             key={sub.text}
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-            className="absolute bottom-0 left-0 flex w-[min(72vw,300px)] -translate-x-1/2 flex-col items-center text-center [text-shadow:0_1px_10px_rgba(0,0,0,0.8)] sm:w-[340px]"
+            className="absolute left-0 top-0 flex items-start [text-shadow:0_1px_10px_rgba(0,0,0,0.6)] group-data-[flip=1]:-translate-x-full group-data-[flip=1]:flex-row-reverse"
           >
-            <p className="eyebrow text-[9px] text-champagne">{sub.speaker}</p>
-            {/* Words appear at roughly speaking pace. */}
-            <p className="mt-1.5 font-display text-[15px] italic leading-snug text-ivory sm:text-lg">
-              <Reveal text={sub.text} stagger={0.12} />
-            </p>
-            <span className="mt-2 h-5 w-px bg-ivory/45" />
+            <span className="mt-[-4px] h-[8px] w-[8px] shrink-0 -translate-x-1/2 rounded-full border border-ivory bg-ivory/90 group-data-[flip=1]:translate-x-1/2" />
+            <span className="mt-0 h-px w-10 shrink-0 bg-ivory/55 sm:w-14" />
+            <div className="-mt-[10px] flex w-[min(58vw,280px)] flex-col px-4 text-left group-data-[flip=1]:items-end group-data-[flip=1]:text-right sm:w-[320px]">
+              <span className="font-display text-[19px] uppercase leading-none tracking-[0.16em] text-ivory sm:text-[21px]">{sub.speaker}</span>
+              {ROLE[sub.who] && <span className="eyebrow mt-2 text-[9px] text-ivory/70">{ROLE[sub.who]}</span>}
+              <span className="mt-3 h-px w-24 bg-ivory/30" />
+              {/* Words appear at roughly speaking pace. */}
+              <p className="mt-3 font-display text-[15px] italic leading-snug text-ivory sm:text-[17px]">
+                <Reveal text={sub.text} stagger={0.12} />
+              </p>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
