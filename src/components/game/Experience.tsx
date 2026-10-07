@@ -17,6 +17,8 @@ import Furniture from "./world/Furniture";
 import Counter from "./world/Counter";
 import People from "./world/People";
 import Player from "./Player";
+import LiveGuests from "./world/LiveGuests";
+import { addSample, peers } from "@/game/live";
 import Director from "./Director";
 import PromptTracker from "./PromptTracker";
 import Effects from "./Effects";
@@ -82,7 +84,7 @@ export default function Experience() {
     useGame.getState().setTouch(window.matchMedia("(pointer: coarse)").matches);
     useAuth.getState().init();
     // Handy for debugging and automated screenshots in development.
-    if (process.env.NODE_ENV !== "production") Object.assign(window, { __knak: useGame, __runtime: runtime, __clock: useClock });
+    if (process.env.NODE_ENV !== "production") Object.assign(window, { __knak: useGame, __runtime: runtime, __clock: useClock, __live: { peers, addSample } });
   }, []);
 
   return (
@@ -124,6 +126,7 @@ export default function Experience() {
               <Gallery />
               <WinterGarden />
               <People />
+              <LiveGuests />
               <Player />
             </Physics>
             <Director />

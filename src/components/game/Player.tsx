@@ -7,6 +7,7 @@ import * as THREE from "three";
 import { useGame } from "@/game/store";
 import { runtime } from "@/game/runtime";
 import { stairFloor } from "@/game/stairs";
+import { chairTakenLive } from "@/game/live";
 import { CHAIRS, CHAIR_BY_ID, COUNTER, COUNTER_SPOT, OCCUPIED_CHAIRS, SPAWN, STAFF, TABLES, tableInfo } from "@/game/layout";
 import { greetGuest } from "./Director";
 
@@ -216,7 +217,7 @@ export default function Player() {
     }
     let best: { id: string; score: number } | null = null;
     for (const c of CHAIRS) {
-      if (OCCUPIED_CHAIRS.has(c.id)) continue;
+      if (OCCUPIED_CHAIRS.has(c.id) || chairTakenLive(c.id)) continue;
       const dx = c.x - px;
       const dz = c.z - pz;
       const d = Math.hypot(dx, dz);

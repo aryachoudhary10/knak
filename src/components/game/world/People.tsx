@@ -5,6 +5,7 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { GUESTS, STAFF, TABLES, WAITER_PATH, WAITING_GUEST, type Npc } from "@/game/layout";
 import { runtime } from "@/game/runtime";
+import { useLive } from "@/game/live";
 import { GUEST_AVATARS, Human, WALK_SPEED, preloadPeople, type AvatarId, type Clip } from "./Human";
 
 preloadPeople();
@@ -111,12 +112,19 @@ function Waiter() {
   );
 }
 
+/** NPC diners always left in the room, however many real guests arrive. */
+const MIN_NPC_DINERS = 4;
+
 export default function People() {
+  // As real guests arrive, NPC diners quietly leave (from the end of the list), so the room stays about as full and
+  // phones never draw more people than before.
+  const live = useLive((s) => s.ids.length);
+  const diners = GUESTS.slice(0, Math.max(MIN_NPC_DINERS, GUESTS.length - live));
   // People stream in after the room, so the restaurant appears without waiting for them.
   return (
     <Suspense fallback={null}>
       <group>
-        {GUESTS.map((g, i) => (
+        {diners.map((g, i) => (
           <PlacedNpc key={g.id} npc={g} seed={((i * 0.618) % 1)} avatar={GUEST_AVATARS[i % GUEST_AVATARS.length]} />
         ))}
         {STAFF.map((s, i) => (
