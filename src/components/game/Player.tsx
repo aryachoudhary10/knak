@@ -6,6 +6,7 @@ import { CapsuleCollider, RigidBody, type RapierRigidBody } from "@react-three/r
 import * as THREE from "three";
 import { useGame } from "@/game/store";
 import { runtime } from "@/game/runtime";
+import { stairFloor } from "@/game/stairs";
 import { CHAIRS, CHAIR_BY_ID, COUNTER, COUNTER_SPOT, OCCUPIED_CHAIRS, SPAWN, STAFF, TABLES, tableInfo } from "@/game/layout";
 import { greetGuest } from "./Director";
 
@@ -13,6 +14,7 @@ const HOST = STAFF.find((n) => n.id === "host")!;
 
 const WALK = 3.0;
 const RUN = 5.2;
+const FOOT = 0.85; // capsule centre above the soles
 const EYE = 0.75; // above capsule centre, so eyes sit at ~1.6 m
 const SEATED_EYE = 1.18;
 
@@ -155,7 +157,12 @@ export default function Player() {
       vx = cam.vx;
       vz = cam.vz;
       const v = rb.linvel();
-      rb.setLinvel({ x: vx, y: v.y, z: vz }, true);
+      // On the round staircase, follow the treads directly: a capsule can't climb a turning flight on its own.
+      const at = rb.translation();
+      const foot = at.y - FOOT;
+      const tread = stairFloor(at.x, at.z, foot);
+      const vy = tread === null ? v.y : THREE.MathUtils.clamp((tread - foot) * 14, -4, 4);
+      rb.setLinvel({ x: vx, y: vy, z: vz }, true);
 
       const p = rb.translation();
       runtime.playerPos.set(p.x, p.y, p.z);

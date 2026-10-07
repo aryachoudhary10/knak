@@ -15,13 +15,30 @@ export type WindowSet = { z: readonly number[]; halfWidth: number; sill: number;
  * The bar salon behind the dining room: through an arch in the back wall, across a short vestibule, up three
  * marble steps to a raised floor with an oval island bar, a lounge, a fireplace and a grand piano.
  */
-export const SALON = { x0: -10, x1: 10, z0: -20.4, z1: -31, stepFrom: -21.4, stepTo: -22.6, floor: 0.5, height: 5.6 } as const;
-export const BAR_ARCH = { x: -6.2, halfWidth: 1.0, spring: 3.0 } as const;
+export const SALON = { x0: -10, x1: 10, z0: -20.4, z1: -31, stepFrom: -22.0, stepTo: -23.2, floor: 0.5, height: 5.6 } as const;
+/** Twin arches either side of the counter, so the salon is entered from either aisle and its way out is always in view. */
+export const BAR_ARCH = { xs: [-6.2, 6.2], halfWidth: 1.2, spring: 3.2 } as const;
+/** Spans of a wall from a to b with the bar arches cut out. */
+export function archSpans(a: number, b: number, pad = 0): [number, number][] {
+  const out: [number, number][] = [];
+  let at = a;
+  for (const x of BAR_ARCH.xs) {
+    out.push([at, x - BAR_ARCH.halfWidth - pad]);
+    at = x + BAR_ARCH.halfWidth + pad;
+  }
+  out.push([at, b]);
+  return out;
+}
 export const ISLAND = { x: 0.8, z: -26.6, rx: 2.8, rz: 1.5, height: 1.1 } as const;
-/** The gallery: a balcony over the entrance, reached by a straight flight of stairs up the right-hand aisle. */
-export const GALLERY = { x0: -6.6, x1: 6.6, z0: -0.45, z1: -3.0, deck: 3.5, stairX: 4.0, stairHalf: 0.6, stairFoot: -12.4 } as const;
+/** The gallery: a balcony over the entrance, reached by a round staircase at its left end. */
+export const GALLERY = { x0: -6.6, x1: 6.6, z0: -0.45, z1: -3.0, deck: 3.5 } as const;
+/**
+ * The round staircase: one full turn about a gilt newel, climbing anticlockwise (seen from above). Guests step
+ * on at its left side walking toward the entrance and step off at the same side, a floor higher, onto the gallery.
+ */
+export const SPIRAL = { x: -4.4, z: -3.6, r: 1.7, core: 0.22, start: -Math.PI / 2, treads: 28 } as const;
 /** The winter garden: a glass house in the right-hand garden, entered from the bar salon through French doors. */
-export const WINTER = { x0: 10.4, x1: 14.6, z0: -21.0, z1: -31.2, floor: 0.5, eaves: 3.9, ridge: 5.3, doorZ: -23.6, doorHalf: 0.8, doorH: 2.8 } as const;
+export const WINTER = { x0: 10.4, x1: 14.6, z0: -21.0, z1: -31.2, floor: 0.5, eaves: 3.9, ridge: 5.3, doorZ: -24.6, doorHalf: 0.8, doorH: 2.8 } as const;
 export const FACADE = { halfWidth: 10, height: 8.2, thickness: 0.4 } as const;
 /** Capsule centre resting on the pavement (half height 0.55 + radius 0.3), so the visitor never drops in. */
 export const SPAWN = { x: 0, y: 0.86, z: 7.5 } as const;
@@ -51,7 +68,7 @@ function roundTable(id: string, x: number, z: number, chairs: number, startAngle
 }
 
 // Left column: round tables with three chairs, like the reference photo.
-[-3.6, -7.2, -10.8].forEach((z, i) => roundTable(`L${i}`, -5.2, z, 3, Math.PI / 2 + 0.4));
+[-6.6, -9.8, -13.0].forEach((z, i) => roundTable(`L${i}`, -5.2, z, 3, Math.PI / 2 + 0.4));
 // Small round tables either side of the runner, chairs set along the aisle so none stand on the carpet.
 [-5.4, -9.0].forEach((z, i) => roundTable(`C${i}`, -2.3, z, 2, 0));
 [-5.4, -9.0].forEach((z, i) => roundTable(`D${i}`, 2.3, z, 2, 0));
@@ -116,9 +133,9 @@ function salonGuests(): Npc[] {
     at("s-lounge2", -9.3, -28.6, Math.PI / 2, "sit"),
     at("s-piano", 6.5, -27.1, Math.PI / 2, "sit"),
     // up in the gallery over the entrance
-    { ...at("g-gal0", -5.75, -1.75, Math.PI / 2, "sit"), y: GALLERY.deck },
-    { ...at("g-gal1", -4.25, -1.75, -Math.PI / 2, "sit"), y: GALLERY.deck },
-    { ...at("g-gal2", 0.45, -1.75, Math.PI / 2, "sit"), y: GALLERY.deck },
+    { ...at("g-gal0", -1.05, -1.75, -Math.PI / 2, "sit"), y: GALLERY.deck },
+    { ...at("g-gal1", -2.55, -1.75, Math.PI / 2, "sit"), y: GALLERY.deck },
+    { ...at("g-gal2", 3.65, -1.75, Math.PI / 2, "sit"), y: GALLERY.deck },
     // a pair taking coffee among the palms in the winter garden
     at("w-0", 11.85, -28.3, Math.PI / 2, "sit"),
     at("w-1", 13.35, -28.3, -Math.PI / 2, "sit"),

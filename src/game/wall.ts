@@ -39,7 +39,7 @@ export function sideWallGeometry(side: "left" | "right") {
 
 let backGeo: THREE.BufferGeometry | null = null;
 
-/** The back wall of the dining room, with the arch through to the bar salon cut into it. */
+/** The back wall of the dining room, with the arches through to the bar salon cut into it. */
 export function backWallGeometry(height: number, thickness = 0.4) {
   if (backGeo) return backGeo;
   const shape = new THREE.Shape();
@@ -48,14 +48,16 @@ export function backWallGeometry(height: number, thickness = 0.4) {
   shape.lineTo(ROOM.maxX, height);
   shape.lineTo(ROOM.minX, height);
   shape.lineTo(ROOM.minX, 0);
-  const { x, halfWidth: w, spring } = BAR_ARCH;
-  const hole = new THREE.Path();
-  hole.moveTo(x - w, 0.001);
-  hole.lineTo(x + w, 0.001);
-  hole.lineTo(x + w, spring);
-  hole.absarc(x, spring, w, 0, Math.PI, false);
-  hole.lineTo(x - w, 0.001);
-  shape.holes.push(hole);
+  const { halfWidth: w, spring } = BAR_ARCH;
+  for (const x of BAR_ARCH.xs) {
+    const hole = new THREE.Path();
+    hole.moveTo(x - w, 0.001);
+    hole.lineTo(x + w, 0.001);
+    hole.lineTo(x + w, spring);
+    hole.absarc(x, spring, w, 0, Math.PI, false);
+    hole.lineTo(x - w, 0.001);
+    shape.holes.push(hole);
+  }
   const g = new THREE.ExtrudeGeometry(shape, { depth: thickness, bevelEnabled: false, curveSegments: 20 });
   g.translate(0, 0, ROOM.minZ - thickness);
   g.computeVertexNormals();

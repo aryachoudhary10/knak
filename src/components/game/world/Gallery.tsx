@@ -4,17 +4,82 @@ import { useMemo } from "react";
 import { CuboidCollider, CylinderCollider, RigidBody } from "@react-three/rapier";
 import * as THREE from "three";
 import { useMats } from "@/game/materials";
-import { GALLERY } from "@/game/layout";
+import { GALLERY, SPIRAL } from "@/game/layout";
 
-const { x0: X0, x1: X1, z0: Z0, z1: Z1, deck: Y, stairX: SX, stairHalf: SH, stairFoot: SF } = GALLERY;
-const SLAB = 0.3;
+const { x0: X0, x1: X1, z0: Z0, z1: Z1, deck: Y } = GALLERY;
+const SLAB = 0.22;
 const RAIL = 1.0;
-const RUN = Z1 - SF; // stairs climb toward the entrance, from the foot at SF up to the gallery edge at Z1
-const STEPS = 20;
-const RISE = Y / STEPS;
-const TREAD = RUN / STEPS;
 const COLUMNS = [-6.0, -2.0, 2.0, 6.0];
-const TABLES = [-5.0, -1.6, 1.2, 5.6];
+const TABLES = [-1.8, 1.4, 4.4];
+/** The landing between the top of the round staircase and the gallery's edge. */
+const LAND = { x0: SPIRAL.x - SPIRAL.r, x1: SPIRAL.x - 0.2, z0: SPIRAL.z, z1: Z1 } as const;
+const TREAD_ANGLE = (Math.PI * 2) / SPIRAL.treads;
+const RISE = Y / SPIRAL.treads;
+
+/** Point on the staircase at radius r after `turn` radians from its foot. */
+const onSpiral = (r: number, turn: number, y: number): [number, number, number] => {
+  const b = SPIRAL.start + turn;
+  return [SPIRAL.x + Math.sin(b) * r, y, SPIRAL.z + Math.cos(b) * r];
+};
+
+/**
+ * The round staircase: one full turn of marble treads cantilevered from a gilt newel, a walnut soffit under each,
+ * and a brass handrail spiralling up on slim iron balusters.
+ */
+function RoundStair() {
+  const m = useMats();
+  const treads = useMemo(() => Array.from({ length: SPIRAL.treads }, (_, i) => i), []);
+  const rail = useMemo(() => {
+    const pts: THREE.Vector3[] = [];
+    for (let i = 0; i <= 96; i++) {
+      const t = (i / 96) * Math.PI * 2;
+      pts.push(new THREE.Vector3(...onSpiral(SPIRAL.r - 0.06, t, (Y * t) / (Math.PI * 2) + 0.95)));
+    }
+    return new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 160, 0.026, 8, false);
+  }, []);
+  return (
+    <group>
+      {treads.map((i) => (
+        <group key={i}>
+          <mesh position={[SPIRAL.x, (i + 1) * RISE - 0.03, SPIRAL.z]} material={m.marble} castShadow>
+            <cylinderGeometry args={[SPIRAL.r, SPIRAL.r, 0.06, 6, 1, false, SPIRAL.start + i * TREAD_ANGLE, TREAD_ANGLE * 1.02]} />
+          </mesh>
+          <mesh position={[SPIRAL.x, (i + 1) * RISE - 0.09, SPIRAL.z]} material={m.walnut}>
+            <cylinderGeometry args={[SPIRAL.r - 0.05, SPIRAL.r - 0.05, 0.06, 6, 1, false, SPIRAL.start + i * TREAD_ANGLE, TREAD_ANGLE * 1.02]} />
+          </mesh>
+          {i % 2 === 0 && (
+            <mesh position={onSpiral(SPIRAL.r - 0.06, (i + 0.5) * TREAD_ANGLE, (i + 1) * RISE + 0.47)} material={m.blackIron}>
+              <cylinderGeometry args={[0.011, 0.011, 0.94, 5]} />
+            </mesh>
+          )}
+        </group>
+      ))}
+      <mesh geometry={rail} material={m.brass} />
+      {/* the newel: a slim gilt column ringed in brass, crowned with a finial above the gallery */}
+      <mesh position={[SPIRAL.x, (Y + 1.1) / 2, SPIRAL.z]} material={m.gilt}>
+        <cylinderGeometry args={[SPIRAL.core * 0.6, SPIRAL.core * 0.75, Y + 1.1, 16]} />
+      </mesh>
+      {[0.6, 1.8, 3.0, 4.2].map((y) => (
+        <mesh key={y} position={[SPIRAL.x, y, SPIRAL.z]} rotation={[Math.PI / 2, 0, 0]} material={m.brass}>
+          <torusGeometry args={[SPIRAL.core * 0.75, 0.03, 6, 20]} />
+        </mesh>
+      ))}
+      <mesh position={[SPIRAL.x, Y + 1.25, SPIRAL.z]} material={m.gilt}>
+        <sphereGeometry args={[0.12, 16, 12]} />
+      </mesh>
+      <mesh position={[SPIRAL.x, 0.08, SPIRAL.z]} material={m.marble}>
+        <cylinderGeometry args={[0.4, 0.45, 0.16, 20]} />
+      </mesh>
+      {/* landing over to the gallery */}
+      <mesh position={[(LAND.x0 + LAND.x1) / 2, Y - SLAB / 2, (LAND.z0 + LAND.z1) / 2]} material={m.panel}>
+        <boxGeometry args={[LAND.x1 - LAND.x0, SLAB, LAND.z1 - LAND.z0]} />
+      </mesh>
+      <mesh position={[(LAND.x0 + LAND.x1) / 2, Y + 0.006, (LAND.z0 + LAND.z1) / 2]} rotation={[-Math.PI / 2, 0, 0]} material={m.walnut}>
+        <planeGeometry args={[LAND.x1 - LAND.x0, LAND.z1 - LAND.z0]} />
+      </mesh>
+    </group>
+  );
+}
 
 /** A gilt iron balustrade with a brass handrail, along local +x from 0 to len. */
 function Balustrade({ len, from }: { len: number; from: [number, number, number] }) {
@@ -92,15 +157,12 @@ function TableForTwo({ x }: { x: number }) {
 
 /**
  * The gallery: a balcony over the entrance carried on slender gilt columns, with a few tables for two that look
- * down over the chandeliers, reached by a straight flight of walnut and marble stairs up the right-hand aisle.
+ * down over the chandeliers, reached by a round marble staircase at its left end.
  */
 export default function Gallery() {
   const m = useMats();
   const front = (Z0 + Z1) / 2;
   const depth = Z0 - Z1;
-  const angle = Math.atan2(Y, RUN);
-  const len = Math.hypot(Y, RUN);
-  const treads = useMemo(() => Array.from({ length: STEPS }, (_, i) => i), []);
   return (
     <group>
       {/* deck: walnut floor, cream soffit with a gilt edge and little glowing discs */}
@@ -140,8 +202,8 @@ export default function Gallery() {
       ))}
 
       {/* balustrade along the front, open where the stairs arrive, and down both ends */}
-      <Balustrade len={SX - SH - X0} from={[X0, Y, Z1 + 0.05]} />
-      <Balustrade len={X1 - (SX + SH)} from={[SX + SH, Y, Z1 + 0.05]} />
+      <Balustrade len={LAND.x0 - X0} from={[X0, Y, Z1 + 0.05]} />
+      <Balustrade len={X1 - LAND.x1} from={[LAND.x1, Y, Z1 + 0.05]} />
       {[X0 + 0.05, X1 - 0.05].map((x) => (
         <group key={x} position={[x, 0, Z0]} rotation={[0, Math.PI / 2, 0]}>
           <Balustrade len={depth} from={[0, Y, 0]} />
@@ -152,57 +214,37 @@ export default function Gallery() {
         <TableForTwo key={x} x={x} />
       ))}
 
-      {/* the stairs: marble treads on a walnut stringer either side, brass balustrades */}
-      {treads.map((i) => (
-        <mesh key={i} position={[SX, (i + 1) * RISE - 0.03, SF + (i + 0.5) * TREAD]} material={m.marble}>
-          <boxGeometry args={[SH * 2, 0.06, TREAD + 0.03]} />
-        </mesh>
-      ))}
-      {treads.map((i) => (
-        <mesh key={`r${i}`} position={[SX, (i + 0.5) * RISE, SF + i * TREAD + 0.01]} material={m.darkWood}>
-          <boxGeometry args={[SH * 2 - 0.02, RISE, 0.03]} />
-        </mesh>
-      ))}
-      {[-1, 1].map((s) => (
-        <group key={s}>
-          <mesh position={[SX + s * (SH + 0.04), Y / 2 - 0.1, (SF + Z1) / 2]} rotation={[-angle, 0, 0]} material={m.walnut}>
-            <boxGeometry args={[0.08, 0.32, len]} />
-          </mesh>
-          <mesh position={[SX + s * (SH + 0.04), Y / 2 + 0.9, (SF + Z1) / 2]} rotation={[Math.PI / 2 - angle, 0, 0]} material={m.brass}>
-            <cylinderGeometry args={[0.028, 0.028, len, 10]} />
-          </mesh>
-          {treads
-            .filter((i) => i % 2 === 0)
-            .map((i) => (
-              <mesh key={i} position={[SX + s * (SH + 0.04), (i + 1) * RISE + 0.45, SF + (i + 0.5) * TREAD]} material={m.blackIron}>
-                <cylinderGeometry args={[0.012, 0.012, 0.9, 5]} />
-              </mesh>
-            ))}
-          {/* newel post at the foot */}
-          <mesh position={[SX + s * (SH + 0.04), 0.55, SF + 0.05]} material={m.brass}>
-            <cylinderGeometry args={[0.05, 0.07, 1.1, 12]} />
-          </mesh>
-          <mesh position={[SX + s * (SH + 0.04), 1.13, SF + 0.05]} material={m.brass}>
-            <sphereGeometry args={[0.07, 14, 10]} />
-          </mesh>
+      <RoundStair />
+      {/* rails along both open sides of the landing */}
+      {[LAND.x0, LAND.x1].map((x) => (
+        <group key={x} position={[x, 0, LAND.z1]} rotation={[0, Math.PI / 2, 0]}>
+          <Balustrade len={LAND.z1 - LAND.z0} from={[0, Y, 0]} />
         </group>
       ))}
 
       <RigidBody type="fixed" colliders={false}>
-        {/* stair ramp, climbing toward +z */}
-        <CuboidCollider
-          args={[SH, 0.05, len / 2 + 0.15]}
-          position={[SX, Y / 2 - Math.cos(angle) * 0.05, (SF + Z1) / 2 + Math.sin(angle) * 0.05]}
-          rotation={[-angle, 0, 0]}
-        />
-        {/* stair sides, so a guest doesn't step off halfway up */}
-        {[-1, 1].map((s) => (
-          <CuboidCollider key={s} args={[0.04, 0.6, len / 2]} position={[SX + s * (SH + 0.06), Y / 2 + 0.55, (SF + Z1) / 2]} rotation={[-angle, 0, 0]} />
+        {/* the round staircase: its treads are followed in Player; here only the newel, the outer guard and the landing */}
+        <CylinderCollider args={[(Y + 1.1) / 2, SPIRAL.core]} position={[SPIRAL.x, (Y + 1.1) / 2, SPIRAL.z]} />
+        {Array.from({ length: SPIRAL.treads }, (_, i) => {
+          const t = (i + 0.5) * TREAD_ANGLE;
+          const [x, , z] = onSpiral(SPIRAL.r + 0.05, t, 0);
+          return (
+            <CuboidCollider
+              key={i}
+              args={[0.05, 0.6, SPIRAL.r * TREAD_ANGLE * 0.55]}
+              position={[x, (i + 1) * RISE + 0.6, z]}
+              rotation={[0, SPIRAL.start + t + Math.PI / 2, 0]}
+            />
+          );
+        })}
+        <CuboidCollider args={[(LAND.x1 - LAND.x0) / 2, SLAB / 2, (LAND.z1 - LAND.z0) / 2]} position={[(LAND.x0 + LAND.x1) / 2, Y - SLAB / 2, (LAND.z0 + LAND.z1) / 2]} />
+        {[LAND.x0, LAND.x1].map((x) => (
+          <CuboidCollider key={`lr${x}`} args={[0.05, 0.6, (LAND.z1 - LAND.z0) / 2]} position={[x, Y + 0.6, (LAND.z0 + LAND.z1) / 2]} />
         ))}
         {/* deck and balustrades */}
         <CuboidCollider args={[(X1 - X0) / 2, SLAB / 2, depth / 2]} position={[0, Y - SLAB / 2, front]} />
-        <CuboidCollider args={[(SX - SH - X0) / 2, 0.6, 0.05]} position={[(X0 + SX - SH) / 2, Y + 0.6, Z1 + 0.05]} />
-        <CuboidCollider args={[(X1 - SX - SH) / 2, 0.6, 0.05]} position={[(SX + SH + X1) / 2, Y + 0.6, Z1 + 0.05]} />
+        <CuboidCollider args={[(LAND.x0 - X0) / 2, 0.6, 0.05]} position={[(X0 + LAND.x0) / 2, Y + 0.6, Z1 + 0.05]} />
+        <CuboidCollider args={[(X1 - LAND.x1) / 2, 0.6, 0.05]} position={[(LAND.x1 + X1) / 2, Y + 0.6, Z1 + 0.05]} />
         {[X0, X1].map((x) => (
           <CuboidCollider key={x} args={[0.05, 0.6, depth / 2]} position={[x, Y + 0.6, front]} />
         ))}

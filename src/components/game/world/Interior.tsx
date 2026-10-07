@@ -8,7 +8,7 @@ import { useMats } from "@/game/materials";
 import { luxuryMats } from "@/game/luxury";
 import { backWallGeometry, sideWallGeometry } from "@/game/wall";
 import { curtainGeo } from "@/game/geometry";
-import { BAR_ARCH, DOOR, RIGHT_WINDOWS, ROOM, WINDOWS, type WindowSet } from "@/game/layout";
+import { BAR_ARCH, DOOR, archSpans, RIGHT_WINDOWS, ROOM, WINDOWS, type WindowSet } from "@/game/layout";
 import Chandelier from "./Chandelier";
 import Ceiling from "./Ceiling";
 
@@ -92,9 +92,9 @@ function Mirror({ side, z, width, height, y }: { side: "left" | "right"; z: numb
 }
 
 /** The way through to the bar salon: a gilt-moulded arch with velvet portières tied back, and a brass plaque. */
-function BarArch() {
+function BarArch({ x }: { x: number }) {
   const m = useMats();
-  const { x, halfWidth: w, spring } = BAR_ARCH;
+  const { halfWidth: w, spring } = BAR_ARCH;
   return (
     <group position={[x, 0, ROOM.minZ + 0.02]}>
       {[-1, 1].map((s) => (
@@ -359,15 +359,14 @@ export default function Interior() {
         </group>
       ))}
       {/* back wainscot, broken by the arch to the bar */}
-      {[
-        [ROOM.minX, BAR_ARCH.x - BAR_ARCH.halfWidth - 0.25],
-        [BAR_ARCH.x + BAR_ARCH.halfWidth + 0.25, ROOM.maxX],
-      ].map(([a, b]) => (
+      {archSpans(ROOM.minX, ROOM.maxX, 0.25).map(([a, b]) => (
         <mesh key={a} position={[(a + b) / 2, 0.5, ROOM.minZ + 0.03]} material={m.darkWood}>
           <boxGeometry args={[b - a, 1.0, 0.06]} />
         </mesh>
       ))}
-      <BarArch />
+      {BAR_ARCH.xs.map((x) => (
+        <BarArch key={x} x={x} />
+      ))}
       {[-1, 1].map((s) => (
         <mesh key={s} position={[s * (DOOR.halfWidth + 0.2 + (W / 2 - DOOR.halfWidth - 0.2) / 2), 0.5, ROOM.maxZ - 0.43]} material={m.darkWood}>
           <boxGeometry args={[W / 2 - DOOR.halfWidth - 0.2, 1.0, 0.06]} />
@@ -378,9 +377,12 @@ export default function Interior() {
         <CuboidCollider args={[0.2, H / 2, D / 2]} position={[ROOM.minX - 0.2, H / 2, CZ]} />
         <CuboidCollider args={[0.2, H / 2, D / 2]} position={[ROOM.maxX + 0.2, H / 2, CZ]} />
         {/* back wall either side of the arch, and above it */}
-        <CuboidCollider args={[(BAR_ARCH.x - BAR_ARCH.halfWidth - ROOM.minX) / 2, H / 2, 0.2]} position={[(ROOM.minX + BAR_ARCH.x - BAR_ARCH.halfWidth) / 2, H / 2, ROOM.minZ - 0.2]} />
-        <CuboidCollider args={[(ROOM.maxX - BAR_ARCH.x - BAR_ARCH.halfWidth) / 2, H / 2, 0.2]} position={[(ROOM.maxX + BAR_ARCH.x + BAR_ARCH.halfWidth) / 2, H / 2, ROOM.minZ - 0.2]} />
-        <CuboidCollider args={[BAR_ARCH.halfWidth, (H - 4.0) / 2, 0.2]} position={[BAR_ARCH.x, (H + 4.0) / 2, ROOM.minZ - 0.2]} />
+        {archSpans(ROOM.minX, ROOM.maxX).map(([a, b]) => (
+          <CuboidCollider key={a} args={[(b - a) / 2, H / 2, 0.2]} position={[(a + b) / 2, H / 2, ROOM.minZ - 0.2]} />
+        ))}
+        {BAR_ARCH.xs.map((x) => (
+          <CuboidCollider key={`top${x}`} args={[BAR_ARCH.halfWidth, (H - BAR_ARCH.spring - BAR_ARCH.halfWidth) / 2, 0.2]} position={[x, (H + BAR_ARCH.spring + BAR_ARCH.halfWidth) / 2, ROOM.minZ - 0.2]} />
+        ))}
       </RigidBody>
 
       {sideWallFeatures.left.map((z) => (
@@ -407,26 +409,9 @@ export default function Interior() {
 
       <Banquette />
 
-      {[[-7.3, -1.0], [7.3, -0.95], [-4.6, -15.3], [4.6, -15.3], [-7.4, -17.4], [7.3, -18.9]].map(([x, z]) => (
+      {[[-7.3, -1.0], [7.3, -0.95], [-4.6, -15.3], [4.6, -15.3], [-7.3, -16.8], [7.3, -16.8]].map(([x, z]) => (
         <OliveTree key={`${x}${z}`} x={x} z={z} s={x * x > 30 ? 1.1 : 0.9} />
       ))}
-
-      {/* kitchen door, back right */}
-      <group position={[6.2, 0, ROOM.minZ + 0.02]}>
-        <mesh position={[0, 1.3, 0]} material={m.darkWood}>
-          <boxGeometry args={[1.3, 2.6, 0.06]} />
-        </mesh>
-        <group position={[0, 1.3, 0.04]}>
-          <Frame w={1.5} h={2.75} t={0.06} material={m.gilt} />
-        </group>
-        <mesh position={[0, 1.75, 0.04]}>
-          <circleGeometry args={[0.18, 24]} />
-          <meshStandardMaterial color="#20160c" emissive="#ffcf8a" emissiveIntensity={0.8} />
-        </mesh>
-        <mesh position={[0, 1.75, 0.045]} material={m.brass}>
-          <torusGeometry args={[0.18, 0.025, 6, 24]} />
-        </mesh>
-      </group>
 
       <Chandelier position={[0, 4.1, -4.2]} ceiling={H} />
       <Chandelier position={[0, 4.1, -9.2]} ceiling={H} />

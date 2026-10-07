@@ -78,8 +78,8 @@ export default function Counter() {
     <group>
       <RigidBody type="fixed" colliders={false}>
         <CuboidCollider args={[HW + DEP / 2, HT / 2, DEP / 2]} position={[0, HT / 2, CZ]} />
-        {/* the back bar stops short of the arch to the bar salon, at the left */}
-        <CuboidCollider args={[(ROOM.maxX + 4.8) / 2, 0.6, 0.35]} position={[(ROOM.maxX - 4.8) / 2, 0.6, ROOM.minZ + 0.35]} />
+        {/* the back bar stops short of the arches to the bar salon on either side */}
+        <CuboidCollider args={[4.8, 0.6, 0.35]} position={[0, 0.6, ROOM.minZ + 0.35]} />
       </RigidBody>
 
       {/* counter body: walnut front, rounded ends */}
@@ -118,11 +118,11 @@ export default function Counter() {
       </mesh>
 
       {/* back bar */}
-      <mesh position={[0.9, 0.5, ROOM.minZ + 0.35]} material={m.walnut}>
-        <boxGeometry args={[11, 1.0, 0.7]} />
+      <mesh position={[0, 0.5, ROOM.minZ + 0.35]} material={m.walnut}>
+        <boxGeometry args={[9.2, 1.0, 0.7]} />
       </mesh>
-      <mesh position={[0.9, 1.02, ROOM.minZ + 0.35]} material={m.marble}>
-        <boxGeometry args={[11.1, 0.04, 0.74]} />
+      <mesh position={[0, 1.02, ROOM.minZ + 0.35]} material={m.marble}>
+        <boxGeometry args={[9.3, 0.04, 0.74]} />
       </mesh>
       <EspressoMachine x={-2.2} />
 

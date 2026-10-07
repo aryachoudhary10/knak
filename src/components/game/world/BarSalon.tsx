@@ -6,7 +6,7 @@ import * as THREE from "three";
 import { useMats } from "@/game/materials";
 import { frescoTexture, luxuryMats } from "@/game/luxury";
 import { bottlesTexture } from "@/game/textures";
-import { BAR_ARCH, ISLAND, SALON, WINTER } from "@/game/layout";
+import { BAR_ARCH, ISLAND, SALON, WINTER, archSpans } from "@/game/layout";
 
 const { x0: X0, x1: X1, z0: Z0, z1: Z1, stepFrom: S0, stepTo: S1, floor: F } = SALON;
 /** Ceiling of the salon, measured from the street level. */
@@ -348,17 +348,30 @@ function Walls() {
         <planeGeometry args={[W, CEIL]} />
       </mesh>
       {/* the salon side of the dining room's back wall, either side of the arch */}
-      {[
-        [X0, BAR_ARCH.x - BAR_ARCH.halfWidth],
-        [BAR_ARCH.x + BAR_ARCH.halfWidth, X1],
-      ].map(([a, b]) => (
+      {archSpans(X0, X1).map(([a, b]) => (
         <mesh key={a} position={[(a + b) / 2, CEIL / 2, Z0 - 0.01]} rotation={[0, Math.PI, 0]} material={lacquer}>
           <planeGeometry args={[b - a, CEIL]} />
         </mesh>
       ))}
-      <mesh position={[BAR_ARCH.x, (BAR_ARCH.spring + BAR_ARCH.halfWidth + CEIL) / 2, Z0 - 0.01]} rotation={[0, Math.PI, 0]} material={lacquer}>
-        <planeGeometry args={[BAR_ARCH.halfWidth * 2, CEIL - BAR_ARCH.spring - BAR_ARCH.halfWidth]} />
-      </mesh>
+      {BAR_ARCH.xs.map((x) => (
+        <group key={x}>
+          <mesh position={[x, (BAR_ARCH.spring + BAR_ARCH.halfWidth + CEIL) / 2, Z0 - 0.01]} rotation={[0, Math.PI, 0]} material={lacquer}>
+            <planeGeometry args={[BAR_ARCH.halfWidth * 2, CEIL - BAR_ARCH.spring - BAR_ARCH.halfWidth]} />
+          </mesh>
+          {/* a gilt arch moulding and a glowing lantern over each way back to the dining room */}
+          <mesh position={[x, BAR_ARCH.spring, Z0 - 0.03]} material={m.gilt}>
+            <torusGeometry args={[BAR_ARCH.halfWidth + 0.05, 0.045, 8, 32, Math.PI]} />
+          </mesh>
+          {[-1, 1].map((s) => (
+            <mesh key={s} position={[x + s * (BAR_ARCH.halfWidth + 0.05), BAR_ARCH.spring / 2, Z0 - 0.03]} material={m.gilt}>
+              <boxGeometry args={[0.09, BAR_ARCH.spring, 0.05]} />
+            </mesh>
+          ))}
+          <mesh position={[x, BAR_ARCH.spring + BAR_ARCH.halfWidth + 0.35, Z0 - 0.12]} material={m.lampShade}>
+            <sphereGeometry args={[0.13, 14, 10]} />
+          </mesh>
+        </group>
+      ))}
       {/* walnut wainscot on the raised floor */}
       {[
         { p: [X0 + 0.04, F + 0.55, (S1 + Z1) / 2] as const, a: [0.06, 1.1, S1 - Z1] as const },
