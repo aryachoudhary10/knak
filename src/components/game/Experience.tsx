@@ -70,6 +70,13 @@ export default function Experience() {
   const phase = useGame((s) => s.phase);
   const intro = useGame((s) => s.intro);
   usePointerLook();
+  // Let the invitation's title settle before the room is built: building it (painting the marble, compiling
+  // materials) holds the phone's main thread for a moment, which would otherwise stutter the opening animation.
+  const [build, setBuild] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setBuild(true), 2600);
+    return () => clearTimeout(t);
+  }, []);
 
   useEffect(() => {
     useGame.getState().setTouch(window.matchMedia("(pointer: coarse)").matches);
@@ -92,6 +99,8 @@ export default function Experience() {
           }}
           onPointerDown={() => requestLook()}
         >
+          {/* Judge the frame rate only once the guest is walking, never while the room is still loading. */}
+          {phase === "playing" && !intro && (
           <PerformanceMonitor
             flipflops={4}
             onDecline={() => {
@@ -101,7 +110,9 @@ export default function Experience() {
             }}
             onIncline={() => setDpr((d) => Math.min(window.devicePixelRatio, isTouch ? 2 : 1.5, d + 0.15))}
           />
-          <Lighting />
+          )}
+          {build && <Lighting />}
+          {build && (
           <Suspense fallback={null}>
             <Physics gravity={[0, -9.81, 0]} timeStep="vary">
               <Street />
@@ -120,6 +131,7 @@ export default function Experience() {
             <Effects ao={ao} />
             <Warmup />
           </Suspense>
+          )}
         </Canvas>
         {phase === "playing" && intro && <IntroOverlay />}
         {phase === "playing" && !intro && <Hud />}

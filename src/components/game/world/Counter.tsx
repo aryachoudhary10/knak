@@ -1,11 +1,11 @@
 "use client";
 
 import GroupLight from "../GroupLight";
-import { barGlow } from "@/game/atmosphere";
 import { useMemo } from "react";
 import { CuboidCollider, RigidBody } from "@react-three/rapier";
 import { useMats } from "@/game/materials";
-import { bottlesTexture, signTexture } from "@/game/textures";
+import { signTexture } from "@/game/textures";
+import BackBar from "./BackBar";
 import { COUNTER, ROOM } from "@/game/layout";
 
 const { z: CZ, halfWidth: HW, depth: DEP, height: HT } = COUNTER;
@@ -74,7 +74,6 @@ function MenuStand({ x }: { x: number }) {
 
 export default function Counter() {
   const m = useMats();
-  const bottles = useMemo(() => bottlesTexture(), []);
   const sign = useMemo(() => signTexture(), []);
   return (
     <group>
@@ -128,22 +127,8 @@ export default function Counter() {
       </mesh>
       <EspressoMachine x={-2.2} />
 
-      {/* backlit bottle wall with gilt frame */}
-      <mesh position={[0, 2.6, ROOM.minZ + 0.03]}>
-        <planeGeometry args={[8.4, 2.6]} />
-        <meshStandardMaterial ref={barGlow} map={bottles} emissive="#ffffff" emissiveMap={bottles} emissiveIntensity={0.55} roughness={0.4} />
-      </mesh>
-      <mesh position={[0, 3.95, ROOM.minZ + 0.06]} material={m.gilt}>
-        <boxGeometry args={[8.7, 0.12, 0.08]} />
-      </mesh>
-      <mesh position={[0, 1.25, ROOM.minZ + 0.06]} material={m.gilt}>
-        <boxGeometry args={[8.7, 0.08, 0.08]} />
-      </mesh>
-      {[-4.3, 4.3].map((x) => (
-        <mesh key={x} position={[x, 2.6, ROOM.minZ + 0.06]} material={m.gilt}>
-          <boxGeometry args={[0.12, 2.8, 0.08]} />
-        </mesh>
-      ))}
+      {/* glass shelves of real bottles before a bronze mirror */}
+      <BackBar />
       <mesh position={[0, 4.55, ROOM.minZ + 0.05]}>
         <planeGeometry args={[2.6, 0.65]} />
         <meshStandardMaterial map={sign} transparent emissive="#7a5418" emissiveMap={sign} emissiveIntensity={0.9} metalness={0.6} roughness={0.35} />

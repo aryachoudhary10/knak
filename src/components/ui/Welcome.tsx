@@ -1,6 +1,7 @@
 "use client";
 
 import { useProgress } from "@react-three/drei";
+import { useState } from "react";
 import { motion } from "motion/react";
 import { useGame } from "@/game/store";
 import Avatar from "./Avatar";
@@ -24,6 +25,11 @@ export default function Welcome() {
   const { active, progress } = useProgress();
   const warm = useGame((s) => s.warm);
   const ready = (!active || progress >= 100) && warm;
+  // One number for the text and the bar; it never runs backwards when more files join the queue.
+  const [peak, setPeak] = useState(0);
+  const raw = warm ? 100 : Math.min(progress, 96);
+  if (raw > peak) setPeak(raw);
+  const shown = Math.max(peak, raw);
   const auth = useAuth((s) => s.status);
   const profile = useAuth((s) => s.profile);
   const openAuth = useAuth((s) => s.open);
@@ -79,14 +85,8 @@ export default function Welcome() {
         <motion.p {...rise(0.2)} className="eyebrow text-champagne">
           An invitation
         </motion.p>
-        {/* The name settles letter by letter, its spacing drawing in like a breath. */}
-        <motion.h1
-          aria-label="KNAK"
-          initial={{ letterSpacing: "0.62em" }}
-          animate={{ letterSpacing: "0.28em" }}
-          transition={{ duration: 3.4, ease: EASE, delay: 0.3 }}
-          className="mt-6 font-display text-[64px] font-normal leading-none sm:text-[104px]"
-        >
+        {/* The name rises letter by letter (opacity and transform only, so it stays smooth while the room loads). */}
+        <h1 aria-label="KNAK" className="mt-6 font-display text-[64px] font-normal leading-none tracking-[0.28em] sm:text-[104px]">
           {"KNAK".split("").map((ch, i) => (
             <motion.span
               key={i}
@@ -99,7 +99,7 @@ export default function Welcome() {
               {ch}
             </motion.span>
           ))}
-        </motion.h1>
+        </h1>
         <motion.p {...rise(1.5)} className="mt-5 font-display text-lg italic text-ivory/75 sm:text-xl">
           A grand café of Paris, brought to your door.
         </motion.p>
@@ -131,9 +131,9 @@ export default function Welcome() {
             </button>
           ) : (
             <div className="w-56">
-              <p className="eyebrow text-ivory/60">Preparing your table · {Math.round(warm ? 100 : Math.min(progress, 96))}%</p>
+              <p className="eyebrow text-ivory/60">Preparing your table · {Math.round(shown)}%</p>
               <div className="mt-3 h-px w-full bg-ivory/15">
-                <div className="h-px bg-champagne transition-[width] duration-500 ease-out" style={{ width: `${progress}%` }} />
+                <div className="h-px origin-left bg-champagne transition-transform duration-500 ease-out" style={{ transform: `scaleX(${shown / 100})` }} />
               </div>
             </div>
           )}
