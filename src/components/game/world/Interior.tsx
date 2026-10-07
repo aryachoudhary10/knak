@@ -6,9 +6,9 @@ import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { useMats } from "@/game/materials";
 import { luxuryMats } from "@/game/luxury";
-import { leftWallGeometry } from "@/game/wall";
+import { sideWallGeometry } from "@/game/wall";
 import { curtainGeo } from "@/game/geometry";
-import { DOOR, ROOM, WINDOWS } from "@/game/layout";
+import { DOOR, RIGHT_WINDOWS, ROOM, WINDOWS, type WindowSet } from "@/game/layout";
 import Chandelier from "./Chandelier";
 import Ceiling from "./Ceiling";
 
@@ -94,12 +94,12 @@ function Mirror({ side, z, width, height, y }: { side: "left" | "right"; z: numb
 /** Clear glass with slim walnut glazing bars; through it, the real garden and street. */
 const windowGlass = new THREE.MeshPhysicalMaterial({ color: "#c9d4dc", transparent: true, opacity: 0.1, roughness: 0.05, metalness: 0, depthWrite: false });
 
-function TallWindow({ z }: { z: number }) {
+function TallWindow({ side, z, win }: { side: "left" | "right"; z: number; win: WindowSet }) {
   const m = useMats();
-  const w = WINDOWS.halfWidth * 2;
-  const h = WINDOWS.spring - WINDOWS.sill;
+  const w = win.halfWidth * 2;
+  const h = win.spring - win.sill;
   return (
-    <OnWall side="left" z={z} y={WINDOWS.sill}>
+    <OnWall side={side} z={z} y={win.sill}>
       <mesh position={[0, h / 2, 0]} material={windowGlass}>
         <planeGeometry args={[w, h]} />
       </mesh>
@@ -303,10 +303,8 @@ export default function Interior() {
       ))}
 
       {/* walls */}
-      <mesh geometry={leftWallGeometry()} material={m.plaster} />
-      <mesh position={[ROOM.maxX + 0.1, H / 2, CZ]} material={m.plaster}>
-        <boxGeometry args={[0.2, H, D]} />
-      </mesh>
+      <mesh geometry={sideWallGeometry("left")} material={m.plaster} />
+      <mesh geometry={sideWallGeometry("right")} material={m.plaster} />
       <mesh position={[0, H / 2, ROOM.minZ - 0.1]} material={m.plaster}>
         <boxGeometry args={[W, H, 0.2]} />
       </mesh>
@@ -350,13 +348,13 @@ export default function Interior() {
         <Pilaster key={`pr${z}`} side="right" z={z} />
       ))}
       {WINDOWS.z.map((z) => (
-        <TallWindow key={z} z={z} />
+        <TallWindow key={z} side="left" z={z} win={WINDOWS} />
       ))}
       {[-5.6, -11.6].map((z) => (
         <Mirror key={z} side="left" z={z} width={1.5} height={3.0} y={1.3} />
       ))}
-      {[-3.15, -6.6, -10.05, -13.45].map((z) => (
-        <Mirror key={z} side="right" z={z} width={1.9} height={2.3} y={1.8} />
+      {RIGHT_WINDOWS.z.map((z) => (
+        <TallWindow key={z} side="right" z={z} win={RIGHT_WINDOWS} />
       ))}
       {sideWallFeatures.left.slice(0, 4).map((z) => (
         <Sconce key={`sl${z}`} side="left" z={z} />

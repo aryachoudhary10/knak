@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { Batch, canopy, prism } from "./kit";
 import { WIN } from "./textures";
-import { WINDOWS } from "@/game/layout";
+import { RIGHT_WINDOWS, WINDOWS } from "@/game/layout";
 
 /**
  * KNAK as a free-standing hôtel particulier: a balustraded crown and low zinc mansard over the
@@ -44,24 +44,16 @@ export function cafeCrown(b: Batch) {
   // closing walls so the building reads as a solid pavilion from the side gardens
   for (const s of [-1, 1]) {
     const x = s * 10.2;
-    // The left wall is cut with real windows (see game/wall.ts), so only the right is a plain slab.
-    if (s > 0) b.box("paint", 0.4, H, -BACK, x, H / 2, BACK / 2, STONE);
+    // Both side walls are cut with real windows (see game/wall.ts); outside, each opening gets stone dressings.
     b.box("paint", 0.6, 0.5, -BACK, x + s * 0.1, 0.25, BACK / 2, "#e2d6bf");
     b.box("paint", 0.7, 0.3, -BACK + 0.2, x + s * 0.12, 6.86, BACK / 2, "#e2d6bf");
     b.box("paint", 0.9, 0.3, -BACK + 0.4, x + s * 0.2, 8.0, BACK / 2, STONE);
-    if (s < 0) {
-      for (const z of WINDOWS.z) {
-        b.box("paint", 0.25, 6.3, 0.7, x + s * 0.2, 3.15, z - 3.0, STONE);
-        b.box("paint", 0.2, 0.25, 2.0, x + s * 0.25, WINDOWS.spring + WINDOWS.halfWidth + 0.3, z, "#e2d6bf");
-        b.box("paint", 0.25, 0.12, 2.0, x + s * 0.27, WINDOWS.sill - 0.06, z, "#e2d6bf");
-      }
-      continue;
-    }
-    for (let k = 0; k < 4; k++) {
-      const z = -2.6 - k * 5;
-      b.box("paint", 0.25, 6.3, 0.7, x + s * 0.2, 3.15, z + 2.5, STONE);
-      b.plane("lit", 1.5, 3.2, x + s * 0.21, 2.9, z, [1.05, 0.88, 0.62], { uv: WIN.sheer, ry: (s * Math.PI) / 2 });
-      b.box("paint", 0.2, 0.25, 2.0, x + s * 0.25, 4.65, z, "#e2d6bf");
+    const win = s < 0 ? WINDOWS : RIGHT_WINDOWS;
+    const piers = s < 0 ? win.z.map((z) => z - 3.0) : [-1.4, -4.875, -8.325, -11.75, -15.2];
+    for (const z of piers) b.box("paint", 0.25, 6.3, 0.7, x + s * 0.2, 3.15, z, STONE);
+    for (const z of win.z) {
+      b.box("paint", 0.2, 0.25, win.halfWidth * 2 + 0.4, x + s * 0.25, win.spring + win.halfWidth + 0.3, z, "#e2d6bf");
+      b.box("paint", 0.25, 0.12, win.halfWidth * 2 + 0.4, x + s * 0.27, win.sill - 0.06, z, "#e2d6bf");
     }
   }
   b.box("paint", 20.8, H, 0.4, 0, H / 2, BACK - 0.2, STONE);

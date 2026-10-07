@@ -5,8 +5,12 @@ export const ROOM = { minX: -8, maxX: 8, minZ: -20, maxZ: 0, height: 6 } as cons
 export const DOOR = { halfWidth: 1.2, height: 3.4 } as const;
 /** Arched French windows in the left wall: open to the real garden and street outside, not a painted view. */
 export const WINDOWS = { z: [-2.6, -8.6, -14.6], halfWidth: 0.8, sill: 1.0, spring: 4.4 } as const;
-/** The left wall runs from the room's plaster face out to the pavilion's stone face, so each window is a deep reveal. */
+/** Arched windows above the banquette on the right wall, looking across the other garden. */
+export const RIGHT_WINDOWS = { z: [-3.15, -6.6, -10.05, -13.45], halfWidth: 0.95, sill: 1.8, spring: 4.1 } as const;
+/** The side walls run from the room's plaster face out to the pavilion's stone face, so each window is a deep reveal. */
 export const LEFT_WALL = { inner: -8.0, outer: -10.4, back: -20.6, height: 8.2 } as const;
+export const SIDE_WALL = LEFT_WALL;
+export type WindowSet = { z: readonly number[]; halfWidth: number; sill: number; spring: number };
 export const FACADE = { halfWidth: 10, height: 8.2, thickness: 0.4 } as const;
 /** Capsule centre resting on the pavement (half height 0.55 + radius 0.3), so the visitor never drops in. */
 export const SPAWN = { x: 0, y: 0.86, z: 7.5 } as const;

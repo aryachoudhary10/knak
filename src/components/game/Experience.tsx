@@ -51,9 +51,12 @@ export function requestLook() {
   canvas?.requestPointerLock?.()?.catch?.(() => {});
 }
 
+const coarse = () => window.matchMedia("(pointer: coarse)").matches;
+
 export default function Experience() {
   // Sharpness is traded for a steady frame rate: start modest, rise only while frames stay fast.
-  const [dpr, setDpr] = useState(() => (typeof window === "undefined" ? 1 : Math.min(window.devicePixelRatio, 1.25)));
+  // Phones have small, dense screens: below about 1.5 the room turns visibly blocky, so they keep a higher floor.
+  const [dpr, setDpr] = useState(() => (typeof window === "undefined" ? 1 : Math.min(window.devicePixelRatio, coarse() ? 1.75 : 1.25)));
   const [ao, setAo] = useState(true);
   const isTouch = useGame((s) => s.isTouch);
   const phase = useGame((s) => s.phase);
@@ -85,9 +88,9 @@ export default function Experience() {
             onDecline={() => {
               // Drop ambient occlusion first; only then lower the resolution.
               if (ao) setAo(false);
-              else setDpr((d) => Math.max(0.8, d - 0.15));
+              else setDpr((d) => Math.max(isTouch ? 1.4 : 0.8, d - 0.15));
             }}
-            onIncline={() => setDpr((d) => Math.min(window.devicePixelRatio, isTouch ? 1.25 : 1.5, d + 0.15))}
+            onIncline={() => setDpr((d) => Math.min(window.devicePixelRatio, isTouch ? 2 : 1.5, d + 0.15))}
           />
           <color attach="background" args={["#2a2230"]} />
           <fog attach="fog" args={["#3a2c33", 35, 110]} />

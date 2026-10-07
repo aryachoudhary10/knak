@@ -15,6 +15,7 @@ export default function Effects({ ao = true }: { ao?: boolean }) {
         <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
         <FilmGrade />
         <Vignette offset={0.3} darkness={0.55} />
+        <SMAA />
       </EffectComposer>
     );
   }
