@@ -32,9 +32,15 @@ function Pilaster({ x }: { x: number }) {
       <mesh position={[0, 6.62, 0.2]} material={m.stoneShade}>
         <boxGeometry args={[1.0, 0.18, 0.44]} />
       </mesh>
-      <mesh position={[0, 6.32, 0.31]} material={m.gilt}>
-        <boxGeometry args={[0.72, 0.04, 0.02]} />
+      {/* acanthus band and corner volutes */}
+      <mesh position={[0, 6.2, 0.26]} rotation={[Math.PI / 2, 0, 0]} scale={[1, 0.5, 1]} material={m.stone}>
+        <cylinderGeometry args={[0.36, 0.3, 0.22, 12]} />
       </mesh>
+      {[-1, 1].map((k) => (
+        <mesh key={k} position={[k * 0.38, 6.42, 0.38]} rotation={[0, Math.PI / 2, 0]} material={m.stone}>
+          <torusGeometry args={[0.08, 0.03, 6, 14]} />
+        </mesh>
+      ))}
       {/* plinth */}
       <mesh position={[0, 0.3, 0.16]} material={m.stoneShade}>
         <boxGeometry args={[0.85, 0.6, 0.34]} />
@@ -50,10 +56,10 @@ function ArchedWindow({ x }: { x: number }) {
   const y0 = 1.0;
   return (
     <group position={[x, 0, 0.02]}>
-      <mesh position={[0, y0 + h / 2, 0]} material={m.glassWarm}>
+      <mesh position={[0, y0 + h / 2, 0]} material={m.glassDim}>
         <planeGeometry args={[w, h]} />
       </mesh>
-      <mesh position={[0, y0 + h, 0]} material={m.glassWarm}>
+      <mesh position={[0, y0 + h, 0]} material={m.glassDim}>
         <circleGeometry args={[w / 2, 32, 0, Math.PI]} />
       </mesh>
       {/* frame + muntins */}
@@ -78,52 +84,99 @@ function ArchedWindow({ x }: { x: number }) {
   );
 }
 
-function Lantern({ x }: { x: number }) {
+/** Painted joinery for the doors and fanlight: warm ivory gloss, like the reference entrance. */
+const doorPaint = new THREE.MeshStandardMaterial({ color: "#f3ecdd", roughness: 0.45 });
+/** Clear glass: what glows through it is the real lit dining room, not a painted light. */
+const entryGlass = new THREE.MeshPhysicalMaterial({ color: "#e9dcc0", transparent: true, opacity: 0.14, roughness: 0.05, depthWrite: false });
+
+/** A carriage lantern on a swan-neck bracket: black iron, four glass sides, a candle-warm bulb. */
+function Lantern({ x, y }: { x: number; y: number }) {
   const m = useMats();
   return (
-    <group position={[x, 2.75, 0.2]}>
-      {/* swan-neck bracket */}
-      <mesh position={[0, 0.55, 0.12]} rotation={[Math.PI / 2, 0, 0]} material={m.blackIron}>
-        <torusGeometry args={[0.18, 0.025, 8, 16, Math.PI]} />
+    <group position={[x, y, 0.3]}>
+      {/* wall plate and swan neck */}
+      <mesh position={[0, 0.55, -0.04]} material={m.blackIron}>
+        <boxGeometry args={[0.12, 0.34, 0.03]} />
       </mesh>
-      <mesh position={[0, 0.25, 0.3]} material={m.blackIron}>
-        <cylinderGeometry args={[0.02, 0.02, 0.3]} />
+      <mesh position={[0, 0.62, 0.1]} rotation={[0, Math.PI / 2, 0]} material={m.blackIron}>
+        <torusGeometry args={[0.13, 0.018, 6, 16, Math.PI]} />
       </mesh>
-      <group position={[0, 0, 0.3]}>
-        <mesh position={[0, 0.12, 0]} material={m.blackIron}>
-          <coneGeometry args={[0.2, 0.18, 4]} />
+      <mesh position={[0, 0.5, 0.23]} material={m.blackIron}>
+        <cylinderGeometry args={[0.014, 0.014, 0.24, 6]} />
+      </mesh>
+      <group position={[0, 0.12, 0.23]}>
+        {/* roof, finial and drip */}
+        <mesh position={[0, 0.25, 0]} rotation={[0, Math.PI / 4, 0]} material={m.blackIron}>
+          <coneGeometry args={[0.19, 0.16, 4]} />
         </mesh>
-        <mesh position={[0, -0.15, 0]} material={m.glassWarm}>
-          <cylinderGeometry args={[0.15, 0.11, 0.38, 4]} />
+        <mesh position={[0, 0.36, 0]} material={m.blackIron}>
+          <sphereGeometry args={[0.03, 8, 6]} />
         </mesh>
-        <mesh position={[0, -0.36, 0]} material={m.blackIron}>
-          <coneGeometry args={[0.06, 0.12, 4]} />
+        <mesh position={[0, 0.17, 0]} material={m.blackIron}>
+          <boxGeometry args={[0.26, 0.03, 0.26]} />
+        </mesh>
+        {/* tapering glass body with iron corner bars */}
+        <mesh position={[0, 0, 0]} rotation={[0, Math.PI / 4, 0]} material={entryGlass}>
+          <cylinderGeometry args={[0.15, 0.11, 0.32, 4, 1, true]} />
+        </mesh>
+        {[0, 1, 2, 3].map((k) => {
+          const a = (k * Math.PI) / 2;
+          return (
+            <mesh key={k} position={[Math.cos(a) * 0.092, 0, Math.sin(a) * 0.092]} rotation={[Math.sin(a) * 0.12, 0, -Math.cos(a) * 0.12]} material={m.blackIron}>
+              <boxGeometry args={[0.018, 0.33, 0.018]} />
+            </mesh>
+          );
+        })}
+        <mesh position={[0, -0.17, 0]} material={m.blackIron}>
+          <boxGeometry args={[0.18, 0.03, 0.18]} />
+        </mesh>
+        <mesh position={[0, -0.24, 0]} material={m.blackIron}>
+          <coneGeometry args={[0.05, 0.12, 4]} />
+        </mesh>
+        {/* candle bulb */}
+        <mesh position={[0, -0.02, 0]} material={m.flame}>
+          <sphereGeometry args={[0.035, 10, 8]} />
         </mesh>
       </group>
     </group>
   );
 }
 
+/** Clipped box egg in a tall ivory urn, one either side of the doors. */
 function Topiary({ x }: { x: number }) {
   const m = useMats();
   return (
-    <group position={[x, 0, 0.75]}>
-      <mesh position={[0, 0.12, 0]} material={m.stoneShade}>
-        <cylinderGeometry args={[0.24, 0.28, 0.24, 20]} />
+    <group position={[x, 0, 0.7]}>
+      <mesh position={[0, 0.09, 0]} material={m.stoneShade}>
+        <boxGeometry args={[0.62, 0.18, 0.62]} />
       </mesh>
-      <mesh position={[0, 0.55, 0]} material={m.stone}>
-        <cylinderGeometry args={[0.4, 0.22, 0.62, 20]} />
+      <mesh position={[0, 0.3, 0]} material={m.stone}>
+        <cylinderGeometry args={[0.17, 0.24, 0.26, 24]} />
       </mesh>
-      <mesh position={[0, 0.88, 0]} rotation={[Math.PI / 2, 0, 0]} material={m.stoneShade}>
-        <torusGeometry args={[0.4, 0.04, 8, 24]} />
+      {/* fluted bowl */}
+      <mesh position={[0, 0.72, 0]} material={m.stone}>
+        <cylinderGeometry args={[0.44, 0.2, 0.6, 24]} />
       </mesh>
-      <mesh position={[0, 1.45, 0]} scale={[1, 1.35, 1]} material={m.leaf}>
-        <icosahedronGeometry args={[0.48, 2]} />
+      <mesh position={[0, 1.04, 0]} rotation={[Math.PI / 2, 0, 0]} material={m.stoneShade}>
+        <torusGeometry args={[0.44, 0.05, 8, 32]} />
+      </mesh>
+      <mesh position={[0, 0.47, 0]} rotation={[Math.PI / 2, 0, 0]} material={m.stoneShade}>
+        <torusGeometry args={[0.22, 0.035, 8, 24]} />
+      </mesh>
+      <mesh position={[0, 1.08, 0]} material={m.darkWood}>
+        <cylinderGeometry args={[0.41, 0.41, 0.02, 24]} />
+      </mesh>
+      <mesh position={[0, 1.62, 0]} scale={[1, 1.4, 1]} material={m.leaf}>
+        <icosahedronGeometry args={[0.42, 3]} />
       </mesh>
     </group>
   );
 }
 
+/**
+ * One leaf of the entrance doors, as in the reference: painted ivory, a raised panel below, six panes of clear
+ * glass above, a long brass lever. The doors swing in as a guest approaches.
+ */
 function DoorLeaf({ side }: { side: -1 | 1 }) {
   const m = useMats();
   const ref = useRef<THREE.Group>(null);
@@ -140,35 +193,192 @@ function DoorLeaf({ side }: { side: -1 | 1 }) {
   });
   // side = -1 is the left leaf hinged at x = -w, extending toward +x.
   const dir = -side;
+  const lw = w - 0.03; // leaf width, leaving a meeting gap
+  const stile = 0.12;
+  const rail = 0.14;
+  const lowTop = 1.05; // top of the lower panel's rail
+  const gTop = h - rail;
+  const gH = gTop - lowTop;
+  const gW = lw - stile * 2;
   return (
-    <group ref={ref} position={[side * w, 0, -T / 2]}>
-      <group position={[(dir * w) / 2, 0, 0]}>
-        {/* lower panel */}
-        <mesh position={[0, 0.55, 0]} material={m.stone}>
-          <boxGeometry args={[w - 0.02, 1.1, 0.07]} />
-        </mesh>
-        <mesh position={[0, 0.55, 0.04]} material={m.stoneShade}>
-          <boxGeometry args={[w - 0.3, 0.75, 0.01]} />
-        </mesh>
-        {/* glazing */}
-        <mesh position={[0, 1.1 + (h - 1.1) / 2, 0]} material={m.glassDim}>
-          <boxGeometry args={[w - 0.1, h - 1.2, 0.02]} />
-        </mesh>
-        {[-1, 0, 1].map((i) => (
-          <mesh key={`v${i}`} position={[(i * (w - 0.04)) / 2, 1.1 + (h - 1.1) / 2, 0.02]} material={m.stone}>
-            <boxGeometry args={[0.07, h - 1.1, 0.06]} />
+    <group ref={ref} position={[side * w, 0, -0.12]}>
+      <group position={[(dir * lw) / 2, 0, 0]}>
+        {/* stiles and rails */}
+        {[-1, 1].map((k) => (
+          <mesh key={k} position={[(k * (lw - stile)) / 2, h / 2, 0]} material={doorPaint}>
+            <boxGeometry args={[stile, h, 0.07]} />
           </mesh>
         ))}
-        {[0, 1, 2, 3].map((i) => (
-          <mesh key={`h${i}`} position={[0, 1.1 + (i * (h - 1.1)) / 3, 0.02]} material={m.stone}>
-            <boxGeometry args={[w - 0.02, 0.07, 0.06]} />
+        {[rail / 2 + 0.06, lowTop - 0.07, h - rail / 2].map((y, k) => (
+          <mesh key={k} position={[0, y, 0]} material={doorPaint}>
+            <boxGeometry args={[lw, k === 0 ? rail + 0.12 : rail, 0.07]} />
           </mesh>
         ))}
-        {/* brass pull */}
-        <mesh position={[dir * (w / 2 - 0.12), 1.15, 0.08]} material={m.brass}>
-          <boxGeometry args={[0.04, 0.42, 0.04]} />
+        {/* raised lower panel with a fine moulding */}
+        <mesh position={[0, (0.18 + lowTop - 0.14) / 2, 0.005]} material={doorPaint}>
+          <boxGeometry args={[gW, lowTop - 0.32, 0.05]} />
+        </mesh>
+        <mesh position={[0, (0.18 + lowTop - 0.14) / 2, 0.035]} material={doorPaint}>
+          <boxGeometry args={[gW - 0.16, lowTop - 0.48, 0.03]} />
+        </mesh>
+        {/* glass, then two columns by three rows of glazing bars */}
+        <mesh position={[0, lowTop + gH / 2, 0]} material={entryGlass}>
+          <planeGeometry args={[gW, gH]} />
+        </mesh>
+        <mesh position={[0, lowTop + gH / 2, 0.01]} material={doorPaint}>
+          <boxGeometry args={[0.04, gH, 0.045]} />
+        </mesh>
+        {[1, 2].map((r) => (
+          <mesh key={r} position={[0, lowTop + (r * gH) / 3, 0.01]} material={doorPaint}>
+            <boxGeometry args={[gW, 0.04, 0.045]} />
+          </mesh>
+        ))}
+        {/* brass lever handle on the meeting stile, and two hinges */}
+        <group position={[dir * (lw / 2 - stile / 2), 1.05, 0.05]}>
+          <mesh position={[0, 0.05, 0]} material={m.brass}>
+            <boxGeometry args={[0.045, 0.34, 0.015]} />
+          </mesh>
+          <mesh position={[-dir * 0.035, 0.12, 0.035]} rotation={[0, 0, Math.PI / 2]} material={m.brass}>
+            <cylinderGeometry args={[0.012, 0.012, 0.12, 8]} />
+          </mesh>
+        </group>
+        {[0.4, h - 0.45].map((y) => (
+          <mesh key={y} position={[-dir * (lw / 2 + 0.005), y, 0.03]} material={m.brass}>
+            <boxGeometry args={[0.02, 0.14, 0.03]} />
+          </mesh>
+        ))}
+      </group>
+    </group>
+  );
+}
+
+/** The stone above the doors, with the fanlight's half-round cut clean through it. */
+function archHeadGeometry() {
+  const w = DOOR.halfWidth;
+  const shape = new THREE.Shape();
+  shape.moveTo(-w, DOOR.height);
+  shape.lineTo(-w, H);
+  shape.lineTo(w, H);
+  shape.lineTo(w, DOOR.height);
+  shape.lineTo(-w, DOOR.height);
+  const hole = new THREE.Path();
+  hole.moveTo(-w + 0.001, FAN_Y);
+  hole.absarc(0, FAN_Y, w - 0.001, Math.PI, 0, true);
+  hole.lineTo(-w + 0.001, FAN_Y);
+  shape.holes.push(hole);
+  const g = new THREE.ExtrudeGeometry(shape, { depth: T, bevelEnabled: false, curveSegments: 32 });
+  g.translate(0, 0, -T);
+  g.computeVertexNormals();
+  return g;
+}
+
+/** Spring line of the fanlight: just above the transom bar that tops the doors. */
+const FAN_Y = DOOR.height + 0.12;
+
+/**
+ * The doorway as in the reference photo: moulded jambs, a transom bar, a half-round fanlight with a sunburst of
+ * glazing bars, a stepped archivolt, a carved keystone, and quiet recessed panels in the spandrels.
+ */
+function Doorway() {
+  const m = useMats();
+  const w = DOOR.halfWidth;
+  const head = useMemo(() => archHeadGeometry(), []);
+  return (
+    <group>
+      <mesh geometry={head} material={m.stone} />
+      {/* transom bar between the doors and the fanlight */}
+      <mesh position={[0, DOOR.height + 0.06, -0.12]} material={doorPaint}>
+        <boxGeometry args={[w * 2, 0.12, 0.12]} />
+      </mesh>
+      {/* fanlight: clear glass, an inner half-ring and radiating bars */}
+      <group position={[0, FAN_Y, -0.14]}>
+        <mesh material={entryGlass}>
+          <circleGeometry args={[w, 48, 0, Math.PI]} />
+        </mesh>
+        <mesh position={[0, 0, 0.02]} material={doorPaint}>
+          <torusGeometry args={[w * 0.46, 0.028, 6, 32, Math.PI]} />
+        </mesh>
+        {[0.5, 0.2, 0.8].map((f) => {
+          const a = f * Math.PI;
+          const r0 = f === 0.5 ? 0 : w * 0.46;
+          const len = w - r0;
+          return (
+            <mesh key={f} position={[Math.cos(a) * (r0 + len / 2), Math.sin(a) * (r0 + len / 2), 0.02]} rotation={[0, 0, a]} material={doorPaint}>
+              <boxGeometry args={[len, 0.035, 0.035]} />
+            </mesh>
+          );
+        })}
+        <mesh position={[0, 0, 0.02]} material={doorPaint}>
+          <torusGeometry args={[w - 0.03, 0.045, 6, 48, Math.PI]} />
         </mesh>
       </group>
+      {/* jambs: two stepped bands framing the opening, with plinth blocks */}
+      {[-1, 1].map((s) => (
+        <group key={s}>
+          <mesh position={[s * (w + 0.1), FAN_Y / 2, 0.04]} material={m.stone}>
+            <boxGeometry args={[0.2, FAN_Y, 0.1]} />
+          </mesh>
+          <mesh position={[s * (w + 0.27), FAN_Y / 2, 0.02]} material={m.stoneShade}>
+            <boxGeometry args={[0.14, FAN_Y, 0.06]} />
+          </mesh>
+          <mesh position={[s * (w + 0.18), 0.22, 0.07]} material={m.stoneShade}>
+            <boxGeometry args={[0.42, 0.44, 0.16]} />
+          </mesh>
+          {/* impost moulding at the spring of the arch */}
+          <mesh position={[s * (w + 0.2), FAN_Y - 0.05, 0.08]} material={m.stone}>
+            <boxGeometry args={[0.5, 0.12, 0.18]} />
+          </mesh>
+        </group>
+      ))}
+      {/* archivolt: three concentric mouldings stepping out from the glass */}
+      {[
+        [w + 0.08, 0.07, 0.05],
+        [w + 0.22, 0.06, 0.09],
+        [w + 0.34, 0.045, 0.06],
+      ].map(([r, t, z], k) => (
+        <mesh key={k} position={[0, FAN_Y, z]} material={k === 1 ? m.stone : m.stoneShade}>
+          <torusGeometry args={[r, t, 8, 48, Math.PI]} />
+        </mesh>
+      ))}
+      {/* keystone: a carved console */}
+      <group position={[0, FAN_Y + w + 0.12, 0.12]}>
+        <mesh material={m.stone}>
+          <boxGeometry args={[0.34, 0.5, 0.2]} />
+        </mesh>
+        <mesh position={[0, 0.3, 0.02]} material={m.stoneShade}>
+          <boxGeometry args={[0.46, 0.1, 0.24]} />
+        </mesh>
+        <mesh position={[0, 0.02, 0.11]} scale={[1, 1.3, 0.5]} material={m.stone}>
+          <sphereGeometry args={[0.1, 12, 8]} />
+        </mesh>
+        {[-1, 1].map((k) => (
+          <mesh key={k} position={[k * 0.12, -0.16, 0.1]} rotation={[0, Math.PI / 2, 0]} material={m.stone}>
+            <torusGeometry args={[0.05, 0.02, 6, 12]} />
+          </mesh>
+        ))}
+      </group>
+      {/* a broad panel above, under the frieze */}
+      <PanelMould x={0} y={5.75} w={3.2} h={0.6} />
+    </group>
+  );
+}
+
+/** A rectangle of fine raised moulding on the stone: the quiet panelling of the reference facade. */
+function PanelMould({ x, y, w, h }: { x: number; y: number; w: number; h: number }) {
+  const m = useMats();
+  const t = 0.035;
+  return (
+    <group position={[x, y, 0.02]}>
+      {[-1, 1].map((k) => (
+        <mesh key={`h${k}`} position={[0, (k * h) / 2, 0]} material={m.stoneShade}>
+          <boxGeometry args={[w + t, t, 0.03]} />
+        </mesh>
+      ))}
+      {[-1, 1].map((k) => (
+        <mesh key={`v${k}`} position={[(k * w) / 2, 0, 0]} material={m.stoneShade}>
+          <boxGeometry args={[t, h, 0.03]} />
+        </mesh>
+      ))}
     </group>
   );
 }
@@ -190,42 +400,7 @@ export default function Facade() {
       <mesh position={[DOOR.halfWidth + pieceW / 2, H / 2, -T / 2]} receiveShadow material={m.stone}>
         <boxGeometry args={[pieceW, H, T]} />
       </mesh>
-      <mesh position={[0, (H + DOOR.height) / 2, -T / 2]} material={m.stone}>
-        <boxGeometry args={[DOOR.halfWidth * 2, H - DOOR.height, T]} />
-      </mesh>
-
-      {/* Fanlight above the doors */}
-      <group position={[0, DOOR.height + 0.05, 0.01]}>
-        <mesh material={m.glassWarm}>
-          <circleGeometry args={[DOOR.halfWidth, 40, 0, Math.PI]} />
-        </mesh>
-        {[0.25, 0.5, 0.75].map((f) => (
-          <mesh key={f} position={[Math.cos(f * Math.PI) * 0.6, Math.sin(f * Math.PI) * 0.6, 0.02]} rotation={[0, 0, f * Math.PI]} material={m.stone}>
-            <boxGeometry args={[1.2, 0.05, 0.04]} />
-          </mesh>
-        ))}
-        <mesh position={[0, 0, 0.02]} material={m.stone}>
-          <torusGeometry args={[0.55, 0.035, 6, 24, Math.PI]} />
-        </mesh>
-        <mesh position={[0, 0, 0.02]} material={m.stone}>
-          <boxGeometry args={[DOOR.halfWidth * 2, 0.08, 0.06]} />
-        </mesh>
-        {/* archivolt */}
-        <mesh position={[0, 0, 0.06]} material={m.stoneShade}>
-          <torusGeometry args={[DOOR.halfWidth + 0.14, 0.13, 10, 40, Math.PI]} />
-        </mesh>
-        {/* keystone */}
-        <mesh position={[0, DOOR.halfWidth + 0.18, 0.12]} material={m.stone}>
-          <boxGeometry args={[0.36, 0.5, 0.2]} />
-        </mesh>
-      </group>
-      {/* door architrave */}
-      {[-1, 1].map((s) => (
-        <mesh key={s} position={[s * (DOOR.halfWidth + 0.12), DOOR.height / 2, 0.05]} material={m.stoneShade}>
-          <boxGeometry args={[0.24, DOOR.height, 0.12]} />
-        </mesh>
-      ))}
-
+      <Doorway />
       <DoorLeaf side={-1} />
       <DoorLeaf side={1} />
 
@@ -249,7 +424,7 @@ export default function Facade() {
       </mesh>
       <mesh position={[0, 7.4, 0.14]}>
         <planeGeometry args={[4.6, 1.15]} />
-        <meshStandardMaterial map={sign} transparent metalness={0.7} roughness={0.3} emissive="#6b4a12" emissiveMap={sign} emissiveIntensity={0.6} />
+        <meshStandardMaterial map={sign} transparent metalness={0.7} roughness={0.3} emissive="#6b4a12" emissiveMap={sign} emissiveIntensity={0.18} />
       </mesh>
       <mesh position={[0, 7.95, 0.28]} material={m.stone}>
         <boxGeometry args={[W * 2 + 0.4, 0.3, 0.6]} />
@@ -264,10 +439,10 @@ export default function Facade() {
         </mesh>
       ))}
 
-      <Lantern x={-1.85} />
-      <Lantern x={1.85} />
-      <Topiary x={-1.95} />
-      <Topiary x={1.95} />
+      <Lantern x={-2.35} y={3.1} />
+      <Lantern x={2.35} y={3.1} />
+      <Topiary x={-2.15} />
+      <Topiary x={2.15} />
     </group>
   );
 }
