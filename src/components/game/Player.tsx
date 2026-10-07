@@ -171,9 +171,9 @@ export default function Player() {
       bob.current += dt * (s.running ? 10 : 7.2) * pace;
       const bobY = Math.sin(bob.current * 2) * 0.018 * pace + Math.sin(runtime.now * 1.3) * 0.004;
       tmp.current.set(p.x + Math.cos(bob.current) * 0.012 * pace * Math.cos(yaw), p.y + EYE + bobY, p.z - Math.cos(bob.current) * 0.012 * pace * Math.sin(yaw));
-      if (!s.intro) camera.position.lerp(tmp.current, 1 - Math.exp(-dt * 30));
+      if (!s.intro && s.phase === "playing") camera.position.lerp(tmp.current, 1 - Math.exp(-dt * 30));
     }
-    if (s.intro) return; // the Director flies the camera during the arrival
+    if (s.intro || s.phase !== "playing") return; // the Director flies the camera on the invitation and the arrival
     // Lean slightly into turns and sideways steps, like a handheld film camera.
     const turnSpeed = (cam.yaw - prevYaw) / Math.max(dt, 1e-3);
     const strafe = s.seatedChairId ? 0 : s.move.x;

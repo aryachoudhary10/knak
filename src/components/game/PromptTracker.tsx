@@ -18,6 +18,9 @@ export default function PromptTracker() {
   const v = useMemo(() => new THREE.Vector3(), []);
   const head = useMemo(() => new THREE.Vector3(), []);
   useFrame(({ camera, size }) => {
+    // The camera was moved this frame but its matrices are only refreshed at render time; refresh them now, or
+    // the labels trail a frame behind and seem to float as you turn.
+    camera.updateMatrixWorld();
     // The spoken line rides above the speaker's head, kept on screen, and fades out if they are behind you or far off.
     const speech = runtime.speechEl;
     const who = useGame.getState().subtitle?.who;

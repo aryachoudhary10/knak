@@ -86,8 +86,23 @@ export default function Director() {
     runtime.now = clock.elapsedTime;
     const s = useGame.getState();
 
+    // Behind the invitation: a slow, steady drift across the street in front of KNAK, as if waiting to cross.
+    if (s.phase === "welcome") {
+      const t = clock.elapsedTime;
+      camera.position.set(-0.8 + Math.sin(t * 0.06) * 1.6, 1.62 + Math.sin(t * 0.11) * 0.04, 21 + Math.cos(t * 0.045) * 0.9);
+      look.set(Math.sin(t * 0.05) * 0.4, lookFrom.y, 0);
+      camera.lookAt(look);
+      return;
+    }
+
     if (s.phase === "playing" && s.intro) {
-      if (start.current === null) start.current = clock.elapsedTime;
+      if (start.current === null) {
+        start.current = clock.elapsedTime;
+        // Begin the walk from wherever the drift had reached, so the invitation flows straight into the arrival.
+        path.points[0].copy(camera.position);
+        path.updateArcLengths();
+        lookFrom.copy(look);
+      }
       const t = Math.min(1, (clock.elapsedTime - start.current) / INTRO_SECONDS);
       const k = ease(t);
       camera.position.copy(path.getPoint(k));

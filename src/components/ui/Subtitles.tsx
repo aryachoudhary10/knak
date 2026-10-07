@@ -33,12 +33,12 @@ export default function Subtitles() {
           >
             <span className="mt-[-4px] h-[8px] w-[8px] shrink-0 -translate-x-1/2 rounded-full border border-ivory bg-ivory/90 group-data-[flip=1]:translate-x-1/2" />
             <span className="mt-0 h-px w-10 shrink-0 bg-ivory/55 sm:w-14" />
-            <div className="-mt-[10px] flex w-[min(58vw,280px)] flex-col px-4 text-left group-data-[flip=1]:items-end group-data-[flip=1]:text-right sm:w-[320px]">
-              <span className="font-display text-[19px] uppercase leading-none tracking-[0.16em] text-ivory sm:text-[21px]">{sub.speaker}</span>
-              {ROLE[sub.who] && <span className="eyebrow mt-2 text-[9px] text-ivory/70">{ROLE[sub.who]}</span>}
-              <span className="mt-3 h-px w-24 bg-ivory/30" />
+            <div className="-mt-[8px] flex w-[min(56vw,250px)] flex-col px-4 text-left group-data-[flip=1]:items-end group-data-[flip=1]:text-right sm:w-[290px]">
+              <span className="font-display text-[15px] uppercase leading-none tracking-[0.16em] text-ivory sm:text-[17px]">{sub.speaker}</span>
+              {ROLE[sub.who] && <span className="eyebrow mt-1.5 text-[8px] text-ivory/70">{ROLE[sub.who]}</span>}
+              <span className="mt-2.5 h-px w-20 bg-ivory/30" />
               {/* Words appear at roughly speaking pace. */}
-              <p className="mt-3 font-display text-[15px] italic leading-snug text-ivory sm:text-[17px]">
+              <p className="mt-2.5 font-display text-[13px] italic leading-snug text-ivory sm:text-[15px]">
                 <Reveal text={sub.text} stagger={0.12} />
               </p>
             </div>

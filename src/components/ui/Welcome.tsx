@@ -12,10 +12,10 @@ const EASE = [0.22, 1, 0.36, 1] as const;
 const rise = (delay: number) => ({
   initial: { opacity: 0, y: 10 },
   animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.9, delay, ease: EASE },
+  transition: { duration: 1.2, delay, ease: EASE },
 });
 
-/** The invitation: a quiet card of type over KNAK's dining room at the golden hour, not a login screen. */
+/** The invitation: a quiet card of type over the live street in front of KNAK, not a login screen. */
 export default function Welcome() {
   const character = useGame((s) => s.character);
   const reroll = useGame((s) => s.rerollCharacter);
@@ -43,19 +43,23 @@ export default function Welcome() {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0, transition: { duration: 1.4, ease: EASE } }}
       transition={{ duration: 0.8 }}
-      className="absolute inset-0 z-30 flex flex-col overflow-hidden bg-ink px-6 py-6 text-ivory sm:px-14 sm:py-10"
+      className="absolute inset-0 z-30 isolate flex flex-col overflow-hidden px-6 py-6 text-ivory sm:px-14 sm:py-10"
     >
-      {/* The dining room as it looks at its best; on Enter it dissolves into the live room behind it. */}
-      <motion.img
-        src="/opening.webp"
-        alt=""
+      {/* Ink covers the street until every part of KNAK is ready, then lifts slowly to show it live behind the type. */}
+      <motion.div
         aria-hidden
-        initial={{ opacity: 0, scale: 1.04 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ opacity: { duration: 1.6, ease: EASE }, scale: { duration: 14, ease: "linear" } }}
-        className="pointer-events-none absolute inset-0 -z-10 h-full w-full object-cover object-center"
+        initial={{ opacity: 1 }}
+        animate={{ opacity: ready ? 0 : 1 }}
+        transition={{ duration: 3.2, ease: [0.4, 0, 0.2, 1] }}
+        className="pointer-events-none absolute inset-0 -z-10 bg-ink"
       />
-      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-ink/45 sm:bg-transparent sm:bg-[linear-gradient(90deg,rgba(14,11,9,0.88)_0%,rgba(14,11,9,0.6)_38%,rgba(14,11,9,0.15)_75%,rgba(14,11,9,0.05)_100%)]" />
+      <motion.div
+        aria-hidden
+        initial={{ opacity: 0 }}
+        animate={{ opacity: ready ? 1 : 0 }}
+        transition={{ duration: 3.2, ease: [0.4, 0, 0.2, 1] }}
+        className="pointer-events-none absolute inset-0 -z-20 bg-[linear-gradient(0deg,rgba(14,11,9,0.85)_0%,rgba(14,11,9,0.55)_55%,rgba(14,11,9,0.3)_100%)] sm:bg-[linear-gradient(90deg,rgba(14,11,9,0.85)_0%,rgba(14,11,9,0.5)_40%,rgba(14,11,9,0.08)_80%,rgba(14,11,9,0)_100%)]"
+      />
       <header className="flex items-center justify-between">
         <p className="font-display text-[15px] tracking-[0.5em] text-ivory/80">KNAK</p>
         {auth === "signedOut" && (
@@ -75,16 +79,39 @@ export default function Welcome() {
         <motion.p {...rise(0.2)} className="eyebrow text-champagne">
           An invitation
         </motion.p>
-        <motion.h1 {...rise(0.35)} className="mt-6 font-display text-[64px] font-normal leading-none tracking-[0.28em] sm:text-[104px]">
-          KNAK
+        {/* The name settles letter by letter, its spacing drawing in like a breath. */}
+        <motion.h1
+          aria-label="KNAK"
+          initial={{ letterSpacing: "0.62em" }}
+          animate={{ letterSpacing: "0.28em" }}
+          transition={{ duration: 3.4, ease: EASE, delay: 0.3 }}
+          className="mt-6 font-display text-[64px] font-normal leading-none sm:text-[104px]"
+        >
+          {"KNAK".split("").map((ch, i) => (
+            <motion.span
+              key={i}
+              aria-hidden
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1.6, ease: EASE, delay: 0.35 + i * 0.22 }}
+              className="inline-block"
+            >
+              {ch}
+            </motion.span>
+          ))}
         </motion.h1>
-        <motion.p {...rise(0.55)} className="mt-5 font-display text-lg italic text-ivory/75 sm:text-xl">
+        <motion.p {...rise(1.5)} className="mt-5 font-display text-lg italic text-ivory/75 sm:text-xl">
           A grand café of Paris, brought to your door.
         </motion.p>
 
-        <motion.div {...rise(0.75)} className="mt-12 h-px w-12 bg-champagne/60" />
+        <motion.div
+          initial={{ scaleX: 0 }}
+          animate={{ scaleX: 1 }}
+          transition={{ duration: 1.6, ease: EASE, delay: 1.8 }}
+          className="mt-12 h-px w-12 origin-left bg-champagne/60"
+        />
 
-        <motion.div {...rise(0.85)} className="mt-10">
+        <motion.div {...rise(2.1)} className="mt-10">
           <p className="eyebrow text-ivory/50">{known ? "Welcome back" : "This evening’s guest"}</p>
           <div className="mt-4 flex items-center gap-5">
             <Avatar c={character} size={52} />
@@ -97,7 +124,7 @@ export default function Welcome() {
           </div>
         </motion.div>
 
-        <motion.div {...rise(1.05)} className="mt-14">
+        <motion.div {...rise(2.4)} className="mt-14">
           {ready ? (
             <button onClick={go} className="text-action text-[13px] text-ivory">
               Enter KNAK <span className="arrow">→</span>
@@ -113,7 +140,7 @@ export default function Welcome() {
         </motion.div>
       </main>
 
-      <motion.footer {...rise(1.3)} className="eyebrow flex flex-wrap gap-x-8 gap-y-2 text-[10px] text-ivory/45">
+      <motion.footer {...rise(2.7)} className="eyebrow flex flex-wrap gap-x-8 gap-y-2 text-[10px] text-ivory/45">
         {isTouch ? (
           <>
             <span>Left thumb · Walk</span>
