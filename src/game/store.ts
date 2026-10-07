@@ -27,6 +27,9 @@ type GameState = {
   menuOpen: boolean;
   cart: CartLine[];
   isTouch: boolean;
+  /** Every shader in the scene has been compiled, so entering never stutters. */
+  warm: boolean;
+  setWarm: () => void;
   pointerLocked: boolean;
   /** The cinematic glide from the street to the door is playing. */
   intro: boolean;
@@ -69,6 +72,8 @@ export const useGame = create<GameState>((set, get) => ({
   menuOpen: false,
   cart: [],
   isTouch: false,
+  warm: false,
+  setWarm: () => set({ warm: true }),
   pointerLocked: false,
   intro: false,
   subtitle: null,

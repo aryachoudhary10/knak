@@ -9,8 +9,8 @@ import { startAudio } from "@/game/audio";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 const rise = (delay: number) => ({
-  initial: { opacity: 0, y: 10, filter: "blur(6px)" },
-  animate: { opacity: 1, y: 0, filter: "blur(0px)" },
+  initial: { opacity: 0, y: 10 },
+  animate: { opacity: 1, y: 0 },
   transition: { duration: 0.9, delay, ease: EASE },
 });
 
@@ -21,7 +21,8 @@ export default function Welcome() {
   const enter = useGame((s) => s.enter);
   const isTouch = useGame((s) => s.isTouch);
   const { active, progress } = useProgress();
-  const ready = !active || progress >= 100;
+  const warm = useGame((s) => s.warm);
+  const ready = (!active || progress >= 100) && warm;
 
   const go = () => {
     startAudio();
@@ -76,7 +77,7 @@ export default function Welcome() {
             </button>
           ) : (
             <div className="w-56">
-              <p className="eyebrow text-ivory/60">Preparing your table · {Math.round(progress)}%</p>
+              <p className="eyebrow text-ivory/60">Preparing your table · {Math.round(warm ? 100 : Math.min(progress, 96))}%</p>
               <div className="mt-3 h-px w-full bg-ivory/15">
                 <div className="h-px bg-champagne transition-[width] duration-500 ease-out" style={{ width: `${progress}%` }} />
               </div>

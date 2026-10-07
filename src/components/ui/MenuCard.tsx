@@ -8,9 +8,9 @@ import { requestLook } from "@/components/game/Experience";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 const swap = {
-  initial: { opacity: 0, y: 8, filter: "blur(4px)" },
-  animate: { opacity: 1, y: 0, filter: "blur(0px)" },
-  exit: { opacity: 0, y: -4, filter: "blur(3px)" },
+  initial: { opacity: 0, y: 8 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -4 },
   transition: { duration: 0.4, ease: EASE },
 };
 
@@ -92,9 +92,9 @@ function Carte() {
       onClick={done}
     >
       <motion.section
-        initial={{ opacity: 0, y: 24, filter: "blur(6px)" }}
-        animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-        exit={{ opacity: 0, y: 12, filter: "blur(4px)" }}
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 12 }}
         transition={{ duration: 0.5, ease: EASE }}
         onClick={(e) => e.stopPropagation()}
         className="relative flex h-full w-full max-w-[780px] flex-col bg-paper text-ink shadow-[0_24px_60px_rgba(0,0,0,0.35)] sm:h-[min(90vh,880px)]"

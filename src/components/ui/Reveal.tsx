@@ -19,8 +19,8 @@ export function Reveal({ text, per = "word", stagger = 0.06, delay = 0, classNam
             key={i}
             aria-hidden
             className="inline-block whitespace-pre"
-            initial={{ opacity: 0, y: 8, filter: "blur(8px)" }}
-            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45, ease: "easeOut", delay: delay + n++ * stagger }}
           >
             {p}
