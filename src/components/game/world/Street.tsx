@@ -1,12 +1,16 @@
 "use client";
 
-import { Sky } from "@react-three/drei";
+import { useEffect, useMemo } from "react";
+import { Sky, Stars } from "@react-three/drei";
+import { daylight, useIndiaHour } from "@/game/daylight";
+import { streetMaterials } from "./street/materials";
+import type * as THREE from "three";
 import { CuboidCollider, RigidBody } from "@react-three/rapier";
 import { useMats } from "@/game/materials";
 import StreetScene from "./street/StreetScene";
 
 /** The two lamps by the café door, matching the candélabres down the street but casting real light. */
-function StreetLamp({ x, z }: { x: number; z: number }) {
+function StreetLamp({ x, z, lamps }: { x: number; z: number; lamps: number }) {
   const m = useMats();
   return (
     <group position={[x, 0, z]}>
@@ -25,15 +29,36 @@ function StreetLamp({ x, z }: { x: number; z: number }) {
       <mesh position={[0, 4.89, 0]} rotation={[0, Math.PI / 4, 0]} material={m.blackIron}>
         <cylinderGeometry args={[0.06, 0.38, 0.28, 4]} />
       </mesh>
-      <pointLight color="#ffc27a" intensity={10} distance={9} decay={2} position={[0, 4.3, 0]} />
+      <pointLight color="#ffc27a" intensity={10 * lamps} distance={9} decay={2} position={[0, 4.3, 0]} />
     </group>
   );
 }
 
+/** Sky, air and the street's own lights, set by the hour in India. */
+function TimeOfDay({ lamps, d }: { lamps: number; d: ReturnType<typeof daylight> }) {
+  useEffect(() => {
+    const m = streetMaterials();
+    // Neighbours' windows and shop glow fade by day, as lights would be off or lost in the daylight.
+    (m.lit as THREE.MeshBasicMaterial).color.setScalar(0.35 + 0.65 * lamps);
+    (m.glow as THREE.MeshBasicMaterial).opacity = lamps;
+    (m.paint as THREE.MeshStandardMaterial).emissiveIntensity = 0.12 + 0.23 * lamps;
+  }, [lamps]);
+  return (
+    <>
+      <color attach="background" args={[d.air]} />
+      <fog attach="fog" args={[d.fog, 35, 110]} />
+      <Sky distance={4500} sunPosition={d.sunPos} turbidity={d.night ? 9 : 6} rayleigh={d.night ? 2.6 : 1.6} mieCoefficient={0.006} mieDirectionalG={0.85} />
+      {d.night && <Stars radius={300} depth={60} count={1500} factor={4} saturation={0} fade speed={0} />}
+    </>
+  );
+}
+
 export default function Street() {
+  const hour = useIndiaHour();
+  const d = useMemo(() => daylight(hour), [hour]);
   return (
     <group>
-      <Sky distance={4500} sunPosition={[-40, -0.8, -100]} turbidity={9} rayleigh={2.6} mieCoefficient={0.006} mieDirectionalG={0.85} />
+      <TimeOfDay lamps={d.lamps} d={d} />
       {/* Neighbouring buildings, the far side of the road, pavements, trees and street furniture. */}
       <StreetScene />
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.16, 0]}>
@@ -41,8 +66,8 @@ export default function Street() {
         <meshStandardMaterial color="#2c2a27" roughness={1} />
       </mesh>
 
-      <StreetLamp x={-6.8} z={8.4} />
-      <StreetLamp x={6.8} z={8.4} />
+      <StreetLamp x={-6.8} z={8.4} lamps={d.lamps} />
+      <StreetLamp x={6.8} z={8.4} lamps={d.lamps} />
 
       {/* Ground and invisible street boundaries */}
       <RigidBody type="fixed" colliders={false}>

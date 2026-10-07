@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useGame } from "@/game/store";
 import { interact } from "@/components/game/Player";
 import { runtime } from "@/game/runtime";
+import { indiaHour } from "@/game/daylight";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -85,7 +86,7 @@ function moodFor(h: number) {
   return "A quieter evening at KNAK";
 }
 
-/** The guest's own local time, the way a hotel lobby clock reminds you where the evening is. */
+/** KNAK's own time, in India, the way a hotel lobby clock reminds you where the evening is; the light outside follows it. */
 function Hour() {
   const [now, setNow] = useState<Date | null>(null);
   useEffect(() => {
@@ -95,11 +96,12 @@ function Hour() {
     return () => clearInterval(id);
   }, []);
   if (!now) return null;
-  const time = now.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  const h = indiaHour(now);
+  const time = `${((Math.floor(h) + 11) % 12) + 1}:${String(Math.floor((h % 1) * 60)).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`;
   return (
     <div className="absolute bottom-7 left-6 hidden sm:bottom-10 sm:left-11 sm:block">
       <p className="font-sans text-[19px] font-light tracking-[0.18em] text-ivory/90">{time}</p>
-      <p className="eyebrow mt-2 max-w-[11rem] text-[9px] leading-[1.7] text-ivory/60">{moodFor(now.getHours())}</p>
+      <p className="eyebrow mt-2 max-w-[11rem] text-[9px] leading-[1.7] text-ivory/60">{moodFor(h)}</p>
     </div>
   );
 }

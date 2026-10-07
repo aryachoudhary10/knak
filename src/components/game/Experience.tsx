@@ -92,8 +92,6 @@ export default function Experience() {
             }}
             onIncline={() => setDpr((d) => Math.min(window.devicePixelRatio, isTouch ? 2 : 1.5, d + 0.15))}
           />
-          <color attach="background" args={["#2a2230"]} />
-          <fog attach="fog" args={["#3a2c33", 35, 110]} />
           <Lighting />
           <Suspense fallback={null}>
             <Physics gravity={[0, -9.81, 0]} timeStep="vary">
