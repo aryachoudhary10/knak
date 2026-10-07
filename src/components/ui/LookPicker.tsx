@@ -43,7 +43,7 @@ export default function LookPicker() {
                   className={`relative aspect-[3/4] cursor-pointer overflow-hidden border transition-all duration-500 ${look === i ? "border-champagne" : "border-ivory/15 opacity-70 hover:opacity-100"}`}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={portrait(i)} alt="" className="h-full w-full object-cover" />
+                  <img src={portrait(i)} alt="" className="h-full w-full origin-[50%_12%] scale-[1.4] object-cover" />
                   {look === i && <span className="absolute inset-x-0 bottom-0 h-[3px] bg-champagne" />}
                 </button>
               ))}
