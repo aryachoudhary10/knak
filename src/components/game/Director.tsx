@@ -6,15 +6,28 @@ import * as THREE from "three";
 import { useGame } from "@/game/store";
 import { runtime } from "@/game/runtime";
 import { setInsideAmount, setMuted, speak } from "@/game/audio";
+import { useAuth } from "@/game/auth";
+import { currentHour } from "@/game/clock";
 
 const INTRO_SECONDS = 8.5;
-const HOST_LINE =
-  "Bonsoir, and welcome to KNAK! I'm Amélie. Please, take any table you like, or see Louis at the counter whenever you're ready to order.";
-const CASHIER_LINE = "Bonsoir! Here is our carte. Everything is cooked fresh and sent out hot for delivery. Take your time.";
+/** Bonjour until five in the afternoon (restaurant time), Bonsoir after. */
+const salut = () => {
+  const h = currentHour();
+  return h >= 5 && h < 17 ? "Bonjour" : "Bonsoir";
+};
+
+/** Amélie greets a signed-in guest by the first name in their profile, anyone else warmly but generically. */
+function hostLine() {
+  const first = useAuth.getState().profile?.name.trim().split(/\s+/)[0];
+  const rest = "I'm Amélie. Please, take any table you like, or see Louis at the counter whenever you're ready to order.";
+  return first ? `${salut()}, ${first}! Welcome to KNAK. ${rest}` : `${salut()}, and welcome to KNAK! ${rest}`;
+}
+const cashierLine = () => `${salut()}! Here is our carte. Everything is cooked fresh and sent out hot for delivery. Take your time.`;
 
 /** Amélie's welcome: she waves, speaks and the line appears above her head. Also what "Speak" replays. */
 export function greetGuest() {
   runtime.greetAt = runtime.now;
+  const HOST_LINE = hostLine();
   const ms = speak(HOST_LINE, { prefer: "female", pitch: 1.1 });
   useGame.getState().say("host", "Amélie", HOST_LINE, ms);
 }
@@ -60,8 +73,9 @@ export default function Director() {
       useGame.subscribe((s, prev) => {
         if (s.menuOpen && !prev.menuOpen && runtime.cashierAt < 0) {
           runtime.cashierAt = runtime.now;
-          const ms = speak(CASHIER_LINE, { prefer: "male", pitch: 0.95 });
-          s.say("cashier", "Louis", CASHIER_LINE, ms);
+          const line = cashierLine();
+          const ms = speak(line, { prefer: "male", pitch: 0.95 });
+          s.say("cashier", "Louis", line, ms);
         }
         if (s.soundOn !== prev.soundOn) setMuted(!s.soundOn);
       }),

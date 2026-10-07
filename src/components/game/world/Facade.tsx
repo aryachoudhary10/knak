@@ -7,7 +7,6 @@ import * as THREE from "three";
 import { useMats } from "@/game/materials";
 import { signTexture } from "@/game/textures";
 import { DOOR, FACADE } from "@/game/layout";
-import { runtime } from "@/game/runtime";
 import { doorChime } from "@/game/audio";
 
 const H = FACADE.height;
@@ -183,13 +182,20 @@ function DoorLeaf({ side }: { side: -1 | 1 }) {
   const open = useRef(0);
   const w = DOOR.halfWidth;
   const h = DOOR.height;
-  useFrame((_, dt) => {
-    const p = runtime.playerPos;
-    const near = Math.hypot(p.x, p.z + 0.2) < 4.2;
+  useFrame(({ camera }, dt) => {
+    // The doors are opened for you as you step onto the red carpet (the arrival shot included) and stay open
+    // until you have walked well away, so they never flap. They move at a steady, slow pace with soft starts
+    // and stops, the left leaf a beat ahead of the right, like a doorman opening one and then the other.
+    const p = camera.position;
+    const d = Math.hypot(p.x, p.z + 0.2);
+    const want = d < 8.5 ? 1 : d > 11 ? 0 : open.current >= 0.5 ? 1 : 0;
     const before = open.current;
-    open.current = THREE.MathUtils.damp(open.current, near ? 1 : 0, 3.2, dt);
-    if (side < 0 && before < 0.05 && open.current >= 0.05) doorChime();
-    if (ref.current) ref.current.rotation.y = -side * open.current * 1.45;
+    const rate = want ? 1 / 2.2 : 1 / 2.6;
+    open.current = THREE.MathUtils.clamp(open.current + Math.sign(want - open.current) * rate * Math.min(dt, 0.1), 0, 1);
+    if (side < 0 && before === 0 && open.current > 0) doorChime();
+    const k = THREE.MathUtils.clamp(side < 0 ? open.current * 1.12 : open.current * 1.12 - 0.12, 0, 1);
+    const eased = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+    if (ref.current) ref.current.rotation.y = -side * eased * 1.42;
   });
   // side = -1 is the left leaf hinged at x = -w, extending toward +x.
   const dir = -side;
