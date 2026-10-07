@@ -1,5 +1,6 @@
 "use client";
 
+import { lightGroups } from "@/game/atmosphere";
 import { useLayoutEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
@@ -54,7 +55,7 @@ export default function Chandelier({ position, ceiling, light = true }: { positi
   useFrame(({ clock }) => {
     if (lamp.current) {
       const t = clock.elapsedTime + seed;
-      lamp.current.intensity = 26 + Math.sin(t * 7.3) * 0.8 + Math.sin(t * 3.1) * 0.6;
+      lamp.current.intensity = (26 + Math.sin(t * 7.3) * 0.8 + Math.sin(t * 3.1) * 0.6) * lightGroups.levels.chandeliers;
     }
   });
 
@@ -91,7 +92,7 @@ export default function Chandelier({ position, ceiling, light = true }: { positi
             <mesh position={[0, 0.09, 0]} material={m.porcelain}>
               <cylinderGeometry args={[0.016, 0.016, 0.12, 10]} />
             </mesh>
-            <mesh position={[0, 0.17, 0]} material={m.bulb} scale={[1, 1.5, 1]}>
+            <mesh position={[0, 0.17, 0]} material={m.chandelierBulb} scale={[1, 1.5, 1]}>
               <sphereGeometry args={[0.018, 10, 8]} />
             </mesh>
           </group>

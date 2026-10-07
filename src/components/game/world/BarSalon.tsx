@@ -1,5 +1,7 @@
 "use client";
 
+import GroupLight from "../GroupLight";
+import { barGlow } from "@/game/atmosphere";
 import { useMemo } from "react";
 import { CuboidCollider, RigidBody } from "@react-three/rapier";
 import * as THREE from "three";
@@ -76,7 +78,7 @@ function IslandBar() {
       {/* bottle tower: three lit tiers ringed in brass, rising to a canopy */}
       <mesh position={[0, 2.2, 0]}>
         <cylinderGeometry args={[0.55, 0.55, 2.2, 24, 1, true]} />
-        <meshStandardMaterial map={bottles} emissive="#ffffff" emissiveMap={bottles} emissiveIntensity={0.7} roughness={0.4} side={THREE.DoubleSide} />
+        <meshStandardMaterial ref={barGlow} map={bottles} emissive="#ffffff" emissiveMap={bottles} emissiveIntensity={0.7} roughness={0.4} side={THREE.DoubleSide} />
       </mesh>
       {[1.1, 1.85, 2.6, 3.3].map((y) => (
         <mesh key={y} position={[0, y, 0]} rotation={[Math.PI / 2, 0, 0]} material={m.brass}>
@@ -367,7 +369,7 @@ function Walls() {
               <boxGeometry args={[0.09, BAR_ARCH.spring, 0.05]} />
             </mesh>
           ))}
-          <mesh position={[x, BAR_ARCH.spring + BAR_ARCH.halfWidth + 0.35, Z0 - 0.12]} material={m.lampShade}>
+          <mesh position={[x, BAR_ARCH.spring + BAR_ARCH.halfWidth + 0.35, Z0 - 0.12]} material={m.barShade}>
             <sphereGeometry args={[0.13, 14, 10]} />
           </mesh>
         </group>
@@ -393,7 +395,7 @@ function Walls() {
         .filter((_, i) => i % 3 === 1)
         .map((f, i) => (
           <group key={`s${i}`} position={[f.x, F + 2.3, f.z]} rotation={[0, f.ry, 0]}>
-            <mesh position={[0, 0, 0.06]} material={m.lampShade}>
+            <mesh position={[0, 0, 0.06]} material={m.sconceShade}>
               <cylinderGeometry args={[0.16, 0.16, 0.12, 16, 1, true, -Math.PI / 2, Math.PI]} />
             </mesh>
             <mesh position={[0, -0.07, 0.06]} material={m.brass}>
@@ -585,7 +587,7 @@ export default function BarSalon() {
       <Fireplace x={-3} />
       <GrandPiano x={7.05} z={-27.1} />
       <SalonColliders />
-      <pointLight color="#ffc98a" intensity={9} distance={10} decay={1.8} position={[ISLAND.x, CEIL - 1.3, ISLAND.z]} />
+      <GroupLight group="bar" color="#ffc98a" intensity={9} distance={10} decay={1.8} position={[ISLAND.x, CEIL - 1.3, ISLAND.z]} />
     </group>
   );
 }

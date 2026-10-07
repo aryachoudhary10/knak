@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { useGame } from "@/game/store";
 import { interact } from "@/components/game/Player";
 import { runtime } from "@/game/runtime";
-import { indiaHour } from "@/game/daylight";
+import { formatHour, useRestaurantHour } from "@/game/clock";
+import { moodFor } from "@/game/atmosphere";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -78,30 +78,18 @@ function SoundToggle() {
   );
 }
 
-function moodFor(h: number) {
-  if (h < 5 || h >= 22) return "A late evening at KNAK";
-  if (h < 11) return "A slow morning at KNAK";
-  if (h < 16) return "An unhurried afternoon at KNAK";
-  if (h < 19) return "The golden hour at KNAK";
-  return "A quieter evening at KNAK";
-}
-
-/** KNAK's own time, in India, the way a hotel lobby clock reminds you where the evening is; the light outside follows it. */
+/** KNAK's own time, the way a hotel lobby clock reminds you where the evening is; the light outside follows it. */
 function Hour() {
-  const [now, setNow] = useState<Date | null>(null);
-  useEffect(() => {
-    const tick = () => setNow(new Date());
-    tick();
-    const id = setInterval(tick, 20_000);
-    return () => clearInterval(id);
-  }, []);
-  if (!now) return null;
-  const h = indiaHour(now);
-  const time = `${((Math.floor(h) + 11) % 12) + 1}:${String(Math.floor((h % 1) * 60)).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`;
+  const h = useRestaurantHour();
+  if (h === null) return null;
   return (
     <div className="absolute bottom-7 left-6 hidden sm:bottom-10 sm:left-11 sm:block">
-      <p className="font-sans text-[19px] font-light tracking-[0.18em] text-ivory/90">{time}</p>
-      <p className="eyebrow mt-2 max-w-[11rem] text-[9px] leading-[1.7] text-ivory/60">{moodFor(h)}</p>
+      <p className="font-sans text-[19px] font-light tracking-[0.18em] text-ivory/90">{formatHour(h)}</p>
+      <p className="eyebrow mt-2 max-w-[11rem] text-[9px] leading-[1.7] text-ivory/60">
+        {moodFor(h)}
+        <br />
+        at KNAK
+      </p>
     </div>
   );
 }

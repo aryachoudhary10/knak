@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { CuboidCollider, CylinderCollider, RigidBody } from "@react-three/rapier";
 import * as THREE from "three";
+import { windowGlass } from "@/game/glass";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { useMats } from "@/game/materials";
 import { luxuryMats } from "@/game/luxury";
@@ -126,7 +127,6 @@ function BarArch({ x }: { x: number }) {
 }
 
 /** Clear glass with slim walnut glazing bars; through it, the real garden and street. */
-const windowGlass = new THREE.MeshPhysicalMaterial({ color: "#c9d4dc", transparent: true, opacity: 0.1, roughness: 0.05, metalness: 0, depthWrite: false });
 
 function TallWindow({ side, z, win }: { side: "left" | "right"; z: number; win: WindowSet }) {
   const m = useMats();
@@ -186,9 +186,8 @@ function Sconce({ side, z }: { side: "left" | "right"; z: number }) {
           <mesh position={[0, 0.07, 0]} material={m.bulb} scale={[1, 1.5, 1]}>
             <sphereGeometry args={[0.016, 8, 8]} />
           </mesh>
-          <mesh position={[0, 0.11, 0]}>
+          <mesh position={[0, 0.11, 0]} material={m.sconceShade}>
             <cylinderGeometry args={[0.04, 0.07, 0.09, 16, 1, true]} />
-            <meshStandardMaterial color="#f5e2bd" emissive="#ffcf8a" emissiveIntensity={1.6} side={THREE.DoubleSide} toneMapped={false} />
           </mesh>
         </group>
       ))}

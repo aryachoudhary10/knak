@@ -53,6 +53,12 @@ function build() {
     flame: std({ color: "#fff3d0", emissive: "#ffcf80", emissiveIntensity: 6, toneMapped: false }),
     lampShade: std({ color: "#f3dcb4", emissive: "#ffbf72", emissiveIntensity: 1.35, roughness: 0.9, side: THREE.DoubleSide, toneMapped: false }),
     bulb: std({ color: "#fff6e0", emissive: "#ffd9a0", emissiveIntensity: 4, toneMapped: false }),
+    // The same glows split by light group, so each can follow its own curve through the day (see game/atmosphere.ts).
+    chandelierBulb: std({ color: "#fff6e0", emissive: "#ffd9a0", emissiveIntensity: 4, toneMapped: false }),
+    sconceShade: std({ color: "#f5e2bd", emissive: "#ffcf8a", emissiveIntensity: 1.6, roughness: 0.9, side: THREE.DoubleSide, toneMapped: false }),
+    barShade: std({ color: "#f3dcb4", emissive: "#ffbf72", emissiveIntensity: 1.35, roughness: 0.9, side: THREE.DoubleSide, toneMapped: false }),
+    lanternShade: std({ color: "#f3dcb4", emissive: "#ffbf72", emissiveIntensity: 1.35, roughness: 0.9, side: THREE.DoubleSide, toneMapped: false }),
+    lanternFlame: std({ color: "#fff3d0", emissive: "#ffcf80", emissiveIntensity: 6, toneMapped: false }),
     crystal: hq
       ? phys({ color: "#ffffff", transmission: 0.9, roughness: 0, ior: 2.0, thickness: 0.02, metalness: 0, envMapIntensity: 2.5, transparent: true })
       : std({ color: "#fff6e0", emissive: "#ffd9a0", emissiveIntensity: 0.6, transparent: true, opacity: 0.7, roughness: 0.05 }),

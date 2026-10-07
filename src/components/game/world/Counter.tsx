@@ -1,5 +1,7 @@
 "use client";
 
+import GroupLight from "../GroupLight";
+import { barGlow } from "@/game/atmosphere";
 import { useMemo } from "react";
 import { CuboidCollider, RigidBody } from "@react-three/rapier";
 import { useMats } from "@/game/materials";
@@ -129,7 +131,7 @@ export default function Counter() {
       {/* backlit bottle wall with gilt frame */}
       <mesh position={[0, 2.6, ROOM.minZ + 0.03]}>
         <planeGeometry args={[8.4, 2.6]} />
-        <meshStandardMaterial map={bottles} emissive="#ffffff" emissiveMap={bottles} emissiveIntensity={0.55} roughness={0.4} />
+        <meshStandardMaterial ref={barGlow} map={bottles} emissive="#ffffff" emissiveMap={bottles} emissiveIntensity={0.55} roughness={0.4} />
       </mesh>
       <mesh position={[0, 3.95, ROOM.minZ + 0.06]} material={m.gilt}>
         <boxGeometry args={[8.7, 0.12, 0.08]} />
@@ -146,7 +148,7 @@ export default function Counter() {
         <planeGeometry args={[2.6, 0.65]} />
         <meshStandardMaterial map={sign} transparent emissive="#7a5418" emissiveMap={sign} emissiveIntensity={0.9} metalness={0.6} roughness={0.35} />
       </mesh>
-      <pointLight color="#ffcf91" intensity={10} distance={7} decay={2} position={[0, 2.4, ROOM.minZ + 1.6]} />
+      <GroupLight group="bar" color="#ffcf91" intensity={10} distance={7} decay={2} position={[0, 2.4, ROOM.minZ + 1.6]} />
     </group>
   );
 }

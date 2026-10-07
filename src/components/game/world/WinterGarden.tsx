@@ -1,8 +1,10 @@
 "use client";
 
+import GroupLight from "../GroupLight";
 import { useMemo } from "react";
 import { CuboidCollider, CylinderCollider, RigidBody } from "@react-three/rapier";
 import * as THREE from "three";
+import { gardenGlass } from "@/game/glass";
 import { useMats } from "@/game/materials";
 import { luxuryMats } from "@/game/luxury";
 import { WINTER } from "@/game/layout";
@@ -16,8 +18,7 @@ const MZ = (Z0 + Z1) / 2;
 const PLINTH = F + 0.55;
 const BAY = 1.275;
 
-/** Clear glass with just a trace of green, as old conservatory glass has. */
-const glass = new THREE.MeshPhysicalMaterial({ color: "#dfe8dc", transparent: true, opacity: 0.12, roughness: 0.04, depthWrite: false, side: THREE.DoubleSide });
+const glass = gardenGlass;
 /** Painted cast iron: the conservatory's slender frame, in a deep green-black. */
 const iron = new THREE.MeshStandardMaterial({ color: "#1f2a24", roughness: 0.45, metalness: 0.5 });
 const water = new THREE.MeshPhysicalMaterial({ color: "#3d5a5a", roughness: 0.05, metalness: 0.1, clearcoat: 1, transparent: true, opacity: 0.85 });
@@ -235,7 +236,7 @@ function Lanterns() {
           <mesh position={[0, 0.3, 0]} material={iron}>
             <cylinderGeometry args={[0.006, 0.006, 0.6, 4]} />
           </mesh>
-          <mesh material={m.lampShade}>
+          <mesh material={m.lanternShade}>
             <sphereGeometry args={[0.08, 12, 10]} />
           </mesh>
         </group>
@@ -292,7 +293,7 @@ export default function WinterGarden() {
           </group>
         </group>
       ))}
-      <pointLight color="#ffd7a0" intensity={4} distance={8} decay={2} position={[MX, EAVES - 0.4, MZ]} />
+      <GroupLight group="exterior" color="#ffd7a0" intensity={4} distance={8} decay={2} position={[MX, EAVES - 0.4, MZ]} />
 
       <RigidBody type="fixed" colliders={false}>
         <CuboidCollider args={[W / 2, F / 2, D / 2]} position={[MX, F / 2, MZ]} />

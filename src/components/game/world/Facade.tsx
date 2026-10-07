@@ -134,7 +134,7 @@ function Lantern({ x, y }: { x: number; y: number }) {
           <coneGeometry args={[0.05, 0.12, 4]} />
         </mesh>
         {/* candle bulb */}
-        <mesh position={[0, -0.02, 0]} material={m.flame}>
+        <mesh position={[0, -0.02, 0]} material={m.lanternFlame}>
           <sphereGeometry args={[0.035, 10, 8]} />
         </mesh>
       </group>

@@ -25,11 +25,13 @@ import IntroOverlay from "@/components/ui/IntroOverlay";
 import Subtitles from "@/components/ui/Subtitles";
 import { isHighQuality } from "@/game/quality";
 import Hud from "@/components/ui/Hud";
+import TimeDebug from "@/components/ui/TimeDebug";
 import Welcome from "@/components/ui/Welcome";
 import MenuCard from "@/components/ui/MenuCard";
 import TouchControls from "@/components/ui/TouchControls";
 import { useGame } from "@/game/store";
 import { runtime } from "@/game/runtime";
+import { useClock } from "@/game/clock";
 
 function usePointerLook() {
   useEffect(() => {
@@ -70,7 +72,7 @@ export default function Experience() {
   useEffect(() => {
     useGame.getState().setTouch(window.matchMedia("(pointer: coarse)").matches);
     // Handy for debugging and automated screenshots in development.
-    if (process.env.NODE_ENV !== "production") Object.assign(window, { __knak: useGame, __runtime: runtime });
+    if (process.env.NODE_ENV !== "production") Object.assign(window, { __knak: useGame, __runtime: runtime, __clock: useClock });
   }, []);
 
   return (
@@ -118,6 +120,7 @@ export default function Experience() {
         </Canvas>
         {phase === "playing" && intro && <IntroOverlay />}
         {phase === "playing" && !intro && <Hud />}
+        {phase === "playing" && <TimeDebug />}
         <Subtitles />
         {phase === "playing" && !intro && isTouch && <TouchControls />}
         <MenuCard />
