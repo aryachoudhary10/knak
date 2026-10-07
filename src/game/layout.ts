@@ -11,6 +11,13 @@ export const RIGHT_WINDOWS = { z: [-3.15, -6.6, -10.05, -13.45], halfWidth: 0.95
 export const LEFT_WALL = { inner: -8.0, outer: -10.4, back: -20.6, height: 8.2 } as const;
 export const SIDE_WALL = LEFT_WALL;
 export type WindowSet = { z: readonly number[]; halfWidth: number; sill: number; spring: number };
+/**
+ * The bar salon behind the dining room: through an arch in the back wall, across a short vestibule, up three
+ * marble steps to a raised floor with an oval island bar, a lounge, a fireplace and a grand piano.
+ */
+export const SALON = { x0: -10, x1: 10, z0: -20.4, z1: -31, stepFrom: -21.4, stepTo: -22.6, floor: 0.5, height: 5.6 } as const;
+export const BAR_ARCH = { x: -6.2, halfWidth: 1.0, spring: 3.0 } as const;
+export const ISLAND = { x: 0.8, z: -26.6, rx: 2.8, rz: 1.5, height: 1.1 } as const;
 export const FACADE = { halfWidth: 10, height: 8.2, thickness: 0.4 } as const;
 /** Capsule centre resting on the pavement (half height 0.55 + radius 0.3), so the visitor never drops in. */
 export const SPAWN = { x: 0, y: 0.86, z: 7.5 } as const;
@@ -65,6 +72,10 @@ export type Npc = {
   z: number;
   rot: number;
   pose: "sit" | "stand";
+  /** floor height under them, for the raised bar salon */
+  y?: number;
+  /** seated away from a dining table (lounge sofa, piano bench), so they don't lean toward one */
+  lounge?: boolean;
   role?: string;
   label?: string;
 };
@@ -86,7 +97,24 @@ function buildGuests(): Npc[] {
   return guests;
 }
 
-export const GUESTS = buildGuests();
+/** Evening company in the bar salon: two at the bar, three in the lounge, and the pianist. */
+function salonGuests(): Npc[] {
+  const rnd = seeded(31);
+  const f = SALON.floor;
+  const at = (id: string, x: number, z: number, rot: number, pose: "sit" | "stand"): Npc => ({
+    id, character: randomCharacter(rnd), x, z, rot, pose, y: f, lounge: pose === "sit",
+  });
+  return [
+    at("s-bar0", ISLAND.x - 1.2, ISLAND.z + ISLAND.rz + 0.55, Math.PI + 0.2, "stand"),
+    at("s-bar1", ISLAND.x - 0.55, ISLAND.z + ISLAND.rz + 0.6, Math.PI - 0.3, "stand"),
+    at("s-lounge0", -9.3, -25.2, Math.PI / 2, "sit"),
+    at("s-lounge1", -9.3, -26.4, Math.PI / 2, "sit"),
+    at("s-lounge2", -9.3, -28.6, Math.PI / 2, "sit"),
+    at("s-piano", 6.5, -27.1, Math.PI / 2, "sit"),
+  ];
+}
+
+export const GUESTS = [...buildGuests(), ...salonGuests()];
 export const OCCUPIED_CHAIRS = new Set(GUESTS.map((g) => g.id.replace(/^g-/, "")));
 
 export const STAFF: Npc[] = [
@@ -104,6 +132,11 @@ export const STAFF: Npc[] = [
     id: "barista",
     character: { name: "Nisha", skin: "#a86d45", hair: "#1d1410", hairStyle: "long", top: "#efe8d8", bottom: "#1c1c1f" },
     x: -2.4, z: COUNTER.z - 1.0, rot: 0.3, pose: "stand", role: "Barista", label: "Nisha · Barista",
+  },
+  {
+    id: "bartender",
+    character: { name: "Hugo", skin: "#d2a07a", hair: "#2a1a10", hairStyle: "short", top: "#1c1c1f", bottom: "#1c1c1f" },
+    x: ISLAND.x - 1.0, z: ISLAND.z + 0.5, rot: 0, pose: "stand", y: SALON.floor, role: "Bar", label: "Hugo · Bar",
   },
 ];
 

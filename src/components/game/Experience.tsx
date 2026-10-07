@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { MotionConfig } from "motion/react";
 import Warmup from "./Warmup";
+import BarSalon from "./world/BarSalon";
 import { PerformanceMonitor } from "@react-three/drei";
 import { Physics } from "@react-three/rapier";
 import * as THREE from "three";
@@ -101,6 +102,7 @@ export default function Experience() {
               <Interior />
               <Furniture />
               <Counter />
+              <BarSalon />
               <People />
               <Player />
             </Physics>

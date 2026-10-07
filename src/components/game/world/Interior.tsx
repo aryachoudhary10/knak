@@ -6,9 +6,9 @@ import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { useMats } from "@/game/materials";
 import { luxuryMats } from "@/game/luxury";
-import { sideWallGeometry } from "@/game/wall";
+import { backWallGeometry, sideWallGeometry } from "@/game/wall";
 import { curtainGeo } from "@/game/geometry";
-import { DOOR, RIGHT_WINDOWS, ROOM, WINDOWS, type WindowSet } from "@/game/layout";
+import { BAR_ARCH, DOOR, RIGHT_WINDOWS, ROOM, WINDOWS, type WindowSet } from "@/game/layout";
 import Chandelier from "./Chandelier";
 import Ceiling from "./Ceiling";
 
@@ -88,6 +88,40 @@ function Mirror({ side, z, width, height, y }: { side: "left" | "right"; z: numb
         <sphereGeometry args={[0.1, 16, 10]} />
       </mesh>
     </OnWall>
+  );
+}
+
+/** The way through to the bar salon: a gilt-moulded arch with velvet portières tied back, and a brass plaque. */
+function BarArch() {
+  const m = useMats();
+  const { x, halfWidth: w, spring } = BAR_ARCH;
+  return (
+    <group position={[x, 0, ROOM.minZ + 0.02]}>
+      {[-1, 1].map((s) => (
+        <mesh key={s} position={[s * (w + 0.06), spring / 2, 0.02]} material={m.gilt}>
+          <boxGeometry args={[0.1, spring, 0.06]} />
+        </mesh>
+      ))}
+      <mesh position={[0, spring, 0.02]} material={m.gilt}>
+        <torusGeometry args={[w + 0.06, 0.05, 8, 32, Math.PI]} />
+      </mesh>
+      {/* the soffit of the opening, so the arch reads as cut through a thick wall */}
+      <mesh position={[0, spring, -0.2]} rotation={[Math.PI / 2, 0, 0]} material={m.plaster}>
+        <cylinderGeometry args={[w, w, 0.4, 24, 1, true, -Math.PI / 2, Math.PI]} />
+      </mesh>
+      {[-1, 1].map((s) => (
+        <mesh key={`j${s}`} position={[s * w, spring / 2, -0.2]} rotation={[0, (s * Math.PI) / 2, 0]} material={m.plaster}>
+          <planeGeometry args={[0.4, spring]} />
+        </mesh>
+      ))}
+      {/* velvet portières gathered to each side */}
+      {[-1, 1].map((s) => (
+        <mesh key={`c${s}`} position={[s * (w - 0.12), spring / 2 + 0.3, 0.12]} geometry={curtainGeo(0.34, spring + 0.6)} material={m.burgundy} />
+      ))}
+      <mesh position={[0, spring + w + 0.42, 0.04]} material={m.brass}>
+        <boxGeometry args={[0.9, 0.22, 0.02]} />
+      </mesh>
+    </group>
   );
 }
 
@@ -305,9 +339,7 @@ export default function Interior() {
       {/* walls */}
       <mesh geometry={sideWallGeometry("left")} material={m.plaster} />
       <mesh geometry={sideWallGeometry("right")} material={m.plaster} />
-      <mesh position={[0, H / 2, ROOM.minZ - 0.1]} material={m.plaster}>
-        <boxGeometry args={[W, H, 0.2]} />
-      </mesh>
+      <mesh geometry={backWallGeometry(H)} material={m.plaster} />
       {/* dark panelled wainscot with gilt chair rail */}
       {(["left", "right"] as const).map((side) => (
         <group key={side}>
@@ -326,9 +358,16 @@ export default function Interior() {
           </OnWall>
         </group>
       ))}
-      <mesh position={[0, 0.5, ROOM.minZ + 0.03]} material={m.darkWood}>
-        <boxGeometry args={[W, 1.0, 0.06]} />
-      </mesh>
+      {/* back wainscot, broken by the arch to the bar */}
+      {[
+        [ROOM.minX, BAR_ARCH.x - BAR_ARCH.halfWidth - 0.25],
+        [BAR_ARCH.x + BAR_ARCH.halfWidth + 0.25, ROOM.maxX],
+      ].map(([a, b]) => (
+        <mesh key={a} position={[(a + b) / 2, 0.5, ROOM.minZ + 0.03]} material={m.darkWood}>
+          <boxGeometry args={[b - a, 1.0, 0.06]} />
+        </mesh>
+      ))}
+      <BarArch />
       {[-1, 1].map((s) => (
         <mesh key={s} position={[s * (DOOR.halfWidth + 0.2 + (W / 2 - DOOR.halfWidth - 0.2) / 2), 0.5, ROOM.maxZ - 0.43]} material={m.darkWood}>
           <boxGeometry args={[W / 2 - DOOR.halfWidth - 0.2, 1.0, 0.06]} />
@@ -338,7 +377,10 @@ export default function Interior() {
       <RigidBody type="fixed" colliders={false}>
         <CuboidCollider args={[0.2, H / 2, D / 2]} position={[ROOM.minX - 0.2, H / 2, CZ]} />
         <CuboidCollider args={[0.2, H / 2, D / 2]} position={[ROOM.maxX + 0.2, H / 2, CZ]} />
-        <CuboidCollider args={[W / 2, H / 2, 0.2]} position={[0, H / 2, ROOM.minZ - 0.2]} />
+        {/* back wall either side of the arch, and above it */}
+        <CuboidCollider args={[(BAR_ARCH.x - BAR_ARCH.halfWidth - ROOM.minX) / 2, H / 2, 0.2]} position={[(ROOM.minX + BAR_ARCH.x - BAR_ARCH.halfWidth) / 2, H / 2, ROOM.minZ - 0.2]} />
+        <CuboidCollider args={[(ROOM.maxX - BAR_ARCH.x - BAR_ARCH.halfWidth) / 2, H / 2, 0.2]} position={[(ROOM.maxX + BAR_ARCH.x + BAR_ARCH.halfWidth) / 2, H / 2, ROOM.minZ - 0.2]} />
+        <CuboidCollider args={[BAR_ARCH.halfWidth, (H - 4.0) / 2, 0.2]} position={[BAR_ARCH.x, (H + 4.0) / 2, ROOM.minZ - 0.2]} />
       </RigidBody>
 
       {sideWallFeatures.left.map((z) => (
@@ -365,7 +407,7 @@ export default function Interior() {
 
       <Banquette />
 
-      {[[-7.3, -1.0], [7.3, -0.95], [-4.6, -15.3], [4.6, -15.3], [-7.3, -18.9], [7.3, -18.9]].map(([x, z]) => (
+      {[[-7.3, -1.0], [7.3, -0.95], [-4.6, -15.3], [4.6, -15.3], [-7.4, -17.4], [7.3, -18.9]].map(([x, z]) => (
         <OliveTree key={`${x}${z}`} x={x} z={z} s={x * x > 30 ? 1.1 : 0.9} />
       ))}
 

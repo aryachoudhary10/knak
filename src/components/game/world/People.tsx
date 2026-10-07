@@ -9,7 +9,7 @@ import { GUEST_AVATARS, Human, WALK_SPEED, preloadPeople, type AvatarId, type Cl
 
 preloadPeople();
 
-const STAFF_AVATAR: Record<string, AvatarId> = { host: "hostess_amelie", cashier: "cashier_louis", barista: "barista_nisha" };
+const STAFF_AVATAR: Record<string, AvatarId> = { host: "hostess_amelie", cashier: "cashier_louis", barista: "barista_nisha", bartender: "guest_m2" };
 
 /** Staff turn to face you when you come near; Amélie waves and talks while greeting, Louis talks when you order. */
 function StaffNpc({ npc, seed }: { npc: Npc; seed: number }) {
@@ -34,7 +34,7 @@ function StaffNpc({ npc, seed }: { npc: Npc; seed: number }) {
     ref.current.rotation.y = cur + delta * Math.min(1, dt * 3);
   });
   return (
-    <group position={[npc.x, 0, npc.z]}>
+    <group position={[npc.x, npc.y ?? 0, npc.z]}>
       <group ref={ref} rotation={[0, npc.rot, 0]}>
         <Human avatar={STAFF_AVATAR[npc.id] ?? "guest_f1"} pick={pick} seed={seed} />
       </group>
@@ -44,7 +44,7 @@ function StaffNpc({ npc, seed }: { npc: Npc; seed: number }) {
 
 /** Seated guests lean in to the table: their hands should rest just past its near edge. */
 function seatOffset(npc: Npc) {
-  if (npc.pose !== "sit") return { x: npc.x, z: npc.z, y: 0 };
+  if (npc.pose !== "sit" || npc.lounge) return { x: npc.x, z: npc.z, y: npc.y ?? 0 };
   let best = TABLES[0];
   let bestD = Infinity;
   for (const t of TABLES) {

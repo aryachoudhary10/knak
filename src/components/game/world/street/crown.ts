@@ -14,6 +14,9 @@ const LIT_STONE: [number, number, number] = [1.0, 0.86, 0.66];
 const GILT = "#d4ab52";
 const H = 8.2;
 const BACK = -20.6;
+/** The lower rear wing holding the bar salon, and its roof height. */
+const REAR = -31.4;
+const WING = 5.9;
 
 let urnGeo: THREE.BufferGeometry | null = null;
 function urn() {
@@ -56,7 +59,9 @@ export function cafeCrown(b: Batch) {
       b.box("paint", 0.25, 0.12, win.halfWidth * 2 + 0.4, x + s * 0.27, win.sill - 0.06, z, "#e2d6bf");
     }
   }
-  b.box("paint", 20.8, H, 0.4, 0, H / 2, BACK - 0.2, STONE);
+  // The hall's back wall shows only above the bar wing's roof; below it, the wing continues the building.
+  b.box("paint", 20.8, H - WING, 0.4, 0, (H + WING) / 2, BACK - 0.2, STONE);
+  barWing(b);
 
   // roof slab hiding the interior, and the parapet crown
   b.box("paint", 20.2, 0.3, -BACK, 0, H + 0.05, BACK / 2, "#cfc3aa");
@@ -85,6 +90,26 @@ export function cafeCrown(b: Batch) {
   }
   b.plane("rail", 18, 0.45, 0, H + 3.3, -10.3, "#ffffff", { uvScale: [18, 1] });
   for (const x of [-9, 9]) b.box("paint", 0.9, 2.2, 1.6, x, H + 3.2, -10.3, "#c9bda6");
+}
+
+/** The bar salon's wing: lower stone walls with pilaster strips, a cornice and a balustraded flat roof. */
+function barWing(b: Batch) {
+  const len = BACK - REAR;
+  const mid = (BACK + REAR) / 2;
+  for (const s of [-1, 1]) {
+    b.box("paint", 0.4, WING, len, s * 10.2, WING / 2, mid, STONE);
+    b.box("paint", 0.6, 0.5, len, s * 10.3, 0.25, mid, "#e2d6bf");
+    b.box("paint", 0.8, 0.3, len + 0.4, s * 10.3, WING - 0.15, mid, "#e2d6bf");
+    for (let z = BACK - 1.6; z > REAR + 0.5; z -= 2.6) b.box("paint", 0.2, WING - 0.8, 0.6, s * 10.45, (WING - 0.8) / 2 + 0.5, z, STONE);
+  }
+  b.box("paint", 20.8, WING, 0.4, 0, WING / 2, REAR + 0.2, STONE);
+  b.box("paint", 21.0, 0.5, 0.6, 0, 0.25, REAR + 0.1, "#e2d6bf");
+  b.box("paint", 21.2, 0.3, 0.8, 0, WING - 0.15, REAR + 0.1, "#e2d6bf");
+  for (let x = -8.4; x < 9; x += 2.8) b.box("paint", 0.6, WING - 0.8, 0.2, x, (WING - 0.8) / 2 + 0.5, REAR - 0.05, STONE);
+  b.box("paint", 20.6, 0.3, len, 0, WING + 0.15, mid, "#cfc3aa");
+  const ped = [0, 6.8, 13.6, 20.4];
+  b.at(-10.2, 0, REAR + 0.2, 0, () => balustrade(b, 20.4, WING + 0.3, ped));
+  for (const s of [-1, 1]) b.at(s * 10.1, 0, BACK, Math.PI / 2, () => balustrade(b, len, WING + 0.3, [0, len]));
 }
 
 function hedge(b: Batch, x0: number, x1: number, z0: number, z1: number, h: number) {
@@ -124,17 +149,17 @@ export function cafeGrounds(b: Batch) {
     const xi = s * 10.4, xo = s * 16;
     const [a, c] = [Math.min(xi, xo), Math.max(xi, xo)];
     const lane = s * 13.4;
-    b.plane("foliage", c - a, 21, (a + c) / 2, 0.005, -10.3, [0.035, 0.07, 0.025], { rx: -Math.PI / 2, jitter: 0.15 });
-    b.plane("road", 1.8, 21.2, lane, 0.012, -10.2, "#8a8274", { rx: -Math.PI / 2 });
-    hedge(b, a + (s > 0 ? 0 : 4.6), a + (s > 0 ? 1.0 : 5.6), -20.5, -1.2, 1.3);
-    hedge(b, s > 0 ? c - 1.2 : a, s > 0 ? c : a + 1.2, -20.5, -0.8, 2.4);
-    for (const z of [-3.5, -9.5, -15.5]) {
+    b.plane("foliage", c - a, 32, (a + c) / 2, 0.005, -15.8, [0.035, 0.07, 0.025], { rx: -Math.PI / 2, jitter: 0.15 });
+    b.plane("road", 1.8, 32.2, lane, 0.012, -15.7, "#8a8274", { rx: -Math.PI / 2 });
+    hedge(b, a + (s > 0 ? 0 : 4.6), a + (s > 0 ? 1.0 : 5.6), -31.5, -1.2, 1.3);
+    hedge(b, s > 0 ? c - 1.2 : a, s > 0 ? c : a + 1.2, -31.5, -0.8, 2.4);
+    for (const z of [-3.5, -9.5, -15.5, -21.5, -27.5]) {
       topiary(b, lane - s * 1.25, z, z !== -9.5);
-      topiary(b, lane + s * 1.25, z - 1.5, z === -9.5);
+      topiary(b, lane + s * 1.25, z - 1.5, z === -9.5 || z === -21.5);
     }
-    for (let z = -2; z > -20; z -= 6) lantern(b, lane + (z % 12 === -2 ? 1 : -1) * s * 1.05, z);
+    for (let z = -2; z > -31; z -= 6) lantern(b, lane + (z % 12 === -2 ? 1 : -1) * s * 1.05, z);
     // garden wall closing the far end
-    b.box("paint", c - a, 3.0, 0.4, (a + c) / 2, 1.5, -20.9, "#e2d6bf");
+    b.box("paint", c - a, 3.0, 0.4, (a + c) / 2, 1.5, -31.9, "#e2d6bf");
     // street railing with stone gate piers and urns
     railing(b, a + 0.3, lane - 1.45, 0.3);
     railing(b, lane + 1.45, c - 0.3, 0.3);
