@@ -139,19 +139,19 @@ function ContextPrompt({ isTouch }: { isTouch: boolean }) {
             className="flex -translate-y-1/2 items-center group-data-[flip=1]:-translate-x-full group-data-[flip=1]:flex-row-reverse group-data-[mode=center]:-translate-x-1/2"
           >
             <span className="h-[8px] w-[8px] -translate-x-1/2 rounded-full border border-ivory bg-ivory/90 group-data-[flip=1]:translate-x-1/2 group-data-[mode=center]:hidden" />
-            <span className="h-px w-12 bg-ivory/55 group-data-[mode=center]:hidden sm:w-16" />
+            <span className="h-px w-8 bg-ivory/55 group-data-[mode=center]:hidden sm:w-16" />
             <button
               type="button"
               onClick={interact}
               tabIndex={-1}
-              className={`flex flex-col px-4 text-left group-data-[flip=1]:items-end group-data-[flip=1]:text-right group-data-[mode=center]:items-center group-data-[mode=center]:text-center ${isTouch ? "pointer-events-auto" : ""}`}
+              className={`flex flex-col px-3 text-left sm:px-4 group-data-[flip=1]:items-end group-data-[flip=1]:text-right group-data-[mode=center]:items-center group-data-[mode=center]:text-center ${isTouch ? "pointer-events-auto" : ""}`}
             >
-              <span className="font-display text-[19px] uppercase leading-none tracking-[0.16em] text-ivory sm:text-[21px]">{prompt.title}</span>
-              <span className="eyebrow mt-2 text-[9px] text-ivory/70">{prompt.meta}</span>
-              <span className="mt-3 h-px w-full min-w-24 bg-ivory/30" />
-              <span className="mt-3 flex items-center gap-3">
+              <span className="font-display text-[13px] uppercase leading-none tracking-[0.14em] text-ivory sm:text-[21px] sm:tracking-[0.16em]">{prompt.title}</span>
+              <span className="eyebrow mt-1.5 text-[7.5px] text-ivory/70 sm:mt-2 sm:text-[9px]">{prompt.meta}</span>
+              <span className="mt-2 h-px w-full min-w-16 bg-ivory/30 sm:mt-3 sm:min-w-24" />
+              <span className="mt-2 flex items-center gap-3 sm:mt-3">
                 {!isTouch && <kbd className="font-sans text-[9px] tracking-[0.2em] text-ivory/45">E</kbd>}
-                <span className="eyebrow text-[10px] text-ivory">
+                <span className="eyebrow text-[8.5px] text-ivory sm:text-[10px]">
                   {prompt.action} <span className="ml-1">→</span>
                 </span>
               </span>
