@@ -4,6 +4,8 @@ import { useEffect, useMemo, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { useGame } from "@/game/store";
+import { SPAWN } from "@/game/layout";
+import { peers } from "@/game/live";
 import { runtime } from "@/game/runtime";
 import { setInsideAmount, setMuted, speak } from "@/game/audio";
 import { useAuth } from "@/game/auth";
@@ -32,6 +34,21 @@ export function greetGuest() {
   useGame.getState().say("host", "Amélie", HOST_LINE, ms);
 }
 
+/** Places along the red carpet and pavement in front of the doors, nearest first. */
+const ARRIVAL_SPOTS: [number, number][] = [
+  [0, 0], [-1.1, 0.4], [1.1, 0.4], [-0.55, 1.3], [0.55, 1.3], [-1.9, 1.2], [1.9, 1.2], [0, 2.1], [-1.3, 2.3], [1.3, 2.3],
+];
+
+function freeArrivalSpot() {
+  const taken = [...peers.values()].map((p) => p.samples[p.samples.length - 1]).filter(Boolean);
+  for (const [dx, dz] of ARRIVAL_SPOTS) {
+    const x = SPAWN.x + dx;
+    const z = SPAWN.z + dz;
+    if (taken.every((t) => Math.hypot(t.x - x, t.z - z) > 0.9)) return { x, z };
+  }
+  return { x: SPAWN.x + (Math.random() - 0.5) * 3.6, z: SPAWN.z + Math.random() * 2.4 };
+}
+
 const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
 /** Runs the cinematic arrival, the staff greetings and the inside/outside sound mix. */
@@ -50,6 +67,12 @@ export default function Director() {
     [],
   );
   const look = useMemo(() => new THREE.Vector3(), []);
+  const arrival = useRef<{ x: number; z: number } | null>(null);
+  const settleArrival = () => {
+    const spot = freeArrivalSpot();
+    arrival.current = spot;
+    runtime.teleport = new THREE.Vector3(spot.x, SPAWN.y, spot.z);
+  };
   const lookFrom = useMemo(() => new THREE.Vector3(0, 4.2, 0), []);
   const lookTo = useMemo(() => new THREE.Vector3(0, 1.95, 0), []);
 
@@ -100,10 +123,21 @@ export default function Director() {
         start.current = clock.elapsedTime;
         // Begin the walk from wherever the drift had reached, so the invitation flows straight into the arrival.
         path.points[0].copy(camera.position);
+        path.points[path.points.length - 1].set(SPAWN.x, 1.62, SPAWN.z);
         path.updateArcLengths();
+        arrival.current = null;
         lookFrom.copy(look);
       }
       const t = Math.min(1, (clock.elapsedTime - start.current) / INTRO_SECONDS);
+      // Each guest ends the walk at a free spot on the carpet, so two people arriving together never stand inside
+      // each other. The spot is chosen part-way in, once the other guests in the sitting are known, and the end of
+      // the path eases over to it.
+      if (t > 0.35 && !arrival.current) settleArrival();
+      if (arrival.current) {
+        const b = THREE.MathUtils.smoothstep(t, 0.35, 0.7);
+        path.points[path.points.length - 1].set(THREE.MathUtils.lerp(SPAWN.x, arrival.current.x, b), 1.62, THREE.MathUtils.lerp(SPAWN.z, arrival.current.z, b));
+        path.updateArcLengths();
+      }
       const k = ease(t);
       camera.position.copy(path.getPoint(k));
       look.lerpVectors(lookFrom, lookTo, ease(Math.min(1, t * 1.15)));
@@ -111,6 +145,8 @@ export default function Director() {
       if (t >= 1) s.endIntro();
       return;
     }
+    // Skipped the walk before a spot was chosen: choose it now.
+    if (start.current !== null && !arrival.current) settleArrival();
     start.current = s.intro ? start.current : null;
 
     const z = runtime.playerPos.z;

@@ -38,6 +38,8 @@ let me: { id: string; name: string; look: number } | null = null;
 let lastSent = 0;
 let lastPayload: Sample | null = null;
 let joining = false;
+/** A sitting being left; joining waits for it, or the client would hand back the closing channel. */
+let leaving: Promise<unknown> = Promise.resolve();
 
 const hashLook = (id: string) => {
   let h = 0;
@@ -67,6 +69,7 @@ export function addSample(id: string, name: string, s: Omit<Sample, "t">) {
 /** Try sittings 1, 2, 3… and stay in the first that still has room. */
 async function joinSitting(n: number): Promise<void> {
   const sb = supabase();
+  await leaving;
   if (!sb || !me || n > MAX_SITTINGS) return;
   const ch = sb.channel(`knak-sitting-${n}`, { config: { broadcast: { self: false }, presence: { key: me.id } } });
   const at = Date.now();
@@ -82,7 +85,7 @@ async function joinSitting(n: number): Promise<void> {
         .sort((a, b) => a.at - b.at || a.key.localeCompare(b.key));
       const rank = order.findIndex((o) => o.key === me!.id);
       if (rank >= SITTING_SIZE) {
-        void sb.removeChannel(ch);
+        leaving = sb.removeChannel(ch);
         void joinSitting(n + 1);
         return;
       }
@@ -121,9 +124,14 @@ export function connectLive(user: { id: string; name: string }) {
   });
 }
 
+/** The guest changed their name: others see the new one with the next update. */
+export function setLiveName(name: string) {
+  if (me) me.name = name;
+}
+
 export function disconnectLive() {
   const sb = supabase();
-  if (channel && sb) void sb.removeChannel(channel);
+  if (channel && sb) leaving = sb.removeChannel(channel).catch(() => {});
   channel = null;
   me = null;
   peers.clear();

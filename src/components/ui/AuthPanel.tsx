@@ -17,12 +17,13 @@ const field =
 
 export default function AuthPanel() {
   const panel = useAuth((s) => s.panel);
-  return <AnimatePresence>{panel && <Card key="auth" />}</AnimatePresence>;
+  // The panel is handed down as a prop: while the card fades out the store already says "closed" (null), and the
+  // fading card must keep showing what it showed, not read the empty store (that crashed after Save and Sign out).
+  return <AnimatePresence>{panel && <Card key="auth" panel={panel} />}</AnimatePresence>;
 }
 
 /** The guest book: sign in with Google or an emailed code, then leave a name, phone and address for delivery. */
-function Card() {
-  const panel = useAuth((s) => s.panel)!;
+function Card({ panel }: { panel: NonNullable<ReturnType<typeof useAuth.getState>["panel"]> }) {
   const close = useAuth((s) => s.close);
   const heading =
     panel.step === "profile"

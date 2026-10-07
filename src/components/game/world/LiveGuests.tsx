@@ -3,9 +3,21 @@
 import { Suspense, useEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
+import {
+  CapsuleCollider,
+  RigidBody,
+  type RapierRigidBody,
+} from "@react-three/rapier";
 import * as THREE from "three";
 import { CHAIR_BY_ID } from "@/game/layout";
-import { connectLive, disconnectLive, peers, publishSelf, useLive } from "@/game/live";
+import {
+  connectLive,
+  disconnectLive,
+  peers,
+  publishSelf,
+  setLiveName,
+  useLive,
+} from "@/game/live";
 import { runtime } from "@/game/runtime";
 import { useGame } from "@/game/store";
 import { useAuth } from "@/game/auth";
@@ -17,6 +29,7 @@ const FOOT = 0.85;
 /** One other real guest: glides toward their latest reported spot, walks while moving, sits when seated. */
 function RemoteGuest({ id }: { id: string }) {
   const ref = useRef<THREE.Group>(null);
+  const body = useRef<RapierRigidBody>(null);
   const label = useRef<HTMLDivElement>(null);
   const state = useRef({ speed: 0, seated: false, placed: false });
   const target = useMemo(() => new THREE.Vector3(), []);
@@ -49,7 +62,22 @@ function RemoteGuest({ id }: { id: string }) {
     // Face where they are looking (the camera yaw looks down -z; the model faces +z).
     const want = chair ? chair.rot : s.yaw + Math.PI;
     const cur = g.rotation.y;
-    g.rotation.y = cur + Math.atan2(Math.sin(want - cur), Math.cos(want - cur)) * Math.min(1, dt * 8);
+    g.rotation.y =
+      cur +
+      Math.atan2(Math.sin(want - cur), Math.cos(want - cur)) *
+        Math.min(1, dt * 8);
+
+    // A solid body that moves with them, so you can't walk through each other. Seated guests are left to their chair.
+    const rb = body.current;
+    if (rb) {
+      if (rb.isEnabled() === st.seated) rb.setEnabled(!st.seated);
+      if (!st.seated)
+        rb.setNextKinematicTranslation({
+          x: g.position.x,
+          y: g.position.y + FOOT,
+          z: g.position.z,
+        });
+    }
 
     // The name shows only up close, and fades with distance.
     const el = label.current;
@@ -60,18 +88,46 @@ function RemoteGuest({ id }: { id: string }) {
     }
   });
 
-  const pick = (): Clip => (state.current.seated ? "sit_idle" : state.current.speed > 0.25 ? "walk" : "stand_idle");
+  const pick = (): Clip =>
+    state.current.seated
+      ? "sit_idle"
+      : state.current.speed > 0.25
+        ? "walk"
+        : "stand_idle";
 
   return (
-    <group ref={ref}>
-      <Human avatar={avatar} pick={pick} seed={((peer?.look ?? 0) % 100) / 100} />
-      <Html position={[0, 2.02, 0]} center zIndexRange={[10, 0]} style={{ pointerEvents: "none" }}>
-        <div
-          ref={label}
-          className="eyebrow whitespace-nowrap text-[9px] text-ivory/90 opacity-0 [text-shadow:0_1px_8px_rgba(0,0,0,0.7)]"
+    <>
+      <RigidBody
+        ref={body}
+        type="kinematicPosition"
+        colliders={false}
+        position={[
+          peer?.samples.at(-1)?.x ?? 0,
+          peer?.samples.at(-1)?.y ?? FOOT,
+          peer?.samples.at(-1)?.z ?? 0,
+        ]}
+      >
+        <CapsuleCollider args={[0.55, 0.28]} />
+      </RigidBody>
+      <group ref={ref}>
+        <Human
+          avatar={avatar}
+          pick={pick}
+          seed={((peer?.look ?? 0) % 100) / 100}
         />
-      </Html>
-    </group>
+        <Html
+          position={[0, 2.02, 0]}
+          center
+          zIndexRange={[10, 0]}
+          style={{ pointerEvents: "none" }}
+        >
+          <div
+            ref={label}
+            className="eyebrow whitespace-nowrap text-[9px] text-ivory/90 opacity-0 [text-shadow:0_1px_8px_rgba(0,0,0,0.7)]"
+          />
+        </Html>
+      </group>
+    </>
   );
 }
 
@@ -82,17 +138,31 @@ function LiveSync() {
   const user = useAuth((s) => s.user);
   const name = useAuth((s) => s.profile?.name);
 
+  const first = (name ?? "").trim().split(/\s+/)[0] || "Guest";
+  const uid = user?.id;
+  const firstRef = useRef(first);
   useEffect(() => {
-    if (phase !== "playing" || status !== "signedIn" || !user) return;
-    connectLive({ id: user.id, name: (name ?? "").trim().split(/\s+/)[0] || "Guest" });
+    firstRef.current = first;
+    setLiveName(first);
+  }, [first]);
+  // Join once per signed-in guest; saving details or a new name doesn't leave and rejoin the sitting.
+  useEffect(() => {
+    if (phase !== "playing" || status !== "signedIn" || !uid) return;
+    connectLive({ id: uid, name: firstRef.current });
     return () => disconnectLive();
-  }, [phase, status, user, name]);
+  }, [phase, status, uid]);
 
   useFrame(({ clock }) => {
     const s = useGame.getState();
     if (s.phase !== "playing" || s.intro) return;
     const p = runtime.playerPos;
-    publishSelf(clock.elapsedTime * 1000, { x: p.x, y: p.y, z: p.z, yaw: s.yaw, chair: s.seatedChairId });
+    publishSelf(clock.elapsedTime * 1000, {
+      x: p.x,
+      y: p.y,
+      z: p.z,
+      yaw: s.yaw,
+      chair: s.seatedChairId,
+    });
   });
   return null;
 }
