@@ -20,6 +20,8 @@ export const BAR_ARCH = { x: -6.2, halfWidth: 1.0, spring: 3.0 } as const;
 export const ISLAND = { x: 0.8, z: -26.6, rx: 2.8, rz: 1.5, height: 1.1 } as const;
 /** The gallery: a balcony over the entrance, reached by a straight flight of stairs up the right-hand aisle. */
 export const GALLERY = { x0: -6.6, x1: 6.6, z0: -0.45, z1: -3.0, deck: 3.5, stairX: 4.0, stairHalf: 0.6, stairFoot: -12.4 } as const;
+/** The winter garden: a glass house in the right-hand garden, entered from the bar salon through French doors. */
+export const WINTER = { x0: 10.4, x1: 14.6, z0: -21.0, z1: -31.2, floor: 0.5, eaves: 3.9, ridge: 5.3, doorZ: -23.6, doorHalf: 0.8, doorH: 2.8 } as const;
 export const FACADE = { halfWidth: 10, height: 8.2, thickness: 0.4 } as const;
 /** Capsule centre resting on the pavement (half height 0.55 + radius 0.3), so the visitor never drops in. */
 export const SPAWN = { x: 0, y: 0.86, z: 7.5 } as const;
@@ -117,6 +119,9 @@ function salonGuests(): Npc[] {
     { ...at("g-gal0", -5.75, -1.75, Math.PI / 2, "sit"), y: GALLERY.deck },
     { ...at("g-gal1", -4.25, -1.75, -Math.PI / 2, "sit"), y: GALLERY.deck },
     { ...at("g-gal2", 0.45, -1.75, Math.PI / 2, "sit"), y: GALLERY.deck },
+    // a pair taking coffee among the palms in the winter garden
+    at("w-0", 11.85, -28.3, Math.PI / 2, "sit"),
+    at("w-1", 13.35, -28.3, -Math.PI / 2, "sit"),
   ];
 }
 

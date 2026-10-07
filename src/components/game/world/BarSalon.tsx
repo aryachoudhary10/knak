@@ -6,13 +6,15 @@ import * as THREE from "three";
 import { useMats } from "@/game/materials";
 import { frescoTexture, luxuryMats } from "@/game/luxury";
 import { bottlesTexture } from "@/game/textures";
-import { BAR_ARCH, ISLAND, SALON } from "@/game/layout";
+import { BAR_ARCH, ISLAND, SALON, WINTER } from "@/game/layout";
 
 const { x0: X0, x1: X1, z0: Z0, z1: Z1, stepFrom: S0, stepTo: S1, floor: F } = SALON;
 /** Ceiling of the salon, measured from the street level. */
 const CEIL = SALON.height;
 const W = X1 - X0;
 const STEP = (S0 - S1) / 3;
+const DOOR0 = WINTER.doorZ + WINTER.doorHalf;
+const DOOR1 = WINTER.doorZ - WINTER.doorHalf;
 
 /** Lacquered near-black walls and ceiling: the bar is the dark, intimate room after the bright hall. */
 const lacquer = new THREE.MeshPhysicalMaterial({ color: "#1d1715", roughness: 0.35, clearcoat: 0.6, clearcoatRoughness: 0.3 });
@@ -319,7 +321,8 @@ function Walls() {
   const mid = (Z0 + Z1) / 2;
   const fillets: { x: number; z: number; ry: number }[] = [];
   for (let z = Z0 - 1.6; z > Z1 + 0.5; z -= 1.8) {
-    fillets.push({ x: X0 + 0.02, z, ry: Math.PI / 2 }, { x: X1 - 0.02, z, ry: -Math.PI / 2 });
+    fillets.push({ x: X0 + 0.02, z, ry: Math.PI / 2 });
+    if (z > DOOR0 + 0.2 || z < DOOR1 - 0.2) fillets.push({ x: X1 - 0.02, z, ry: -Math.PI / 2 });
   }
   for (let x = X0 + 1.5; x < X1 - 0.5; x += 1.8) fillets.push({ x, z: Z1 + 0.02, ry: 0 });
   return (
@@ -328,9 +331,19 @@ function Walls() {
       <mesh position={[X0 + 0.01, CEIL / 2, mid]} rotation={[0, Math.PI / 2, 0]} material={lacquer}>
         <planeGeometry args={[D, CEIL]} />
       </mesh>
-      <mesh position={[X1 - 0.01, CEIL / 2, mid]} rotation={[0, -Math.PI / 2, 0]} material={lacquer}>
-        <planeGeometry args={[D, CEIL]} />
+      {/* right wall, opened by the French doors to the winter garden */}
+      {[
+        [Z0, DOOR0],
+        [DOOR1, Z1],
+      ].map(([a, b]) => (
+        <mesh key={a} position={[X1 - 0.01, CEIL / 2, (a + b) / 2]} rotation={[0, -Math.PI / 2, 0]} material={lacquer}>
+          <planeGeometry args={[a - b, CEIL]} />
+        </mesh>
+      ))}
+      <mesh position={[X1 - 0.01, (F + WINTER.doorH + CEIL) / 2, WINTER.doorZ]} rotation={[0, -Math.PI / 2, 0]} material={lacquer}>
+        <planeGeometry args={[DOOR0 - DOOR1, CEIL - F - WINTER.doorH]} />
       </mesh>
+      <GardenDoors />
       <mesh position={[0, CEIL / 2, Z1 + 0.01]} material={lacquer}>
         <planeGeometry args={[W, CEIL]} />
       </mesh>
@@ -349,7 +362,8 @@ function Walls() {
       {/* walnut wainscot on the raised floor */}
       {[
         { p: [X0 + 0.04, F + 0.55, (S1 + Z1) / 2] as const, a: [0.06, 1.1, S1 - Z1] as const },
-        { p: [X1 - 0.04, F + 0.55, (S1 + Z1) / 2] as const, a: [0.06, 1.1, S1 - Z1] as const },
+        { p: [X1 - 0.04, F + 0.55, (S1 + DOOR0) / 2] as const, a: [0.06, 1.1, S1 - DOOR0] as const },
+        { p: [X1 - 0.04, F + 0.55, (DOOR1 + Z1) / 2] as const, a: [0.06, 1.1, DOOR1 - Z1] as const },
         { p: [0, F + 0.55, Z1 + 0.04] as const, a: [W, 1.1, 0.06] as const },
       ].map(({ p, a }, i) => (
         <mesh key={i} position={[...p]} material={m.walnut}>
@@ -374,6 +388,63 @@ function Walls() {
             </mesh>
           </group>
         ))}
+    </group>
+  );
+}
+
+/** Glazed French doors to the winter garden, folded open, in a gilt frame; the glass house shows beyond. */
+function GardenDoors() {
+  const m = useMats();
+  const h = WINTER.doorH;
+  const w = WINTER.doorHalf;
+  return (
+    <group position={[X1, F, WINTER.doorZ]}>
+      {/* reveal through the wall's thickness */}
+      {[-1, 1].map((s) => (
+        <mesh key={s} position={[0.2, h / 2, s * w]} material={m.panel}>
+          <boxGeometry args={[0.4, h, 0.02]} />
+        </mesh>
+      ))}
+      <mesh position={[0.2, h, 0]} material={m.panel}>
+        <boxGeometry args={[0.4, 0.02, w * 2]} />
+      </mesh>
+      {/* gilt architrave on the salon side */}
+      {[-1, 1].map((s) => (
+        <mesh key={`a${s}`} position={[-0.03, h / 2, s * (w + 0.06)]} material={m.gilt}>
+          <boxGeometry args={[0.05, h + 0.1, 0.1]} />
+        </mesh>
+      ))}
+      <mesh position={[-0.03, h + 0.05, 0]} material={m.gilt}>
+        <boxGeometry args={[0.05, 0.1, w * 2 + 0.22]} />
+      </mesh>
+      {/* the two leaves, folded fully open into the salon: walnut frames around tall panes */}
+      {[-1, 1].map((s) => (
+        <group key={`l${s}`} position={[-0.02 - w / 2, 0, s * (w - 0.03)]}>
+          {[-1, 1].map((k) => (
+            <mesh key={`st${k}`} position={[(k * (w - 0.12)) / 2, h / 2, 0]} material={m.darkWood}>
+              <boxGeometry args={[0.08, h, 0.05]} />
+            </mesh>
+          ))}
+          {[0.06, 0.75, h - 0.06].map((y) => (
+            <mesh key={y} position={[0, y, 0]} material={m.darkWood}>
+              <boxGeometry args={[w - 0.04, y === 0.75 ? 0.06 : 0.12, 0.05]} />
+            </mesh>
+          ))}
+          <mesh position={[0, 0.4, 0]} material={m.darkWood}>
+            <boxGeometry args={[w - 0.1, 0.6, 0.03]} />
+          </mesh>
+          <mesh position={[0, (0.78 + h - 0.12) / 2, 0]} material={coupe}>
+            <boxGeometry args={[w - 0.16, h - 0.9, 0.01]} />
+          </mesh>
+          <mesh position={[(-(w - 0.2)) / 2 + 0.02, 1.05, s * 0.04]} material={m.brass}>
+            <boxGeometry args={[0.03, 0.22, 0.02]} />
+          </mesh>
+        </group>
+      ))}
+      {/* threshold */}
+      <mesh position={[0.2, 0.01, 0]} material={m.brass}>
+        <boxGeometry args={[0.4, 0.02, w * 2]} />
+      </mesh>
     </group>
   );
 }
@@ -464,7 +535,8 @@ function SalonColliders() {
       <CuboidCollider args={[W / 2, F / 2, (S1 - 0.1 - Z1) / 2]} position={[0, F / 2, (S1 - 0.1 + Z1) / 2]} />
       {/* walls */}
       <CuboidCollider args={[0.2, CEIL / 2, (Z0 - Z1) / 2]} position={[X0 - 0.2, CEIL / 2, (Z0 + Z1) / 2]} />
-      <CuboidCollider args={[0.2, CEIL / 2, (Z0 - Z1) / 2]} position={[X1 + 0.2, CEIL / 2, (Z0 + Z1) / 2]} />
+      <CuboidCollider args={[0.2, CEIL / 2, (Z0 - DOOR0) / 2]} position={[X1 + 0.2, CEIL / 2, (Z0 + DOOR0) / 2]} />
+      <CuboidCollider args={[0.2, CEIL / 2, (DOOR1 - Z1) / 2]} position={[X1 + 0.2, CEIL / 2, (DOOR1 + Z1) / 2]} />
       <CuboidCollider args={[W / 2, CEIL / 2, 0.2]} position={[0, CEIL / 2, Z1 - 0.2]} />
       {/* furniture */}
       <CuboidCollider args={[ISLAND.rx + 0.1, 0.6, ISLAND.rz + 0.1]} position={[ISLAND.x, F + 0.6, ISLAND.z]} />

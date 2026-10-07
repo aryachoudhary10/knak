@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { Batch, canopy, prism } from "./kit";
 import { WIN } from "./textures";
-import { RIGHT_WINDOWS, WINDOWS } from "@/game/layout";
+import { RIGHT_WINDOWS, WINDOWS, WINTER } from "@/game/layout";
 
 /**
  * KNAK as a free-standing hôtel particulier: a balustraded crown and low zinc mansard over the
@@ -96,8 +96,14 @@ export function cafeCrown(b: Batch) {
 function barWing(b: Batch) {
   const len = BACK - REAR;
   const mid = (BACK + REAR) / 2;
+  // On the right, French doors open from the salon into the winter garden, so the wall is built either side of them.
+  const d0 = WINTER.doorZ + WINTER.doorHalf;
+  const d1 = WINTER.doorZ - WINTER.doorHalf;
+  b.box("paint", 0.4, WING, BACK - d0, 10.2, WING / 2, (BACK + d0) / 2, STONE);
+  b.box("paint", 0.4, WING, d1 - REAR, 10.2, WING / 2, (d1 + REAR) / 2, STONE);
+  b.box("paint", 0.4, WING - WINTER.doorH - WINTER.floor, d0 - d1, 10.2, (WING + WINTER.doorH + WINTER.floor) / 2, WINTER.doorZ, STONE);
   for (const s of [-1, 1]) {
-    b.box("paint", 0.4, WING, len, s * 10.2, WING / 2, mid, STONE);
+    if (s < 0) b.box("paint", 0.4, WING, len, s * 10.2, WING / 2, mid, STONE);
     b.box("paint", 0.6, 0.5, len, s * 10.3, 0.25, mid, "#e2d6bf");
     b.box("paint", 0.8, 0.3, len + 0.4, s * 10.3, WING - 0.15, mid, "#e2d6bf");
     for (let z = BACK - 1.6; z > REAR + 0.5; z -= 2.6) b.box("paint", 0.2, WING - 0.8, 0.6, s * 10.45, (WING - 0.8) / 2 + 0.5, z, STONE);
@@ -151,13 +157,16 @@ export function cafeGrounds(b: Batch) {
     const lane = s * 13.4;
     b.plane("foliage", c - a, 32, (a + c) / 2, 0.005, -15.8, [0.035, 0.07, 0.025], { rx: -Math.PI / 2, jitter: 0.15 });
     b.plane("road", 1.8, 32.2, lane, 0.012, -15.7, "#8a8274", { rx: -Math.PI / 2 });
-    hedge(b, a + (s > 0 ? 0 : 4.6), a + (s > 0 ? 1.0 : 5.6), -31.5, -1.2, 1.3);
+    // On the right, the winter garden fills the far end, so the planting stops short of it.
+    const far = s > 0 ? WINTER.z0 - 0.3 : -31.5;
+    hedge(b, a + (s > 0 ? 0 : 4.6), a + (s > 0 ? 1.0 : 5.6), far, -1.2, 1.3);
     hedge(b, s > 0 ? c - 1.2 : a, s > 0 ? c : a + 1.2, -31.5, -0.8, 2.4);
     for (const z of [-3.5, -9.5, -15.5, -21.5, -27.5]) {
+      if (s > 0 && z < WINTER.z0 + 1.5) continue;
       topiary(b, lane - s * 1.25, z, z !== -9.5);
       topiary(b, lane + s * 1.25, z - 1.5, z === -9.5 || z === -21.5);
     }
-    for (let z = -2; z > -31; z -= 6) lantern(b, lane + (z % 12 === -2 ? 1 : -1) * s * 1.05, z);
+    for (let z = -2; z > (s > 0 ? WINTER.z0 + 1 : -31); z -= 6) lantern(b, lane + (z % 12 === -2 ? 1 : -1) * s * 1.05, z);
     // garden wall closing the far end
     b.box("paint", c - a, 3.0, 0.4, (a + c) / 2, 1.5, -31.9, "#e2d6bf");
     // street railing with stone gate piers and urns

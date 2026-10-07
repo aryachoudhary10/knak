@@ -6,6 +6,7 @@ import { MotionConfig } from "motion/react";
 import Warmup from "./Warmup";
 import BarSalon from "./world/BarSalon";
 import Gallery from "./world/Gallery";
+import WinterGarden from "./world/WinterGarden";
 import { PerformanceMonitor } from "@react-three/drei";
 import { Physics } from "@react-three/rapier";
 import * as THREE from "three";
@@ -105,6 +106,7 @@ export default function Experience() {
               <Counter />
               <BarSalon />
               <Gallery />
+              <WinterGarden />
               <People />
               <Player />
             </Physics>
