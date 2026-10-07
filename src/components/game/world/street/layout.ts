@@ -29,6 +29,10 @@ export function buildStreet(hq: boolean) {
   row(b, { origin: v(-150, 0, 0), normal: v(0, 0, 1), length: 134, seed: 11 }, nearShops, lodFor);
   row(b, { origin: v(16, 0, 0), normal: v(0, 0, 1), length: 134, seed: 23 }, nearShops, lodFor);
 
+  // The neighbours' courtyard faces across KNAK's side gardens: what the dining room's windows look out on.
+  row(b, { origin: v(-16, 0, -0.3), normal: v(1, 0, 0), length: 20.5, seed: 71 }, () => undefined, lodFor);
+  row(b, { origin: v(16, 0, -20.8), normal: v(-1, 0, 0), length: 20.5, seed: 73 }, () => undefined, lodFor);
+
   // Across the road, split by the side street that the opening shot flies down.
   const farShops = (c: THREE.Vector3, w: number): Shop[] | undefined => {
     const edge = c.x < 0 ? -c.x - w / 2 + SIDE.left : c.x - w / 2 - SIDE.right;

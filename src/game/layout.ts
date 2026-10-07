@@ -3,6 +3,10 @@ import { seeded, randomCharacter, type Character } from "@/lib/character";
 /** World units are metres. The facade sits on z = 0, the street is z > 0, the dining room is z < 0. */
 export const ROOM = { minX: -8, maxX: 8, minZ: -20, maxZ: 0, height: 6 } as const;
 export const DOOR = { halfWidth: 1.2, height: 3.4 } as const;
+/** Arched French windows in the left wall: open to the real garden and street outside, not a painted view. */
+export const WINDOWS = { z: [-2.6, -8.6, -14.6], halfWidth: 0.8, sill: 1.0, spring: 4.4 } as const;
+/** The left wall runs from the room's plaster face out to the pavilion's stone face, so each window is a deep reveal. */
+export const LEFT_WALL = { inner: -8.0, outer: -10.4, back: -20.6, height: 8.2 } as const;
 export const FACADE = { halfWidth: 10, height: 8.2, thickness: 0.4 } as const;
 /** Capsule centre resting on the pavement (half height 0.55 + radius 0.3), so the visitor never drops in. */
 export const SPAWN = { x: 0, y: 0.86, z: 7.5 } as const;
@@ -33,8 +37,9 @@ function roundTable(id: string, x: number, z: number, chairs: number, startAngle
 
 // Left column: round tables with three chairs, like the reference photo.
 [-3.6, -7.2, -10.8].forEach((z, i) => roundTable(`L${i}`, -5.2, z, 3, Math.PI / 2 + 0.4));
-// Centre pair of small round tables.
-[-5.4, -9.0].forEach((z, i) => roundTable(`C${i}`, -1.9, z, 2, Math.PI / 2));
+// Small round tables either side of the runner, chairs set along the aisle so none stand on the carpet.
+[-5.4, -9.0].forEach((z, i) => roundTable(`C${i}`, -2.3, z, 2, 0));
+[-5.4, -9.0].forEach((z, i) => roundTable(`D${i}`, 2.3, z, 2, 0));
 
 // Right column: square tables against the burgundy banquette.
 [-3.0, -5.4, -7.8, -10.2, -12.6].forEach((z, i) => {
@@ -64,7 +69,7 @@ export type Npc = {
 function buildGuests(): Npc[] {
   const rnd = seeded(7);
   const guests: Npc[] = [];
-  const takenChairs = new Set(["L0-c0", "L0-c1", "L2-c2", "C1-c0", "C1-c1", "R1-c0", "R3-c0", "O0-c1"]);
+  const takenChairs = new Set(["L0-c0", "L0-c1", "L2-c2", "C1-c0", "C1-c1", "D0-c0", "D0-c1", "R1-c0", "R3-c0", "O0-c1"]);
   for (const c of CHAIRS) {
     if (!takenChairs.has(c.id)) continue;
     guests.push({ id: `g-${c.id}`, character: randomCharacter(rnd), x: c.x, z: c.z, rot: c.rot, pose: "sit" });

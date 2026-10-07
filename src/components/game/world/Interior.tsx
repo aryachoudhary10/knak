@@ -6,9 +6,9 @@ import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { useMats } from "@/game/materials";
 import { luxuryMats } from "@/game/luxury";
-import { windowViewTexture } from "@/game/textures";
+import { leftWallGeometry } from "@/game/wall";
 import { curtainGeo } from "@/game/geometry";
-import { DOOR, ROOM } from "@/game/layout";
+import { DOOR, ROOM, WINDOWS } from "@/game/layout";
 import Chandelier from "./Chandelier";
 import Ceiling from "./Ceiling";
 
@@ -91,29 +91,29 @@ function Mirror({ side, z, width, height, y }: { side: "left" | "right"; z: numb
   );
 }
 
+/** Clear glass with slim walnut glazing bars; through it, the real garden and street. */
+const windowGlass = new THREE.MeshPhysicalMaterial({ color: "#c9d4dc", transparent: true, opacity: 0.1, roughness: 0.05, metalness: 0, depthWrite: false });
+
 function TallWindow({ z }: { z: number }) {
   const m = useMats();
-  const view = useMemo(() => windowViewTexture(), []);
-  const w = 1.6;
-  const h = 3.6;
+  const w = WINDOWS.halfWidth * 2;
+  const h = WINDOWS.spring - WINDOWS.sill;
   return (
-    <OnWall side="left" z={z} y={1.1}>
-      <mesh position={[0, h / 2, 0]}>
+    <OnWall side="left" z={z} y={WINDOWS.sill}>
+      <mesh position={[0, h / 2, 0]} material={windowGlass}>
         <planeGeometry args={[w, h]} />
-        <meshBasicMaterial map={view} toneMapped={false} />
       </mesh>
-      <mesh position={[0, h, 0]}>
+      <mesh position={[0, h, 0]} material={windowGlass}>
         <circleGeometry args={[w / 2, 24, 0, Math.PI]} />
-        <meshBasicMaterial color="#3a4766" />
       </mesh>
       {[-w / 2, 0, w / 2].map((dx) => (
         <mesh key={dx} position={[dx, h / 2, 0.03]} material={m.darkWood}>
-          <boxGeometry args={[0.07, h, 0.06]} />
+          <boxGeometry args={[dx === 0 ? 0.045 : 0.07, h, 0.06]} />
         </mesh>
       ))}
       {[0, 1, 2, 3, 4].map((i) => (
         <mesh key={i} position={[0, (i * h) / 4, 0.03]} material={m.darkWood}>
-          <boxGeometry args={[w, 0.06, 0.06]} />
+          <boxGeometry args={[w, i === 0 || i === 4 ? 0.06 : 0.04, 0.06]} />
         </mesh>
       ))}
       <mesh position={[0, h, 0.03]} material={m.darkWood}>
@@ -303,9 +303,7 @@ export default function Interior() {
       ))}
 
       {/* walls */}
-      <mesh position={[ROOM.minX - 0.1, H / 2, CZ]} material={m.plaster}>
-        <boxGeometry args={[0.2, H, D]} />
-      </mesh>
+      <mesh geometry={leftWallGeometry()} material={m.plaster} />
       <mesh position={[ROOM.maxX + 0.1, H / 2, CZ]} material={m.plaster}>
         <boxGeometry args={[0.2, H, D]} />
       </mesh>
@@ -351,7 +349,7 @@ export default function Interior() {
       {sideWallFeatures.right.map((z) => (
         <Pilaster key={`pr${z}`} side="right" z={z} />
       ))}
-      {[-2.6, -8.6, -14.6].map((z) => (
+      {WINDOWS.z.map((z) => (
         <TallWindow key={z} z={z} />
       ))}
       {[-5.6, -11.6].map((z) => (

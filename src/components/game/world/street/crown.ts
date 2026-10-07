@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { Batch, canopy, prism } from "./kit";
 import { WIN } from "./textures";
+import { WINDOWS } from "@/game/layout";
 
 /**
  * KNAK as a free-standing hôtel particulier: a balustraded crown and low zinc mansard over the
@@ -43,10 +44,19 @@ export function cafeCrown(b: Batch) {
   // closing walls so the building reads as a solid pavilion from the side gardens
   for (const s of [-1, 1]) {
     const x = s * 10.2;
-    b.box("paint", 0.4, H, -BACK, x, H / 2, BACK / 2, STONE);
+    // The left wall is cut with real windows (see game/wall.ts), so only the right is a plain slab.
+    if (s > 0) b.box("paint", 0.4, H, -BACK, x, H / 2, BACK / 2, STONE);
     b.box("paint", 0.6, 0.5, -BACK, x + s * 0.1, 0.25, BACK / 2, "#e2d6bf");
     b.box("paint", 0.7, 0.3, -BACK + 0.2, x + s * 0.12, 6.86, BACK / 2, "#e2d6bf");
     b.box("paint", 0.9, 0.3, -BACK + 0.4, x + s * 0.2, 8.0, BACK / 2, STONE);
+    if (s < 0) {
+      for (const z of WINDOWS.z) {
+        b.box("paint", 0.25, 6.3, 0.7, x + s * 0.2, 3.15, z - 3.0, STONE);
+        b.box("paint", 0.2, 0.25, 2.0, x + s * 0.25, WINDOWS.spring + WINDOWS.halfWidth + 0.3, z, "#e2d6bf");
+        b.box("paint", 0.25, 0.12, 2.0, x + s * 0.27, WINDOWS.sill - 0.06, z, "#e2d6bf");
+      }
+      continue;
+    }
     for (let k = 0; k < 4; k++) {
       const z = -2.6 - k * 5;
       b.box("paint", 0.25, 6.3, 0.7, x + s * 0.2, 3.15, z + 2.5, STONE);
