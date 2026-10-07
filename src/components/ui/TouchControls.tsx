@@ -2,17 +2,19 @@
 
 import { useRef, useState } from "react";
 import { useGame } from "@/game/store";
+import { useChat } from "@/game/chat";
 
 const RADIUS = 52;
 
 /** Left thumb joystick to walk, drag anywhere on the right to look. */
 export default function TouchControls() {
   const menuOpen = useGame((s) => s.menuOpen);
+  const chatOpen = useChat((s) => s.open);
   const stick = useRef<{ id: number; x: number; y: number } | null>(null);
   const look = useRef<{ id: number; x: number; y: number } | null>(null);
   const [knob, setKnob] = useState({ x: 0, y: 0, active: false });
 
-  if (menuOpen) return null;
+  if (menuOpen || chatOpen) return null;
 
   return (
     <div className="absolute inset-0 z-[5] flex touch-none select-none">

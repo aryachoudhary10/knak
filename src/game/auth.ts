@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
+import { adoptSavedLook } from "./look";
 
 /** What KNAK keeps about a guest: who to greet and where to deliver. One row per account in `profiles`. */
 export type Profile = { name: string; phone: string; address: string; pincode: string };
@@ -57,7 +58,7 @@ export const useAuth = create<Auth>((set, get) => ({
         return;
       }
       set({ status: "signedIn", user });
-      const { data } = await sb.from("profiles").select("name, phone, address, pincode").eq("id", user.id).maybeSingle();
+      const { data } = await sb.from("profiles").select("name, phone, address, pincode, look").eq("id", user.id).maybeSingle();
       const meta = user.user_metadata ?? {};
       const profile: Profile = {
         name: data?.name ?? meta.full_name ?? meta.name ?? "",
@@ -66,6 +67,7 @@ export const useAuth = create<Auth>((set, get) => ({
         pincode: data?.pincode ?? "",
       };
       set({ profile });
+      adoptSavedLook(data?.look);
       // A guest who has just signed in but hasn't told us where to deliver goes straight on to that step.
       const panel = get().panel;
       if (panel && !profileComplete(profile)) set({ panel: { ...panel, step: "profile" } });

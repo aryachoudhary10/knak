@@ -7,7 +7,8 @@ import * as THREE from "three";
 import { useGame } from "@/game/store";
 import { runtime } from "@/game/runtime";
 import { stairFloor } from "@/game/stairs";
-import { chairTakenLive } from "@/game/live";
+import { chairTakenLive, peers } from "@/game/live";
+import { openChat, useChat } from "@/game/chat";
 import { CHAIRS, CHAIR_BY_ID, COUNTER, COUNTER_SPOT, OCCUPIED_CHAIRS, SPAWN, STAFF, TABLES, tableInfo } from "@/game/layout";
 import { greetGuest } from "./Director";
 
@@ -35,7 +36,7 @@ function syncKeys() {
 /** Run the current on-screen prompt: sit, stand, or open the menu. */
 export function interact() {
   const s = useGame.getState();
-  if (s.phase !== "playing" || s.menuOpen || s.intro) return;
+  if (s.phase !== "playing" || s.menuOpen || s.intro || useChat.getState().open) return;
   if (s.seatedChairId) {
     s.stand();
     return;
@@ -44,6 +45,10 @@ export function interact() {
   if (!p) return;
   if (p.kind === "sit") s.sit(p.chairId);
   if (p.kind === "speak") greetGuest();
+  if (p.kind === "whisper") {
+    openChat(`w:${p.peerId}`, p.title);
+    if (document.pointerLockElement) document.exitPointerLock();
+  }
   if (p.kind === "order") {
     s.openMenu();
     if (document.pointerLockElement) document.exitPointerLock();
@@ -63,7 +68,10 @@ export default function Player() {
     const down = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
       if (e.code === "KeyE" && !e.repeat) interact();
-      if (e.code === "Escape") useGame.getState().closeMenu();
+      if (e.code === "Escape") {
+        useGame.getState().closeMenu();
+        useChat.setState({ open: false });
+      }
       keys.add(e.code);
       syncKeys();
     };
@@ -138,7 +146,8 @@ export default function Player() {
       camera.position.set(c.x, SEATED_EYE, c.z);
       runtime.playerPos.set(c.x, 0.9, c.z);
     } else {
-      const canMove = s.phase === "playing" && !s.menuOpen && !s.intro;
+      const chatting = useChat.getState().open;
+      const canMove = s.phase === "playing" && !s.menuOpen && !s.intro && !chatting;
       const mx = canMove ? s.move.x : 0;
       const my = canMove ? s.move.y : 0;
       const len = Math.hypot(mx, my);
@@ -187,7 +196,7 @@ export default function Player() {
     camera.rotation.set(cam.pitch, cam.yaw, cam.roll, "YXZ");
 
     // Find what the visitor is looking at.
-    if (s.phase !== "playing" || s.menuOpen) return;
+    if (s.phase !== "playing" || s.menuOpen || useChat.getState().open) return;
     const anchor = (x: number, y: number, z: number) => (runtime.promptAnchor ??= new THREE.Vector3()).set(x, y, z);
     if (s.seatedChairId) {
       runtime.promptAnchor = null;
@@ -217,6 +226,22 @@ export default function Player() {
     if (hostD < 2.4 && (toHostX * lookX + toHostZ * lookZ) / hostD > 0.6) {
       anchor(HOST.x - 0.45, 1.25, HOST.z);
       s.setPrompt({ kind: "speak", title: "Amélie", meta: "Your host", action: "Speak" });
+      return;
+    }
+    // Another real guest close by and in front of you: offer a whisper.
+    let near: { id: string; name: string; d: number; x: number; y: number; z: number } | null = null;
+    for (const p of peers.values()) {
+      const at = p.samples[p.samples.length - 1];
+      if (!at || at.chair) continue;
+      const dx = at.x - px;
+      const dz = at.z - pz;
+      const d = Math.hypot(dx, dz);
+      if (d > 2.2 || d < 0.01 || (dx * lookX + dz * lookZ) / d < 0.75) continue;
+      if (!near || d < near.d) near = { id: p.id, name: p.name, d, x: at.x, y: at.y, z: at.z };
+    }
+    if (near) {
+      anchor(near.x, near.y + 0.55, near.z);
+      s.setPrompt({ kind: "whisper", peerId: near.id, title: near.name, meta: "Guest tonight", action: "Whisper" });
       return;
     }
     let best: { id: string; score: number } | null = null;

@@ -4,7 +4,7 @@ import { useProgress } from "@react-three/drei";
 import { useState } from "react";
 import { motion } from "motion/react";
 import { useGame } from "@/game/store";
-import Avatar from "./Avatar";
+import { portrait, useLook } from "@/game/look";
 import { requestLook } from "@/components/game/Experience";
 import { startAudio } from "@/game/audio";
 import { useAuth } from "@/game/auth";
@@ -19,7 +19,7 @@ const rise = (delay: number) => ({
 /** The invitation: a quiet card of type over the live street in front of KNAK, not a login screen. */
 export default function Welcome() {
   const character = useGame((s) => s.character);
-  const reroll = useGame((s) => s.rerollCharacter);
+  const look = useLook((s) => s.look);
   const enter = useGame((s) => s.enter);
   const isTouch = useGame((s) => s.isTouch);
   const { active, progress } = useProgress();
@@ -146,19 +146,24 @@ export default function Welcome() {
         </motion.div>
 
         <motion.div {...rise(1.95)} className="mt-8 flex flex-col items-center">
-          <Avatar c={character} size={54} />
+          <button
+            onClick={() => useLook.setState({ picker: true })}
+            aria-label="Choose your character"
+            className="h-[64px] w-[64px] cursor-pointer overflow-hidden rounded-full border border-champagne/50 transition-colors duration-500 hover:border-champagne"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={portrait(look)} alt="" className="h-full w-full scale-[1.35] object-cover object-[50%_18%]" />
+          </button>
           <p className="mt-4 font-display text-[26px] leading-none">{first}</p>
           <p className="eyebrow mt-3 text-[9px] text-ivory/45">
             {known ? "Your table is ready" : "This evening’s guest"}
           </p>
-          {!known && (
-            <button
-              onClick={reroll}
-              className="text-action mt-4 text-[9px] text-ivory/60 hover:text-ivory"
-            >
-              Change appearance
-            </button>
-          )}
+          <button
+            onClick={() => useLook.setState({ picker: true })}
+            className="text-action mt-4 text-[9px] text-ivory/60 hover:text-ivory"
+          >
+            Choose your character
+          </button>
         </motion.div>
 
         <motion.div

@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
+import { useLook } from "./look";
 
 /**
  * Live guests: signed-in visitors see each other walk and sit in the restaurant.
@@ -20,15 +21,25 @@ const SEND_IDLE_MS = 8000;
 const STALE_MS = 25000;
 
 export type Sample = { t: number; x: number; y: number; z: number; yaw: number; chair: string | null };
-export type Peer = { id: string; name: string; look: number; samples: Sample[]; last: number };
+export type Peer = {
+  id: string;
+  name: string;
+  look: number;
+  samples: Sample[];
+  last: number;
+  /** a line of table talk, shown above their head until `until` (performance.now) */
+  said?: { body: string; until: number };
+};
 
 type LiveState = {
   /** ids of the other guests in this sitting; changes only when someone arrives or leaves */
   ids: string[];
   sitting: number | null;
+  /** the character each guest chose; changes rarely, so it can live in React state */
+  looks: Record<string, number>;
 };
 
-export const useLive = create<LiveState>(() => ({ ids: [], sitting: null }));
+export const useLive = create<LiveState>(() => ({ ids: [], sitting: null, looks: {} }));
 
 /** Per-frame data lives outside React, so movement never causes a re-render. */
 export const peers = new Map<string, Peer>();
@@ -53,12 +64,16 @@ function syncIds() {
   if (ids.length !== cur.length || ids.some((v, i) => v !== cur[i])) useLive.setState({ ids });
 }
 
-export function addSample(id: string, name: string, s: Omit<Sample, "t">) {
+export function addSample(id: string, name: string, s: Omit<Sample, "t">, look?: number) {
   let p = peers.get(id);
   if (!p) {
-    p = { id, name, look: hashLook(id), samples: [], last: 0 };
+    p = { id, name, look: look ?? hashLook(id), samples: [], last: 0 };
     peers.set(id, p);
     syncIds();
+  }
+  if (look !== undefined && useLive.getState().looks[id] !== look) {
+    p.look = look;
+    useLive.setState((st) => ({ looks: { ...st.looks, [id]: look } }));
   }
   p.name = name || p.name;
   p.last = performance.now();
@@ -104,9 +119,9 @@ async function joinSitting(n: number): Promise<void> {
   });
 
   ch.on("broadcast", { event: "p" }, ({ payload }) => {
-    const p = payload as { id: string; n: string; x: number; y: number; z: number; r: number; c: string | null };
+    const p = payload as { id: string; n: string; x: number; y: number; z: number; r: number; c: string | null; l?: number };
     if (!p?.id || p.id === me?.id) return;
-    addSample(p.id, p.n, { x: p.x, y: p.y, z: p.z, yaw: p.r, chair: p.c });
+    addSample(p.id, p.n, { x: p.x, y: p.y, z: p.z, yaw: p.r, chair: p.c }, typeof p.l === "number" ? p.l : undefined);
   });
 
   ch.subscribe(async (status) => {
@@ -125,6 +140,11 @@ export function connectLive(user: { id: string; name: string }) {
 }
 
 /** The guest changed their name: others see the new one with the next update. */
+// A new character choice is announced straight away.
+useLook.subscribe((s, prev) => {
+  if (s.look !== prev.look) lastSent = 0;
+});
+
 export function setLiveName(name: string) {
   if (me) me.name = name;
 }
@@ -135,7 +155,7 @@ export function disconnectLive() {
   channel = null;
   me = null;
   peers.clear();
-  useLive.setState({ ids: [], sitting: null });
+  useLive.setState({ ids: [], sitting: null, looks: {} });
 }
 
 /** Called every frame with this guest's position; sends only when it has changed, or as a slow heartbeat. */
@@ -157,7 +177,7 @@ export function publishSelf(now: number, s: Omit<Sample, "t">) {
   lastSent = now;
   lastPayload = { ...s, t: now };
   const r = (v: number) => Math.round(v * 100) / 100;
-  void channel.send({ type: "broadcast", event: "p", payload: { id: me.id, n: me.name, x: r(s.x), y: r(s.y), z: r(s.z), r: r(s.yaw), c: s.chair } });
+  void channel.send({ type: "broadcast", event: "p", payload: { id: me.id, n: me.name, l: useLook.getState().look, x: r(s.x), y: r(s.y), z: r(s.z), r: r(s.yaw), c: s.chair } });
 }
 
 /** True while another real guest is sitting in this chair. */

@@ -9,6 +9,7 @@ export type Prompt =
   | ({ kind: "stand" } & PromptText)
   | ({ kind: "order" } & PromptText)
   | ({ kind: "speak" } & PromptText)
+  | ({ kind: "whisper"; peerId: string } & PromptText)
   | null;
 
 export type CartLine = { itemId: string; qty: number };

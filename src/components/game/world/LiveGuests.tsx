@@ -21,6 +21,7 @@ import {
 import { runtime } from "@/game/runtime";
 import { useGame } from "@/game/store";
 import { useAuth } from "@/game/auth";
+import { setTable, startChat, stopChat } from "@/game/chat";
 import { GUEST_AVATARS, Human, type Clip } from "./Human";
 
 /** Feet sit this far below the player's capsule centre (see Player). */
@@ -31,10 +32,13 @@ function RemoteGuest({ id }: { id: string }) {
   const ref = useRef<THREE.Group>(null);
   const body = useRef<RapierRigidBody>(null);
   const label = useRef<HTMLDivElement>(null);
+  const said = useRef<HTMLDivElement>(null);
   const state = useRef({ speed: 0, seated: false, placed: false });
   const target = useMemo(() => new THREE.Vector3(), []);
   const peer = peers.get(id);
-  const avatar = GUEST_AVATARS[(peer?.look ?? 0) % GUEST_AVATARS.length];
+  const chosen = useLive((s) => s.looks[id]);
+  const look = chosen ?? peer?.look ?? 0;
+  const avatar = GUEST_AVATARS[look % GUEST_AVATARS.length];
 
   useFrame(({ camera }, dt) => {
     const g = ref.current;
@@ -86,6 +90,13 @@ function RemoteGuest({ id }: { id: string }) {
       el.style.opacity = String(THREE.MathUtils.clamp((7 - d) / 3, 0, 1));
       el.textContent = p.name;
     }
+    // A line of table talk floats above them for a moment (only those at the table ever receive it).
+    const sd = said.current;
+    if (sd) {
+      const on = !!p.said && performance.now() < p.said.until;
+      if (on && sd.textContent !== p.said!.body) sd.textContent = p.said!.body;
+      sd.style.opacity = on ? "1" : "0";
+    }
   });
 
   const pick = (): Clip =>
@@ -111,9 +122,10 @@ function RemoteGuest({ id }: { id: string }) {
       </RigidBody>
       <group ref={ref}>
         <Human
+          key={avatar}
           avatar={avatar}
           pick={pick}
-          seed={((peer?.look ?? 0) % 100) / 100}
+          seed={(look % 100) / 100}
         />
         <Html
           position={[0, 2.02, 0]}
@@ -124,6 +136,12 @@ function RemoteGuest({ id }: { id: string }) {
           <div
             ref={label}
             className="eyebrow whitespace-nowrap text-[9px] text-ivory/90 opacity-0 [text-shadow:0_1px_8px_rgba(0,0,0,0.7)]"
+          />
+        </Html>
+        <Html position={[0, 2.3, 0]} center zIndexRange={[10, 0]} style={{ pointerEvents: "none" }}>
+          <div
+            ref={said}
+            className="w-max max-w-[220px] text-center font-display text-[13px] italic leading-snug text-ivory opacity-0 transition-opacity duration-500 [text-shadow:0_1px_10px_rgba(0,0,0,0.8)]"
           />
         </Html>
       </group>
@@ -149,7 +167,18 @@ function LiveSync() {
   useEffect(() => {
     if (phase !== "playing" || status !== "signedIn" || !uid) return;
     connectLive({ id: uid, name: firstRef.current });
-    return () => disconnectLive();
+    startChat(uid);
+    // Sitting at a table joins its table talk; standing up leaves it.
+    const seat = (chair: string | null) => void setTable(chair ? chair.split("-")[0] : null);
+    seat(useGame.getState().seatedChairId);
+    const off = useGame.subscribe((s, prev) => {
+      if (s.seatedChairId !== prev.seatedChairId) seat(s.seatedChairId);
+    });
+    return () => {
+      off();
+      stopChat();
+      disconnectLive();
+    };
   }, [phase, status, uid]);
 
   useFrame(({ clock }) => {

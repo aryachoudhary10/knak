@@ -6,6 +6,7 @@ import { interact } from "@/components/game/Player";
 import { runtime } from "@/game/runtime";
 import { formatHour, useRestaurantHour } from "@/game/clock";
 import { moodFor } from "@/game/atmosphere";
+import { useChat } from "@/game/chat";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -17,6 +18,7 @@ export default function Hud() {
   const isTouch = useGame((s) => s.isTouch);
   const locked = useGame((s) => s.pointerLocked);
   const menuOpen = useGame((s) => s.menuOpen);
+  const chatOpen = useChat((s) => s.open);
 
   return (
     <div className="pointer-events-none absolute inset-0 z-10 select-none text-ivory [text-shadow:0_1px_10px_rgba(0,0,0,0.45)]">
@@ -33,10 +35,10 @@ export default function Hud() {
 
       {!isTouch && !menuOpen && <div className="absolute left-1/2 top-1/2 h-[3px] w-[3px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-ivory/55" />}
 
-      {!menuOpen && <ContextPrompt isTouch={isTouch} />}
+      {!menuOpen && !chatOpen && <ContextPrompt isTouch={isTouch} />}
 
       <AnimatePresence>
-        {!isTouch && !locked && !menuOpen && (
+        {!isTouch && !locked && !menuOpen && !chatOpen && (
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

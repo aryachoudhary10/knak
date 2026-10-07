@@ -27,6 +27,9 @@ import IntroOverlay from "@/components/ui/IntroOverlay";
 import Subtitles from "@/components/ui/Subtitles";
 import { isHighQuality } from "@/game/quality";
 import Hud from "@/components/ui/Hud";
+import ChatPanel from "@/components/ui/ChatPanel";
+import LookPicker from "@/components/ui/LookPicker";
+import { useChat } from "@/game/chat";
 import TimeDebug from "@/components/ui/TimeDebug";
 import Welcome from "@/components/ui/Welcome";
 import MenuCard from "@/components/ui/MenuCard";
@@ -55,7 +58,7 @@ function usePointerLook() {
 
 export function requestLook() {
   const s = useGame.getState();
-  if (s.isTouch || s.menuOpen || s.phase !== "playing") return;
+  if (s.isTouch || s.menuOpen || s.phase !== "playing" || useChat.getState().open) return;
   const canvas = document.querySelector("canvas");
   // Some browsers reject the request if it comes too soon after an exit; that is harmless.
   canvas?.requestPointerLock?.()?.catch?.(() => {});
@@ -84,7 +87,7 @@ export default function Experience() {
     useGame.getState().setTouch(window.matchMedia("(pointer: coarse)").matches);
     useAuth.getState().init();
     // Handy for debugging and automated screenshots in development.
-    if (process.env.NODE_ENV !== "production") Object.assign(window, { __knak: useGame, __runtime: runtime, __clock: useClock, __live: { peers, addSample } });
+    if (process.env.NODE_ENV !== "production") Object.assign(window, { __knak: useGame, __runtime: runtime, __clock: useClock, __live: { peers, addSample }, __chat: useChat, __auth: useAuth });
   }, []);
 
   return (
@@ -138,11 +141,13 @@ export default function Experience() {
         </Canvas>
         {phase === "playing" && intro && <IntroOverlay />}
         {phase === "playing" && !intro && <Hud />}
+        {phase === "playing" && !intro && <ChatPanel />}
         {phase === "playing" && <TimeDebug />}
         <Subtitles />
         {phase === "playing" && !intro && isTouch && <TouchControls />}
         <MenuCard />
         <AuthPanel />
+        <LookPicker />
         <AnimatePresence>{phase === "welcome" && <Welcome key="welcome" />}</AnimatePresence>
       </div>
     </MotionConfig>
