@@ -43,15 +43,17 @@ export default function Welcome() {
     requestAnimationFrame(() => requestLook());
   };
 
+  const first = known ? profile!.name.trim().split(/\s+/)[0] : character.name;
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0, transition: { duration: 1.4, ease: EASE } }}
       transition={{ duration: 0.8 }}
-      className="absolute inset-0 z-30 isolate flex flex-col overflow-hidden px-6 py-6 text-ivory sm:px-14 sm:py-10"
+      className="absolute inset-0 z-30 isolate flex flex-col items-center overflow-hidden px-8 py-8 text-center text-ivory sm:px-14 sm:py-12"
     >
-      {/* Ink covers the street until every part of KNAK is ready, then lifts slowly to show it live behind the type. */}
+      {/* Ink covers the street until every part of KNAK is ready, then lifts slowly to show it live behind the card. */}
       <motion.div
         aria-hidden
         initial={{ opacity: 1 }}
@@ -59,101 +61,152 @@ export default function Welcome() {
         transition={{ duration: 3.2, ease: [0.4, 0, 0.2, 1] }}
         className="pointer-events-none absolute inset-0 -z-10 bg-ink"
       />
+      {/* An even veil over the street, deeper at the edges, so the centred type always reads. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-20 bg-ink/60"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-20 bg-[radial-gradient(ellipse_at_center,rgba(14,11,9,0)_35%,rgba(14,11,9,0.7)_100%)]"
+      />
+
+      {/* The edge of a printed invitation: a double hairline frame. */}
       <motion.div
         aria-hidden
         initial={{ opacity: 0 }}
-        animate={{ opacity: ready ? 1 : 0 }}
-        transition={{ duration: 3.2, ease: [0.4, 0, 0.2, 1] }}
-        className="pointer-events-none absolute inset-0 -z-20 bg-[linear-gradient(0deg,rgba(14,11,9,0.85)_0%,rgba(14,11,9,0.55)_55%,rgba(14,11,9,0.3)_100%)] sm:bg-[linear-gradient(90deg,rgba(14,11,9,0.85)_0%,rgba(14,11,9,0.5)_40%,rgba(14,11,9,0.08)_80%,rgba(14,11,9,0)_100%)]"
-      />
-      <header className="flex items-center justify-between">
-        <p className="font-display text-[15px] tracking-[0.5em] text-ivory/80">KNAK</p>
+        animate={{ opacity: 1 }}
+        transition={{ duration: 1.6, delay: 0.2, ease: EASE }}
+        className="pointer-events-none absolute inset-3 border border-champagne/30 sm:inset-6"
+      >
+        <div className="absolute inset-[5px] border border-champagne/15" />
+      </motion.div>
+
+      <motion.header
+        {...rise(0.4)}
+        className="relative flex w-full items-center justify-between"
+      >
+        <p className="eyebrow text-[9px] text-ivory/55">Grand Café · Paris</p>
         {auth === "signedOut" && (
-          <button onClick={() => openAuth("invite")} className="text-action text-[10px] text-ivory/80 hover:text-ivory">
-            Sign in <span className="arrow">→</span>
+          <button
+            onClick={() => openAuth("invite")}
+            className="text-action text-[9px] text-ivory/80 hover:text-ivory"
+          >
+            Sign in
           </button>
         )}
         {auth === "signedIn" && (
-          <button onClick={() => openAuth("address")} className="text-action text-[10px] text-ivory/60 hover:text-ivory">
-            {profile?.name ? profile.name.split(" ")[0] : "Your details"}
+          <button
+            onClick={() => openAuth("address")}
+            className="text-action text-[9px] text-ivory/70 hover:text-ivory"
+          >
+            Your details
           </button>
         )}
-        {(auth === "off" || auth === "loading") && <p className="eyebrow hidden text-ivory/50 sm:block">Grand Café · Paris</p>}
-      </header>
+      </motion.header>
 
-      <main className="flex flex-1 flex-col justify-center sm:max-w-xl">
-        <motion.p {...rise(0.2)} className="eyebrow text-champagne">
-          An invitation
+      <main className="flex w-full flex-1 flex-col items-center justify-center py-6">
+        <motion.p {...rise(0.3)} className="eyebrow text-[10px] text-champagne">
+          {known ? "Welcome back" : "You are invited"}
         </motion.p>
         {/* The name rises letter by letter (opacity and transform only, so it stays smooth while the room loads). */}
-        <h1 aria-label="KNAK" className="mt-6 font-display text-[64px] font-normal leading-none tracking-[0.28em] sm:text-[104px]">
+        <h1
+          aria-label="KNAK"
+          className="mt-6 whitespace-nowrap pl-[0.3em] font-display text-[68px] font-normal leading-none tracking-[0.3em] sm:text-[96px]"
+        >
           {"KNAK".split("").map((ch, i) => (
             <motion.span
               key={i}
               aria-hidden
               initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1.6, ease: EASE, delay: 0.35 + i * 0.22 }}
+              transition={{ duration: 1.6, ease: EASE, delay: 0.45 + i * 0.2 }}
               className="inline-block"
             >
               {ch}
             </motion.span>
           ))}
         </h1>
-        <motion.p {...rise(1.5)} className="mt-5 font-display text-lg italic text-ivory/75 sm:text-xl">
+        <motion.p
+          {...rise(1.4)}
+          className="mt-6 max-w-[17rem] font-display text-[17px] italic leading-snug text-ivory/75 sm:max-w-none sm:text-xl"
+        >
           A grand café of Paris, brought to your door.
         </motion.p>
 
+        {/* line, lozenge, line */}
         <motion.div
-          initial={{ scaleX: 0 }}
-          animate={{ scaleX: 1 }}
-          transition={{ duration: 1.6, ease: EASE, delay: 1.8 }}
-          className="mt-12 h-px w-12 origin-left bg-champagne/60"
-        />
-
-        <motion.div {...rise(2.1)} className="mt-10">
-          <p className="eyebrow text-ivory/50">{known ? "Welcome back" : "This evening’s guest"}</p>
-          <div className="mt-4 flex items-center gap-5">
-            <Avatar c={character} size={52} />
-            <div>
-              <p className="font-display text-2xl">{known ? profile!.name.split(" ")[0] : character.name}</p>
-              <button onClick={reroll} className="text-action mt-1 text-[10px] text-ivory/60 hover:text-ivory">
-                Change appearance
-              </button>
-            </div>
-          </div>
+          {...rise(1.7)}
+          aria-hidden
+          className="mt-8 flex items-center gap-3"
+        >
+          <span className="h-px w-14 bg-champagne/50" />
+          <span className="h-[5px] w-[5px] rotate-45 border border-champagne/80" />
+          <span className="h-px w-14 bg-champagne/50" />
         </motion.div>
 
-        <motion.div {...rise(2.4)} className="mt-14">
-          {ready ? (
-            <button onClick={go} className="text-action text-[13px] text-ivory">
-              Enter KNAK <span className="arrow">→</span>
+        <motion.div {...rise(1.95)} className="mt-8 flex flex-col items-center">
+          <Avatar c={character} size={54} />
+          <p className="mt-4 font-display text-[26px] leading-none">{first}</p>
+          <p className="eyebrow mt-3 text-[9px] text-ivory/45">
+            {known ? "Your table is ready" : "This evening’s guest"}
+          </p>
+          {!known && (
+            <button
+              onClick={reroll}
+              className="text-action mt-4 text-[9px] text-ivory/60 hover:text-ivory"
+            >
+              Change appearance
             </button>
+          )}
+        </motion.div>
+
+        <motion.div
+          {...rise(2.25)}
+          className="mt-9 flex h-14 items-center justify-center"
+        >
+          {ready ? (
+            <motion.button
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.9, ease: EASE }}
+              onClick={go}
+              className="border border-ivory/45 px-10 py-4 pl-[calc(2.5rem+0.42em)] font-sans text-[11px] uppercase tracking-[0.42em] text-ivory transition-colors duration-500 hover:border-ivory hover:bg-ivory hover:text-ink"
+            >
+              Enter KNAK
+            </motion.button>
           ) : (
-            <div className="w-56">
-              <p className="eyebrow text-ivory/60">Preparing your table · {Math.round(shown)}%</p>
+            <div className="flex w-52 flex-col items-center">
+              <p className="eyebrow text-[9px] text-ivory/55">
+                Preparing your table · {Math.round(shown)}%
+              </p>
               <div className="mt-3 h-px w-full bg-ivory/15">
-                <div className="h-px origin-left bg-champagne transition-transform duration-500 ease-out" style={{ transform: `scaleX(${shown / 100})` }} />
+                <div
+                  className="h-px origin-left bg-champagne transition-transform duration-500 ease-out"
+                  style={{ transform: `scaleX(${shown / 100})` }}
+                />
               </div>
             </div>
           )}
         </motion.div>
       </main>
 
-      <motion.footer {...rise(2.7)} className="eyebrow flex flex-wrap gap-x-8 gap-y-2 text-[10px] text-ivory/45">
+      <motion.footer
+        {...rise(2.6)}
+        className="eyebrow relative flex max-w-xs flex-wrap justify-center gap-x-5 gap-y-1.5 text-[8.5px] text-ivory/40 sm:max-w-none"
+      >
         {isTouch ? (
           <>
-            <span>Left thumb · Walk</span>
-            <span>Right thumb · Look</span>
-            <span>Tap a prompt · Interact</span>
+            <span>Left thumb · walk</span>
+            <span>Right thumb · look</span>
+            <span>Tap a prompt · interact</span>
           </>
         ) : (
           <>
-            <span>W A S D · Walk</span>
-            <span>Mouse · Look</span>
-            <span>E · Interact</span>
-            <span>Shift · Stroll faster</span>
-            <span>Esc · Release the mouse</span>
+            <span>W A S D · walk</span>
+            <span>Mouse · look</span>
+            <span>E · interact</span>
+            <span>Shift · stroll faster</span>
           </>
         )}
       </motion.footer>
