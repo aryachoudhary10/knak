@@ -15,6 +15,9 @@ const HOST = STAFF.find((n) => n.id === "host")!;
 
 const WALK = 3.0;
 const RUN = 5.2;
+// On phones a gentle stroll: the thumb stick makes full speed too easy to reach, and the room is meant to be savoured.
+const TOUCH_WALK = 1.6;
+const TOUCH_RUN = 2.4;
 const FOOT = 0.85; // capsule centre above the soles
 const EYE = 0.75; // above capsule centre, so eyes sit at ~1.6 m
 const SEATED_EYE = 1.18;
@@ -139,7 +142,8 @@ export default function Player() {
       const mx = canMove ? s.move.x : 0;
       const my = canMove ? s.move.y : 0;
       const len = Math.hypot(mx, my);
-      const speed = s.running ? RUN : WALK;
+      const walk = s.isTouch ? TOUCH_WALK : WALK;
+      const speed = s.running ? (s.isTouch ? TOUCH_RUN : RUN) : walk;
       const fwdX = -Math.sin(yaw);
       const fwdZ = -Math.cos(yaw);
       const rightX = Math.cos(yaw);
@@ -168,7 +172,7 @@ export default function Player() {
       const p = rb.translation();
       runtime.playerPos.set(p.x, p.y, p.z);
       // A gentle step rhythm that fades in with speed, plus a slow breath when standing still.
-      const pace = Math.min(1, Math.hypot(vx, vz) / WALK);
+      const pace = Math.min(1, Math.hypot(vx, vz) / walk);
       bob.current += dt * (s.running ? 10 : 7.2) * pace;
       const bobY = Math.sin(bob.current * 2) * 0.018 * pace + Math.sin(runtime.now * 1.3) * 0.004;
       tmp.current.set(p.x + Math.cos(bob.current) * 0.012 * pace * Math.cos(yaw), p.y + EYE + bobY, p.z - Math.cos(bob.current) * 0.012 * pace * Math.sin(yaw));

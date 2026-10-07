@@ -38,7 +38,7 @@ export default function TouchControls() {
           setKnob({ x: dx, y: dy, active: true });
           const g = useGame.getState();
           g.setMove(dx / RADIUS, -dy / RADIUS);
-          g.setRunning(d > RADIUS * 1.6);
+          g.setRunning(d > RADIUS * 2.4);
         }}
         onPointerUp={(e) => {
           if (stick.current?.id !== e.pointerId) return;
