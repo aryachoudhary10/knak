@@ -184,6 +184,12 @@ export default function Player() {
     }
     const px = runtime.playerPos.x;
     const pz = runtime.playerPos.z;
+    // Up in the gallery, the counter, host and dining tables below are out of reach.
+    if (runtime.playerPos.y > 2.5) {
+      runtime.promptAnchor = null;
+      s.setPrompt(null);
+      return;
+    }
     const lookX = -Math.sin(yaw);
     const lookZ = -Math.cos(yaw);
     const toCounterX = COUNTER_SPOT.x - px;

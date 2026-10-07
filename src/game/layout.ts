@@ -18,6 +18,8 @@ export type WindowSet = { z: readonly number[]; halfWidth: number; sill: number;
 export const SALON = { x0: -10, x1: 10, z0: -20.4, z1: -31, stepFrom: -21.4, stepTo: -22.6, floor: 0.5, height: 5.6 } as const;
 export const BAR_ARCH = { x: -6.2, halfWidth: 1.0, spring: 3.0 } as const;
 export const ISLAND = { x: 0.8, z: -26.6, rx: 2.8, rz: 1.5, height: 1.1 } as const;
+/** The gallery: a balcony over the entrance, reached by a straight flight of stairs up the right-hand aisle. */
+export const GALLERY = { x0: -6.6, x1: 6.6, z0: -0.45, z1: -3.0, deck: 3.5, stairX: 4.0, stairHalf: 0.6, stairFoot: -12.4 } as const;
 export const FACADE = { halfWidth: 10, height: 8.2, thickness: 0.4 } as const;
 /** Capsule centre resting on the pavement (half height 0.55 + radius 0.3), so the visitor never drops in. */
 export const SPAWN = { x: 0, y: 0.86, z: 7.5 } as const;
@@ -111,6 +113,10 @@ function salonGuests(): Npc[] {
     at("s-lounge1", -9.3, -26.4, Math.PI / 2, "sit"),
     at("s-lounge2", -9.3, -28.6, Math.PI / 2, "sit"),
     at("s-piano", 6.5, -27.1, Math.PI / 2, "sit"),
+    // up in the gallery over the entrance
+    { ...at("g-gal0", -5.75, -1.75, Math.PI / 2, "sit"), y: GALLERY.deck },
+    { ...at("g-gal1", -4.25, -1.75, -Math.PI / 2, "sit"), y: GALLERY.deck },
+    { ...at("g-gal2", 0.45, -1.75, Math.PI / 2, "sit"), y: GALLERY.deck },
   ];
 }
 
@@ -164,7 +170,7 @@ export const WAITING_GUEST: Npc = {
 
 /** The waiter walks this loop through the aisle. */
 export const WAITER_PATH: [number, number][] = [
-  [0.4, -2.5], [0.4, -12.5], [4.0, -12.8], [4.0, -2.8],
+  [0.5, -2.5], [0.5, -12.6], [-0.5, -12.6], [-0.5, -2.5],
 ];
 
 export const CHAIR_BY_ID = Object.fromEntries(CHAIRS.map((c) => [c.id, c]));
