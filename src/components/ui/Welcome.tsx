@@ -14,7 +14,7 @@ const rise = (delay: number) => ({
   transition: { duration: 0.9, delay, ease: EASE },
 });
 
-/** The invitation: a quiet card of type over the street at dusk, not a login screen. */
+/** The invitation: a quiet card of type over KNAK's dining room at the golden hour, not a login screen. */
 export default function Welcome() {
   const character = useGame((s) => s.character);
   const reroll = useGame((s) => s.rerollCharacter);
@@ -36,9 +36,21 @@ export default function Welcome() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
+      exit={{ opacity: 0, transition: { duration: 1.4, ease: EASE } }}
       transition={{ duration: 0.8 }}
-      className="absolute inset-0 z-30 flex flex-col bg-ink/70 px-6 py-6 text-ivory sm:px-14 sm:py-10"
+      className="absolute inset-0 z-30 flex flex-col overflow-hidden bg-ink px-6 py-6 text-ivory sm:px-14 sm:py-10"
     >
+      {/* The dining room as it looks at its best; on Enter it dissolves into the live room behind it. */}
+      <motion.img
+        src="/opening.webp"
+        alt=""
+        aria-hidden
+        initial={{ opacity: 0, scale: 1.04 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ opacity: { duration: 1.6, ease: EASE }, scale: { duration: 14, ease: "linear" } }}
+        className="pointer-events-none absolute inset-0 -z-10 h-full w-full object-cover object-center"
+      />
+      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-ink/45 sm:bg-transparent sm:bg-[linear-gradient(90deg,rgba(14,11,9,0.88)_0%,rgba(14,11,9,0.6)_38%,rgba(14,11,9,0.15)_75%,rgba(14,11,9,0.05)_100%)]" />
       <header className="flex items-center justify-between">
         <p className="font-display text-[15px] tracking-[0.5em] text-ivory/80">KNAK</p>
         <p className="eyebrow hidden text-ivory/50 sm:block">Grand Café · Paris</p>

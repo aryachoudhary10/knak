@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { Canvas } from "@react-three/fiber";
-import { MotionConfig } from "motion/react";
+import { AnimatePresence, MotionConfig } from "motion/react";
 import Warmup from "./Warmup";
 import BarSalon from "./world/BarSalon";
 import Gallery from "./world/Gallery";
@@ -124,7 +124,7 @@ export default function Experience() {
         <Subtitles />
         {phase === "playing" && !intro && isTouch && <TouchControls />}
         <MenuCard />
-        {phase === "welcome" && <Welcome />}
+        <AnimatePresence>{phase === "welcome" && <Welcome key="welcome" />}</AnimatePresence>
       </div>
     </MotionConfig>
   );

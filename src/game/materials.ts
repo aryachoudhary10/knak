@@ -46,7 +46,7 @@ function build() {
     blackIron: phys({ color: "#1a1918", metalness: 0.8, roughness: 0.4 }),
     zinc: phys({ color: "#b8bcbf", metalness: 0.9, roughness: 0.25, clearcoat: hq ? 0.3 : 0 }),
     leaf: std({ color: "#2c4a22", roughness: 0.85 }),
-    curtain: phys({ color: "#cfb788", roughness: 0.9, sheen: hq ? 0.8 : 0, sheenColor: new THREE.Color("#fff1cf") }),
+    curtain: phys({ color: "#4e101b", roughness: 0.85, sheen: hq ? 1 : 0, sheenColor: new THREE.Color("#b8455a"), sheenRoughness: 0.4 }),
     mirror: std({ map: mirrorTexture(), emissive: "#ffffff", emissiveMap: mirrorTexture(), emissiveIntensity: 0.12, metalness: 0.2, roughness: 0.15 }),
     glassWarm: std({ color: "#2a1c0c", emissive: "#ffb257", emissiveIntensity: 2.2, roughness: 0.2, toneMapped: false }),
     glassDim: std({ color: "#20160c", emissive: "#ffb060", emissiveIntensity: 0.6, roughness: 0.15 }),
@@ -58,11 +58,12 @@ function build() {
     sconceShade: std({ color: "#f5e2bd", emissive: "#ffcf8a", emissiveIntensity: 1.6, roughness: 0.9, side: THREE.DoubleSide, toneMapped: false }),
     barShade: std({ color: "#f3dcb4", emissive: "#ffbf72", emissiveIntensity: 1.35, roughness: 0.9, side: THREE.DoubleSide, toneMapped: false }),
     lanternShade: std({ color: "#f3dcb4", emissive: "#ffbf72", emissiveIntensity: 1.35, roughness: 0.9, side: THREE.DoubleSide, toneMapped: false }),
+    stepGlow: std({ color: "#3a2410", emissive: "#ffc27a", emissiveIntensity: 2.2, toneMapped: false }),
     lanternFlame: std({ color: "#fff3d0", emissive: "#ffcf80", emissiveIntensity: 6, toneMapped: false }),
     crystal: hq
       ? phys({ color: "#ffffff", transmission: 0.9, roughness: 0, ior: 2.0, thickness: 0.02, metalness: 0, envMapIntensity: 2.5, transparent: true })
       : std({ color: "#fff6e0", emissive: "#ffd9a0", emissiveIntensity: 0.6, transparent: true, opacity: 0.7, roughness: 0.05 }),
-    checker: std({ map: cloneTex(checkerTexture(), 16 / 0.9, 20 / 0.9), normalMap: floorNormal, normalScale: new THREE.Vector2(0.25, 0.25), roughness: 0.42, metalness: 0 }),
+    checker: std({ map: cloneTex(checkerTexture(), 16 / 0.9, 20 / 0.9), normalMap: floorNormal, normalScale: new THREE.Vector2(0.25, 0.25), roughness: 0.24, metalness: 0 }),
     marble: std({ map: marbleTexture(), roughness: 0.38 }),
     paving: std({ map: cloneTex(pavingTexture(), 10, 5), roughness: 0.9 }),
     road: std({ color: "#34332f", roughness: 0.6 }),

@@ -94,6 +94,7 @@ function TimeOfDay() {
     if (!hq) registerGlow("chandeliers", m.crystal as THREE.MeshStandardMaterial);
     registerGlow("sconces", m.bulb);
     registerGlow("sconces", m.sconceShade);
+    registerGlow("sconces", m.stepGlow);
     registerGlow("tableLamps", m.lampShade);
     registerGlow("tableLamps", m.flame);
     registerGlow("bar", m.barShade);

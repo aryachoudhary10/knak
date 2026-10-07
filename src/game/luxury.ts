@@ -210,7 +210,7 @@ function build() {
       const t = frescoTexture(seed);
       return new THREE.MeshStandardMaterial({ map: t, emissiveMap: t, emissive: "#ffffff", emissiveIntensity: 0.2, roughness: 1 });
     },
-    cove: new THREE.MeshStandardMaterial({ color: "#2a1a08", emissive: "#ffbe6e", emissiveIntensity: 2.4, toneMapped: false }),
+    cove: new THREE.MeshStandardMaterial({ color: "#2a1a08", emissive: "#ffbe6e", emissiveIntensity: 3.4, toneMapped: false }),
     cream: new THREE.MeshStandardMaterial({ color: "#efe3c8", roughness: 0.85 }),
     creamShade: new THREE.MeshStandardMaterial({ color: "#e2d2b0", roughness: 0.9 }),
   };

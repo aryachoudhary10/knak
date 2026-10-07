@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { CuboidCollider, CylinderCollider, RigidBody } from "@react-three/rapier";
 import * as THREE from "three";
+import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { useMats } from "@/game/materials";
 import { GALLERY, SPIRAL } from "@/game/layout";
 
@@ -37,8 +38,24 @@ function RoundStair() {
     }
     return new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 160, 0.026, 8, false);
   }, []);
+  // A warm light strip under the nosing of every tread, so the stair reads as a glowing spiral at night.
+  const strips = useMemo(() => {
+    const len = SPIRAL.r - SPIRAL.core - 0.08;
+    const mid = (SPIRAL.r + SPIRAL.core) / 2;
+    const parts = Array.from({ length: SPIRAL.treads }, (_, i) => {
+      const b = SPIRAL.start + i * TREAD_ANGLE + 0.02;
+      const g = new THREE.BoxGeometry(len, 0.018, 0.03);
+      g.rotateY(b - Math.PI / 2);
+      g.translate(SPIRAL.x + Math.sin(b) * mid, (i + 1) * RISE - 0.07, SPIRAL.z + Math.cos(b) * mid);
+      return g;
+    });
+    const merged = mergeGeometries(parts)!;
+    parts.forEach((g) => g.dispose());
+    return merged;
+  }, []);
   return (
     <group>
+      <mesh geometry={strips} material={m.stepGlow} />
       {treads.map((i) => (
         <group key={i}>
           <mesh position={[SPIRAL.x, (i + 1) * RISE - 0.03, SPIRAL.z]} material={m.marble} castShadow>
