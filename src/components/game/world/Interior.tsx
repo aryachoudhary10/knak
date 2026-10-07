@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo } from "react";
-import { CuboidCollider, RigidBody } from "@react-three/rapier";
+import { CuboidCollider, CylinderCollider, RigidBody } from "@react-three/rapier";
 import * as THREE from "three";
+import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { useMats } from "@/game/materials";
 import { luxuryMats } from "@/game/luxury";
 import { windowViewTexture } from "@/game/textures";
@@ -235,6 +236,50 @@ function Floor() {
   );
 }
 
+/** Olive trees in black lacquer planters, as in the grand cafés' corners. One shared foliage mesh per tree. */
+let oliveFoliage: THREE.BufferGeometry | null = null;
+function foliageGeo() {
+  if (oliveFoliage) return oliveFoliage;
+  const parts: THREE.BufferGeometry[] = [];
+  let seed = 3;
+  const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  for (let i = 0; i < 22; i++) {
+    const g = new THREE.IcosahedronGeometry(0.16 + rnd() * 0.14, 0);
+    const a = rnd() * Math.PI * 2;
+    const r = 0.1 + rnd() * 0.45;
+    g.scale(1, 0.75, 1);
+    g.translate(Math.cos(a) * r, 1.55 + rnd() * 0.75, Math.sin(a) * r);
+    parts.push(g.toNonIndexed());
+  }
+  oliveFoliage = mergeGeometries(parts);
+  oliveFoliage.computeVertexNormals();
+  return oliveFoliage;
+}
+
+const oliveLeaf = new THREE.MeshStandardMaterial({ color: "#59613f", roughness: 0.85, flatShading: true });
+const lacquer = new THREE.MeshStandardMaterial({ color: "#121110", roughness: 0.25, metalness: 0.1 });
+
+function OliveTree({ x, z, s = 1 }: { x: number; z: number; s?: number }) {
+  const m = useMats();
+  return (
+    <group position={[x, 0, z]} scale={s}>
+      <mesh position={[0, 0.3, 0]} material={lacquer} castShadow>
+        <cylinderGeometry args={[0.3, 0.24, 0.6, 24]} />
+      </mesh>
+      <mesh position={[0, 0.605, 0]} material={m.brass}>
+        <cylinderGeometry args={[0.305, 0.305, 0.015, 24]} />
+      </mesh>
+      <mesh position={[0, 1.05, 0]} rotation={[0, 0, 0.08]} material={m.darkWood}>
+        <cylinderGeometry args={[0.025, 0.045, 1.0, 6]} />
+      </mesh>
+      <mesh geometry={foliageGeo()} material={oliveLeaf} castShadow />
+      <RigidBody type="fixed" colliders={false}>
+        <CylinderCollider args={[0.5, 0.34]} position={[0, 0.5, 0]} />
+      </RigidBody>
+    </group>
+  );
+}
+
 export default function Interior() {
   const m = useMats();
   const sideWallFeatures = {
@@ -323,6 +368,10 @@ export default function Interior() {
       ))}
 
       <Banquette />
+
+      {[[-7.3, -1.0], [7.3, -0.95], [-4.6, -15.3], [4.6, -15.3], [-7.3, -18.9], [7.3, -18.9]].map(([x, z]) => (
+        <OliveTree key={`${x}${z}`} x={x} z={z} s={x * x > 30 ? 1.1 : 0.9} />
+      ))}
 
       {/* kitchen door, back right */}
       <group position={[6.2, 0, ROOM.minZ + 0.02]}>

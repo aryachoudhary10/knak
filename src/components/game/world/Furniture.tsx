@@ -156,7 +156,8 @@ function TableMesh({ t }: { t: Table }) {
   return (
     <group position={[t.x, 0, t.z]}>
       <mesh geometry={tableclothGeo(r, TOP, 0.62)} material={m.linen} castShadow receiveShadow />
-      <Centrepiece x={0} z={0} />
+      <Centrepiece x={0.12} z={0.1} />
+      <TableLamp x={-0.1} z={-0.12} />
       <GlowPool size={r * 1.9} />
     </group>
   );
@@ -165,7 +166,9 @@ function TableMesh({ t }: { t: Table }) {
 export function ChairMesh({ chair }: { chair: Chair }) {
   const m = useMats();
   const cane = m.caneBack;
+  // Inside: dark walnut frames with burgundy velvet seat and back. On the terrace: classic rattan and cane.
   const seat = chair.outdoor ? m.cane : m.burgundy;
+  const wood = chair.outdoor ? m.rattan : m.darkWood;
   const frame = tubeGeo(
     "chair-back",
     [
@@ -178,21 +181,27 @@ export function ChairMesh({ chair }: { chair: Chair }) {
   const legR = tubeGeo("chair-leg-r", [[0.15, 0.46, 0.13], [0.165, 0.25, 0.16], [0.18, 0, 0.2]], 0.016);
   return (
     <group position={[chair.x, 0, chair.z]} rotation={[0, chair.rot, 0]}>
-      <mesh position={[0, 0.455, 0]} rotation={[Math.PI / 2, 0, 0]} material={m.rattan}>
+      <mesh position={[0, 0.455, 0]} rotation={[Math.PI / 2, 0, 0]} material={wood}>
         <torusGeometry args={[0.215, 0.02, 8, 32]} />
       </mesh>
       <mesh position={[0, 0.48, 0]} material={seat} castShadow>
         <cylinderGeometry args={[0.2, 0.21, 0.05, 32]} />
       </mesh>
-      <mesh position={[0, 0.18, -0.02]} rotation={[Math.PI / 2, 0, 0]} material={m.rattan}>
+      <mesh position={[0, 0.18, -0.02]} rotation={[Math.PI / 2, 0, 0]} material={wood}>
         <torusGeometry args={[0.18, 0.012, 6, 32]} />
       </mesh>
-      <mesh geometry={frame} material={m.rattan} castShadow />
-      <mesh geometry={legL} material={m.rattan} />
-      <mesh geometry={legR} material={m.rattan} />
-      <mesh position={[0, 0.71, -0.215]} rotation={[-0.15, 0, 0]} material={cane}>
-        <planeGeometry args={[0.3, 0.3]} />
-      </mesh>
+      <mesh geometry={frame} material={wood} castShadow />
+      <mesh geometry={legL} material={wood} />
+      <mesh geometry={legR} material={wood} />
+      {chair.outdoor ? (
+        <mesh position={[0, 0.71, -0.215]} rotation={[-0.15, 0, 0]} material={cane}>
+          <planeGeometry args={[0.3, 0.3]} />
+        </mesh>
+      ) : (
+        <mesh position={[0, 0.7, -0.2]} rotation={[-0.15, 0, 0]} material={m.burgundy} castShadow>
+          <boxGeometry args={[0.31, 0.34, 0.045]} />
+        </mesh>
+      )}
     </group>
   );
 }

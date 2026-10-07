@@ -2,10 +2,13 @@ import { create } from "zustand";
 import type { Character } from "@/lib/character";
 import { randomCharacter } from "@/lib/character";
 
+/** A contextual prompt: who or what you are facing, a line of detail, and the action E (or a tap) takes. */
+type PromptText = { title: string; meta: string; action: string };
 export type Prompt =
-  | { kind: "sit"; chairId: string; label: string }
-  | { kind: "stand"; label: string }
-  | { kind: "order"; label: string }
+  | ({ kind: "sit"; chairId: string } & PromptText)
+  | ({ kind: "stand" } & PromptText)
+  | ({ kind: "order" } & PromptText)
+  | ({ kind: "speak" } & PromptText)
   | null;
 
 export type CartLine = { itemId: string; qty: number };
@@ -42,6 +45,7 @@ type GameState = {
   closeMenu: () => void;
   addToCart: (itemId: string) => void;
   removeFromCart: (itemId: string) => void;
+  clearCart: () => void;
   setTouch: (isTouch: boolean) => void;
   setPointerLocked: (locked: boolean) => void;
   endIntro: () => void;
@@ -86,8 +90,7 @@ export const useGame = create<GameState>((set, get) => ({
     const cur = get().prompt;
     const same =
       cur === p ||
-      (cur && p && cur.kind === p.kind && cur.label === p.label &&
-        (cur.kind !== "sit" || (p.kind === "sit" && cur.chairId === p.chairId)));
+      (cur && p && cur.kind === p.kind && cur.title === p.title && cur.meta === p.meta && cur.action === p.action);
     if (!same) set({ prompt: p });
   },
   sit: (chairId) => set({ seatedChairId: chairId, prompt: null }),
@@ -106,6 +109,7 @@ export const useGame = create<GameState>((set, get) => ({
         .map((l) => (l.itemId === itemId ? { ...l, qty: l.qty - 1 } : l))
         .filter((l) => l.qty > 0),
     })),
+  clearCart: () => set({ cart: [] }),
   setTouch: (isTouch) => set({ isTouch }),
   setPointerLocked: (pointerLocked) => set({ pointerLocked }),
   endIntro: () => set({ intro: false, yaw: 0, pitch: 0 }),

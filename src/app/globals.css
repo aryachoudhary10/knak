@@ -6,10 +6,21 @@
   --font-serif: var(--font-display);
 }
 
+/* House palette: warm ivory paper, near-black ink, muted champagne, and deep bordeaux used sparingly. */
+@theme {
+  --color-ivory: #f3eee5;
+  --color-paper: #f7f3ec;
+  --color-ink: #151311;
+  --color-stone: #8b837a;
+  --color-champagne: #c4b08c;
+  --color-bordeaux: #5a1b23;
+  --ease-house: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 html,
 body {
-  background: #120d0a;
-  color: #f6efe2;
+  background: #0e0c0b;
+  color: #f3eee5;
   font-family: var(--font-sans), system-ui, sans-serif;
   overscroll-behavior: none;
 }
@@ -28,7 +39,63 @@ body {
   75% { opacity: 1; }
   100% { opacity: 0; letter-spacing: 0.45em; }
 }
+@keyframes captionIn {
+  0% { opacity: 0; transform: translateY(6px); filter: blur(4px); }
+  18% { opacity: 1; transform: translateY(0); filter: blur(0); }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
+}
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@layer components {
+/* An understated text action: small caps sans with a hairline that draws in on hover. */
+.text-action {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6em;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding-bottom: 0.35em;
+}
+.text-action::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.35;
+  transform-origin: left;
+  transition: opacity 300ms var(--ease-house), transform 400ms var(--ease-house);
+}
+.text-action:hover::after,
+.text-action:focus-visible::after {
+  opacity: 1;
+}
+.text-action .arrow {
+  transition: transform 300ms var(--ease-house);
+}
+.text-action:hover .arrow {
+  transform: translateX(4px);
+}
+.text-action:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+.eyebrow {
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-size: 0.66rem;
+  font-weight: 400;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+}
 }

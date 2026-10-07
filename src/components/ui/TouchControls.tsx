@@ -53,9 +53,9 @@ export default function TouchControls() {
           useGame.getState().setMove(0, 0);
         }}
       >
-        <div className="pointer-events-none absolute bottom-10 left-8 h-32 w-32 rounded-full border-2 border-[#e6c77a]/60 bg-[#1c1410]/30">
+        <div className="pointer-events-none absolute bottom-12 left-10 h-28 w-28 rounded-full border border-ivory/25">
           <div
-            className="absolute left-1/2 top-1/2 h-14 w-14 rounded-full border-2 border-[#e6c77a] bg-[#6e1a24]/80 shadow-lg"
+            className="absolute left-1/2 top-1/2 h-9 w-9 rounded-full border border-ivory/60 bg-ivory/10"
             style={{
               transform: `translate(calc(-50% + ${knob.x}px), calc(-50% + ${knob.y}px))`,
               transition: knob.active ? "none" : "transform 120ms ease-out",

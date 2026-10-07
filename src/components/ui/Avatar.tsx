@@ -4,7 +4,7 @@ import type { Character } from "@/lib/character";
 export default function Avatar({ c, size = 120 }: { c: Character; size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 120 120" aria-label={`${c.name}'s character`}>
-      <circle cx="60" cy="60" r="58" fill="#f4ecdc" stroke="#c9a24a" strokeWidth="2" />
+      <circle cx="60" cy="60" r="58" fill="#e9e2d6" stroke="#c4b08c" strokeWidth="1.5" />
       <clipPath id={`clip-${c.name}`}>
         <circle cx="60" cy="60" r="57" />
       </clipPath>

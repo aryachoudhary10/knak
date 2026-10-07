@@ -98,6 +98,21 @@ export const STAFF: Npc[] = [
   },
 ];
 
+const WORDS = ["", "one", "two", "three", "four", "five", "six"];
+
+/** How a table introduces itself in the contextual prompt: "TABLE 07", "FOR THREE · BY THE WINDOWS · TWO DINING". */
+export function tableInfo(chairId: string) {
+  const tableId = chairId.split("-")[0];
+  const index = TABLES.findIndex((t) => t.id === tableId);
+  const t = TABLES[index];
+  const seats = [...CHAIRS, ...BANQUETTE_SEATS].filter((c) => c.id.startsWith(`${tableId}-`));
+  const dining = seats.filter((c) => OCCUPIED_CHAIRS.has(c.id)).length;
+  const place =
+    t.shape === "bistro" ? "On the terrace" : t.shape === "rect" ? "On the banquette" : t.x < -3 ? "By the windows" : "Beneath the chandeliers";
+  const meta = [`For ${WORDS[seats.length] ?? seats.length}`, place, dining > 0 ? `${WORDS[dining]} dining` : "Free tonight"];
+  return { title: `Table ${String(index + 1).padStart(2, "0")}`, meta: meta.join(" · ") };
+}
+
 /** A guest waiting for a takeaway pickup at the end of the counter. */
 export const WAITING_GUEST: Npc = {
   id: "waiting",

@@ -1,83 +1,174 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import { useGame } from "@/game/store";
 import { interact } from "@/components/game/Player";
-import Avatar from "./Avatar";
+import { runtime } from "@/game/runtime";
 
+const EASE = [0.22, 1, 0.36, 1] as const;
+
+/**
+ * Exploration UI, kept to the corners like a film title card: the wordmark, sound, the hour, your table,
+ * and one contextual prompt pinned beside whoever or whatever you are facing.
+ */
 export default function Hud() {
-  const prompt = useGame((s) => s.prompt);
   const isTouch = useGame((s) => s.isTouch);
   const locked = useGame((s) => s.pointerLocked);
   const menuOpen = useGame((s) => s.menuOpen);
-  const character = useGame((s) => s.character);
-  const cartCount = useGame((s) => s.cart.reduce((n, l) => n + l.qty, 0));
-  const openMenu = useGame((s) => s.openMenu);
-  const soundOn = useGame((s) => s.soundOn);
-  const toggleSound = useGame((s) => s.toggleSound);
 
   return (
-    <div className="pointer-events-none absolute inset-0 z-10 select-none">
-      {/* top bar */}
-      <div className="flex items-start justify-between p-3 sm:p-4">
-        <div className="flex items-center gap-2 rounded-full border border-[#c9a24a]/50 bg-[#1c1410]/85 py-1 pl-1 pr-4">
-          <Avatar c={character} size={32} />
-          <span className="font-display text-lg tracking-[0.3em] text-[#e6c77a]">KNAK</span>
-        </div>
-        <div className="flex items-center gap-2">
-        <button
-          onClick={toggleSound}
-          aria-label={soundOn ? "Mute sound" : "Turn sound on"}
-          className="pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full border border-[#c9a24a]/50 bg-[#1c1410]/85 text-[#e6c77a]"
-        >
-          {soundOn ? (
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 5 6 9H2v6h4l5 4V5z" /><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14" /></svg>
-          ) : (
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 5 6 9H2v6h4l5 4V5z" /><path d="m23 9-6 6M17 9l6 6" /></svg>
-          )}
-        </button>
-        {cartCount > 0 && (
-          <button
-            onClick={() => {
-              if (document.pointerLockElement) document.exitPointerLock();
-              openMenu();
-            }}
-            className="pointer-events-auto rounded-full border border-[#c9a24a]/60 bg-[#6e1a24]/90 px-4 py-2 text-sm text-[#f6efe2] shadow-lg"
-          >
-            Your order · {cartCount}
-          </button>
+    <div className="pointer-events-none absolute inset-0 z-10 select-none text-ivory [text-shadow:0_1px_10px_rgba(0,0,0,0.45)]">
+      <AnimatePresence>
+        {!menuOpen && (
+          <motion.div key="chrome" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }}>
+            <Wordmark />
+            <SoundToggle />
+            <Hour />
+            <YourTable />
+          </motion.div>
         )}
-        </div>
-      </div>
+      </AnimatePresence>
 
-      {/* crosshair */}
-      {!isTouch && !menuOpen && (
-        <div className="absolute left-1/2 top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#f6efe2]/80 shadow" />
-      )}
+      {!isTouch && !menuOpen && <div className="absolute left-1/2 top-1/2 h-[3px] w-[3px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-ivory/55" />}
 
-      {/* interaction prompt */}
-      {prompt && !menuOpen && (
-        <div className="absolute inset-x-0 bottom-28 flex justify-center sm:bottom-24">
-          {isTouch ? (
+      {!menuOpen && <ContextPrompt isTouch={isTouch} />}
+
+      <AnimatePresence>
+        {!isTouch && !locked && !menuOpen && (
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4 }}
+            className="eyebrow absolute inset-x-0 top-1/2 mt-8 text-center text-ivory/60"
+          >
+            Click to look around
+          </motion.p>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function Wordmark() {
+  return (
+    <div className="absolute left-6 top-6 sm:left-11 sm:top-10">
+      <p className="font-display text-[22px] leading-none tracking-[0.55em] text-ivory/90 sm:text-[26px]">KNAK</p>
+      <p className="eyebrow mt-2 text-[9px] text-ivory/60">Grand Café</p>
+    </div>
+  );
+}
+
+function SoundToggle() {
+  const soundOn = useGame((s) => s.soundOn);
+  const toggleSound = useGame((s) => s.toggleSound);
+  return (
+    <button
+      onClick={toggleSound}
+      aria-label={soundOn ? "Mute sound" : "Turn sound on"}
+      className="pointer-events-auto absolute right-6 top-6 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-ivory/35 text-ivory/80 transition-colors duration-300 hover:border-ivory/70 hover:text-ivory sm:right-11 sm:top-9"
+    >
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3">
+        <path d="M11 5 6 9H2v6h4l5 4V5z" />
+        {soundOn ? <path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14" /> : <path d="m22 9-6 6M16 9l6 6" />}
+      </svg>
+    </button>
+  );
+}
+
+function moodFor(h: number) {
+  if (h < 5 || h >= 22) return "A late evening at KNAK";
+  if (h < 11) return "A slow morning at KNAK";
+  if (h < 16) return "An unhurried afternoon at KNAK";
+  if (h < 19) return "The golden hour at KNAK";
+  return "A quieter evening at KNAK";
+}
+
+/** The guest's own local time, the way a hotel lobby clock reminds you where the evening is. */
+function Hour() {
+  const [now, setNow] = useState<Date | null>(null);
+  useEffect(() => {
+    const tick = () => setNow(new Date());
+    tick();
+    const id = setInterval(tick, 20_000);
+    return () => clearInterval(id);
+  }, []);
+  if (!now) return null;
+  const time = now.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  return (
+    <div className="absolute bottom-7 left-6 hidden sm:bottom-10 sm:left-11 sm:block">
+      <p className="font-sans text-[19px] font-light tracking-[0.18em] text-ivory/90">{time}</p>
+      <p className="eyebrow mt-2 max-w-[11rem] text-[9px] leading-[1.7] text-ivory/60">{moodFor(now.getHours())}</p>
+    </div>
+  );
+}
+
+function YourTable() {
+  const count = useGame((s) => s.cart.reduce((n, l) => n + l.qty, 0));
+  const openMenu = useGame((s) => s.openMenu);
+  return (
+    <button
+      onClick={() => {
+        if (document.pointerLockElement) document.exitPointerLock();
+        openMenu();
+      }}
+      className="pointer-events-auto absolute bottom-7 right-6 flex cursor-pointer items-center gap-5 text-ivory/80 transition-colors duration-300 hover:text-ivory sm:bottom-10 sm:right-11"
+    >
+      <span className="eyebrow text-[10px]">Your table</span>
+      <span className="flex items-center gap-2">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
+          <path d="M5 8h14l-1 13H6L5 8z" />
+          <path d="M9 8V6a3 3 0 0 1 6 0v2" />
+        </svg>
+        <span className="font-sans text-xs tabular-nums">{count}</span>
+      </span>
+    </button>
+  );
+}
+
+function ContextPrompt({ isTouch }: { isTouch: boolean }) {
+  const prompt = useGame((s) => s.prompt);
+  const key = prompt ? `${prompt.kind}-${prompt.title}-${prompt.action}` : "none";
+  return (
+    <div
+      ref={(el) => {
+        runtime.promptEl = el;
+      }}
+      data-mode="center"
+      className="group absolute left-0 top-0 will-change-transform"
+    >
+      <AnimatePresence mode="wait">
+        {prompt && (
+          <motion.div
+            key={key}
+            initial={{ opacity: 0, filter: "blur(4px)" }}
+            animate={{ opacity: 1, filter: "blur(0px)" }}
+            exit={{ opacity: 0, filter: "blur(3px)" }}
+            transition={{ duration: 0.45, ease: EASE }}
+            className="flex -translate-y-1/2 items-center group-data-[flip=1]:-translate-x-full group-data-[flip=1]:flex-row-reverse group-data-[mode=center]:-translate-x-1/2"
+          >
+            <span className="h-[8px] w-[8px] -translate-x-1/2 rounded-full border border-ivory bg-ivory/90 group-data-[flip=1]:translate-x-1/2 group-data-[mode=center]:hidden" />
+            <span className="h-px w-12 bg-ivory/55 group-data-[mode=center]:hidden sm:w-16" />
             <button
+              type="button"
               onClick={interact}
-              className="pointer-events-auto rounded-full border-2 border-[#e6c77a] bg-[#6e1a24]/90 px-6 py-3 font-display text-lg text-[#f6efe2] shadow-xl active:scale-95"
+              tabIndex={-1}
+              className={`flex flex-col px-4 text-left group-data-[flip=1]:items-end group-data-[flip=1]:text-right group-data-[mode=center]:items-center group-data-[mode=center]:text-center ${isTouch ? "pointer-events-auto" : ""}`}
             >
-              {prompt.label}
+              <span className="font-display text-[19px] uppercase leading-none tracking-[0.16em] text-ivory sm:text-[21px]">{prompt.title}</span>
+              <span className="eyebrow mt-2 text-[9px] text-ivory/70">{prompt.meta}</span>
+              <span className="mt-3 h-px w-full min-w-24 bg-ivory/30" />
+              <span className="mt-3 flex items-center gap-3">
+                {!isTouch && <kbd className="font-sans text-[9px] tracking-[0.2em] text-ivory/45">E</kbd>}
+                <span className="eyebrow text-[10px] text-ivory">
+                  {prompt.action} <span className="ml-1">→</span>
+                </span>
+              </span>
             </button>
-          ) : (
-            <div className="flex items-center gap-2 rounded-full border border-[#c9a24a]/60 bg-[#1c1410]/80 px-4 py-2 text-[#f6efe2]">
-              <kbd className="rounded border border-[#e6c77a] px-2 font-sans text-sm text-[#e6c77a]">E</kbd>
-              <span className="font-display text-lg">{prompt.label}</span>
-            </div>
-          )}
-        </div>
-      )}
-
-      {!isTouch && !locked && !menuOpen && (
-        <div className="absolute inset-x-0 top-1/2 mt-8 flex justify-center">
-          <p className="rounded-full bg-[#1c1410]/70 px-4 py-1.5 text-sm text-[#f6efe2]/90">Click to look around</p>
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -203,7 +203,7 @@ let mats: ReturnType<typeof build> | null = null;
 function build() {
   return {
     cabochon: (fieldW: number, fieldD: number) =>
-      new THREE.MeshStandardMaterial({ map: repeat(cabochonTexture(), fieldW, fieldD), roughness: 0.3, metalness: 0 }),
+      new THREE.MeshStandardMaterial({ map: repeat(cabochonTexture(), fieldW, fieldD), roughness: 0.2, metalness: 0 }),
     nero: (w: number, d: number) => new THREE.MeshStandardMaterial({ map: repeat(neroTexture(), w / 1.5, d / 1.5), roughness: 0.32, metalness: 0 }),
     runner: (len: number) => new THREE.MeshStandardMaterial({ map: repeat(runnerTexture(), 1, len / 3.2), roughness: 1, metalness: 0 }),
     fresco: (seed: number) => {

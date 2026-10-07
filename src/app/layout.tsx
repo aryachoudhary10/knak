@@ -1,17 +1,20 @@
 import type { Metadata, Viewport } from "next";
-import { Cormorant_Garamond, Inter } from "next/font/google";
+import { Bodoni_Moda, Jost } from "next/font/google";
 import "./globals.css";
 
-const display = Cormorant_Garamond({
+/** High-contrast Didone for the wordmark, titles and dish names, as on a couture house's menu card. */
+const display = Bodoni_Moda({
   variable: "--font-display",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500", "600"],
   style: ["normal", "italic"],
 });
 
-const sans = Inter({
+/** A restrained geometric sans, Parisian Art Deco in origin, for navigation, prices and hints. */
+const sans = Jost({
   variable: "--font-sans",
   subsets: ["latin"],
+  weight: ["300", "400", "500"],
 });
 
 export const metadata: Metadata = {
@@ -24,7 +27,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#120d0a",
+  themeColor: "#0e0c0b",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

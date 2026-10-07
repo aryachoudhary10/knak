@@ -11,4 +11,8 @@ export const runtime = {
   cashierAt: -1,
   /** Set to a copy of elapsed time every frame so DOM code can stamp events. */
   now: 0,
+  /** World point the contextual prompt points at (host, counter, table), or null to sit at the bottom centre. */
+  promptAnchor: null as THREE.Vector3 | null,
+  /** The prompt's DOM node, positioned every frame from the 3D anchor. */
+  promptEl: null as HTMLElement | null,
 };

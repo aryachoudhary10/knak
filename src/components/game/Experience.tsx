@@ -14,6 +14,7 @@ import Counter from "./world/Counter";
 import People from "./world/People";
 import Player from "./Player";
 import Director from "./Director";
+import PromptTracker from "./PromptTracker";
 import Effects from "./Effects";
 import Lighting from "./Lighting";
 import IntroOverlay from "@/components/ui/IntroOverlay";
@@ -67,7 +68,7 @@ export default function Experience() {
 
   return (
     <MotionConfig reducedMotion="user">
-      <div className="fixed inset-0 bg-[#120d0a]">
+      <div className="fixed inset-0 bg-ink">
         <Canvas
           dpr={dpr}
           camera={{ fov: 72, near: 0.05, far: 400, position: [0, 1.6, 7.5] }}
@@ -102,6 +103,7 @@ export default function Experience() {
               <Player />
             </Physics>
             <Director />
+            <PromptTracker />
             <Effects ao={ao} />
           </Suspense>
         </Canvas>

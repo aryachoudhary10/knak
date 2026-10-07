@@ -6,7 +6,10 @@ import { CapsuleCollider, RigidBody, type RapierRigidBody } from "@react-three/r
 import * as THREE from "three";
 import { useGame } from "@/game/store";
 import { runtime } from "@/game/runtime";
-import { CHAIRS, CHAIR_BY_ID, COUNTER_SPOT, OCCUPIED_CHAIRS, SPAWN } from "@/game/layout";
+import { CHAIRS, CHAIR_BY_ID, COUNTER, COUNTER_SPOT, OCCUPIED_CHAIRS, SPAWN, STAFF, TABLES, tableInfo } from "@/game/layout";
+import { greetGuest } from "./Director";
+
+const HOST = STAFF.find((n) => n.id === "host")!;
 
 const WALK = 3.0;
 const RUN = 5.2;
@@ -34,6 +37,7 @@ export function interact() {
   const p = s.prompt;
   if (!p) return;
   if (p.kind === "sit") s.sit(p.chairId);
+  if (p.kind === "speak") greetGuest();
   if (p.kind === "order") {
     s.openMenu();
     if (document.pointerLockElement) document.exitPointerLock();
@@ -172,8 +176,10 @@ export default function Player() {
 
     // Find what the visitor is looking at.
     if (s.phase !== "playing" || s.menuOpen) return;
+    const anchor = (x: number, y: number, z: number) => (runtime.promptAnchor ??= new THREE.Vector3()).set(x, y, z);
     if (s.seatedChairId) {
-      s.setPrompt({ kind: "stand", label: "Stand up" });
+      runtime.promptAnchor = null;
+      s.setPrompt({ kind: "stand", ...tableInfo(s.seatedChairId), action: "Leave the table" });
       return;
     }
     const px = runtime.playerPos.x;
@@ -183,7 +189,16 @@ export default function Player() {
     const toCounterX = COUNTER_SPOT.x - px;
     const toCounterZ = COUNTER_SPOT.z - pz;
     if (Math.abs(toCounterX) < 3.2 && Math.abs(toCounterZ) < 1.6 && lookZ < -0.3) {
-      s.setPrompt({ kind: "order", label: "Order at the counter" });
+      anchor(2.4, 1.5, COUNTER.z);
+      s.setPrompt({ kind: "order", title: "The Counter", meta: "Louis · Maître de comptoir", action: "Explore the menu" });
+      return;
+    }
+    const toHostX = HOST.x - px;
+    const toHostZ = HOST.z - pz;
+    const hostD = Math.hypot(toHostX, toHostZ);
+    if (hostD < 2.4 && (toHostX * lookX + toHostZ * lookZ) / hostD > 0.6) {
+      anchor(HOST.x - 0.45, 1.25, HOST.z);
+      s.setPrompt({ kind: "speak", title: "Amélie", meta: "Your host", action: "Speak" });
       return;
     }
     let best: { id: string; score: number } | null = null;
@@ -198,7 +213,11 @@ export default function Player() {
       const score = dot - d * 0.3;
       if (!best || score > best.score) best = { id: c.id, score };
     }
-    s.setPrompt(best ? { kind: "sit", chairId: best.id, label: "Sit down" } : null);
+    if (best) {
+      const t = TABLES.find((tb) => tb.id === best.id.split("-")[0]);
+      if (t) anchor(t.x, 1.05, t.z);
+    }
+    s.setPrompt(best ? { kind: "sit", chairId: best.id, ...tableInfo(best.id), action: "Take a seat" } : null);
   });
 
   return (

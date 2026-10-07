@@ -1,14 +1,20 @@
 "use client";
 
 import { useProgress } from "@react-three/drei";
+import { motion } from "motion/react";
 import { useGame } from "@/game/store";
 import Avatar from "./Avatar";
 import { requestLook } from "@/components/game/Experience";
 import { startAudio } from "@/game/audio";
-import { motion } from "motion/react";
-import { Reveal } from "./Reveal";
-import { BorderTrail } from "@/components/motion-primitives/border-trail";
 
+const EASE = [0.22, 1, 0.36, 1] as const;
+const rise = (delay: number) => ({
+  initial: { opacity: 0, y: 10, filter: "blur(6px)" },
+  animate: { opacity: 1, y: 0, filter: "blur(0px)" },
+  transition: { duration: 0.9, delay, ease: EASE },
+});
+
+/** The invitation: a quiet card of type over the street at dusk, not a login screen. */
 export default function Welcome() {
   const character = useGame((s) => s.character);
   const reroll = useGame((s) => s.rerollCharacter);
@@ -17,53 +23,85 @@ export default function Welcome() {
   const { active, progress } = useProgress();
   const ready = !active || progress >= 100;
 
+  const go = () => {
+    startAudio();
+    // Load voices early so the first greeting has a good one.
+    if (typeof speechSynthesis !== "undefined") speechSynthesis.getVoices();
+    enter();
+    requestAnimationFrame(() => requestLook());
+  };
+
   return (
-    <div className="absolute inset-0 z-30 flex items-center justify-center bg-[radial-gradient(ellipse_at_center,rgba(28,20,16,0.55),rgba(18,13,10,0.92))] p-4">
-      <motion.div
-        initial={{ opacity: 0, y: 28, scale: 0.97 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ type: "spring", stiffness: 140, damping: 20 }}
-        className="w-full max-w-md rounded-2xl border border-[#c9a24a]/50 bg-[#f6efe2] p-8 text-center text-[#2a1d14] shadow-2xl"
-      >
-        <h1 className="font-display text-5xl font-semibold tracking-[0.35em] text-[#a8812f]">
-          <Reveal text="KNAK" per="char" stagger={0.12} delay={0.15} />
-        </h1>
-        <p className="mt-1 font-display text-lg italic text-[#6e1a24]">
-          <Reveal text="Grand café · Home delivery" delay={0.6} />
-        </p>
-        <motion.div initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ delay: 0.8, duration: 0.6, ease: "easeOut" }} className="mx-auto my-6 h-px w-24 bg-[#c9a24a]" />
-        <div className="flex flex-col items-center gap-3">
-          <Avatar c={character} size={112} />
-          <p className="text-sm text-[#5a4a3a]">
-            Tonight you are <span className="font-semibold text-[#2a1d14]">{character.name}</span>
-          </p>
-          <button
-            onClick={reroll}
-            className="cursor-pointer rounded-full border border-[#c9a24a] px-4 py-1.5 text-xs uppercase tracking-widest text-[#8f6a24] transition hover:bg-[#c9a24a]/10"
-          >
-            Change my look
-          </button>
-        </div>
-        <button
-          disabled={!ready}
-          onClick={() => {
-            startAudio();
-            // Load voices early so the first greeting has a good one.
-            if (typeof speechSynthesis !== "undefined") speechSynthesis.getVoices();
-            enter();
-            requestAnimationFrame(() => requestLook());
-          }}
-          className="relative mt-8 w-full cursor-pointer rounded-full bg-[#6e1a24] py-3 font-display text-xl tracking-wider text-[#f6efe2] shadow-lg transition hover:bg-[#831f2b] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#c9a24a] active:scale-[0.98] disabled:cursor-wait disabled:opacity-60"
-        >
-          {ready && <BorderTrail size={70} className="bg-gradient-to-l from-transparent via-[#ecd08a] to-transparent" transition={{ repeat: Infinity, duration: 4, ease: "linear" }} />}
-          {ready ? "Enter KNAK" : `Setting the tables… ${Math.round(progress)}%`}
-        </button>
-        <p className="mt-4 text-xs leading-relaxed text-[#7a6a58]">
-          {isTouch
-            ? "Left thumb to walk, drag on the right to look around, tap the gold button to sit or order."
-            : "W A S D to walk, mouse to look, E to sit or order, Shift to walk faster, Esc to free the mouse."}
-        </p>
-      </motion.div>
-    </div>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.8 }}
+      className="absolute inset-0 z-30 flex flex-col bg-ink/70 px-6 py-6 text-ivory sm:px-14 sm:py-10"
+    >
+      <header className="flex items-center justify-between">
+        <p className="font-display text-[15px] tracking-[0.5em] text-ivory/80">KNAK</p>
+        <p className="eyebrow hidden text-ivory/50 sm:block">Grand Café · Paris</p>
+      </header>
+
+      <main className="flex flex-1 flex-col justify-center sm:max-w-xl">
+        <motion.p {...rise(0.2)} className="eyebrow text-champagne">
+          An invitation
+        </motion.p>
+        <motion.h1 {...rise(0.35)} className="mt-6 font-display text-[64px] font-normal leading-none tracking-[0.28em] sm:text-[104px]">
+          KNAK
+        </motion.h1>
+        <motion.p {...rise(0.55)} className="mt-5 font-display text-lg italic text-ivory/75 sm:text-xl">
+          A grand café of Paris, brought to your door.
+        </motion.p>
+
+        <motion.div {...rise(0.75)} className="mt-12 h-px w-12 bg-champagne/60" />
+
+        <motion.div {...rise(0.85)} className="mt-10">
+          <p className="eyebrow text-ivory/50">This evening’s guest</p>
+          <div className="mt-4 flex items-center gap-5">
+            <Avatar c={character} size={52} />
+            <div>
+              <p className="font-display text-2xl">{character.name}</p>
+              <button onClick={reroll} className="text-action mt-1 text-[10px] text-ivory/60 hover:text-ivory">
+                Change appearance
+              </button>
+            </div>
+          </div>
+        </motion.div>
+
+        <motion.div {...rise(1.05)} className="mt-14">
+          {ready ? (
+            <button onClick={go} className="text-action text-[13px] text-ivory">
+              Enter KNAK <span className="arrow">→</span>
+            </button>
+          ) : (
+            <div className="w-56">
+              <p className="eyebrow text-ivory/60">Preparing your table · {Math.round(progress)}%</p>
+              <div className="mt-3 h-px w-full bg-ivory/15">
+                <div className="h-px bg-champagne transition-[width] duration-500 ease-out" style={{ width: `${progress}%` }} />
+              </div>
+            </div>
+          )}
+        </motion.div>
+      </main>
+
+      <motion.footer {...rise(1.3)} className="eyebrow flex flex-wrap gap-x-8 gap-y-2 text-[10px] text-ivory/45">
+        {isTouch ? (
+          <>
+            <span>Left thumb · Walk</span>
+            <span>Right thumb · Look</span>
+            <span>Tap a prompt · Interact</span>
+          </>
+        ) : (
+          <>
+            <span>W A S D · Walk</span>
+            <span>Mouse · Look</span>
+            <span>E · Interact</span>
+            <span>Shift · Stroll faster</span>
+            <span>Esc · Release the mouse</span>
+          </>
+        )}
+      </motion.footer>
+    </motion.div>
   );
 }
