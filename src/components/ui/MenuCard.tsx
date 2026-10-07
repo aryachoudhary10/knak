@@ -6,6 +6,7 @@ import { useGame } from "@/game/store";
 import { CATEGORIES, MENU, formatINR, menuById, type MenuItem } from "@/data/menu";
 import { requestLook } from "@/components/game/Experience";
 import { profileComplete, useAuth } from "@/game/auth";
+import { placeOrder } from "@/game/orders";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 const swap = {
@@ -15,7 +16,12 @@ const swap = {
   transition: { duration: 0.4, ease: EASE },
 };
 
-type View = { name: "carte" } | { name: "dish"; id: string } | { name: "table" } | { name: "sent"; ref: string; to: string | null };
+type View =
+  | { name: "carte" }
+  | { name: "dish"; id: string }
+  | { name: "table" }
+  | { name: "pay" }
+  | { name: "sent"; ref: string; to: string | null; total: number };
 
 export default function MenuCard() {
   const open = useGame((s) => s.menuOpen);
@@ -85,9 +91,28 @@ function Carte() {
       auth.open("order");
       return;
     }
+    // Nothing is saved yet: the guest pays first, and the order is written only when they confirm.
+    setView({ name: "pay" });
+  };
+  const [paying, setPaying] = useState<{ busy: boolean; error: string | null }>({ busy: false, error: null });
+  const confirmPaid = async () => {
+    const auth = useAuth.getState();
     const p = auth.profile;
+    if (auth.status === "off" || !p) {
+      // Sign-in isn't set up on this copy of the site, so there is nowhere to save; show the preview ending.
+      clearCart();
+      setView({ name: "sent", ref: "Preview", to: null, total });
+      return;
+    }
+    setPaying({ busy: true, error: null });
+    const res = await placeOrder(cart, p);
+    if ("error" in res) {
+      setPaying({ busy: false, error: res.error });
+      return;
+    }
+    setPaying({ busy: false, error: null });
     clearCart();
-    setView({ name: "sent", ref: String(1000 + Math.floor(Math.random() * 9000)), to: p ? `${p.address}, ${p.pincode}` : null });
+    setView({ name: "sent", ref: String(res.order.number), to: `${p.address}, ${p.pincode}`, total: res.order.total });
   };
 
   return (
@@ -154,13 +179,19 @@ function Carte() {
             </motion.div>
           )}
 
+          {view.name === "pay" && (
+            <motion.div key="pay" {...swap} className="flex min-h-0 flex-1 flex-col">
+              <PayView total={total} busy={paying.busy} error={paying.error} onBack={() => setView({ name: "table" })} onPaid={confirmPaid} />
+            </motion.div>
+          )}
+
           {view.name === "sent" && (
             <motion.div key="sent" {...swap} className="flex flex-1 flex-col items-center justify-center px-8 text-center">
               <p className="eyebrow text-stone">Order No. {view.ref}</p>
               <p className="mt-6 font-display text-6xl italic">Merci.</p>
               <p className="mt-6 max-w-sm font-display text-lg leading-relaxed text-ink/80">Your table’s order is with the kitchen. We will let you know the moment it leaves for your door.</p>
               {view.to && <p className="mt-4 max-w-sm font-sans text-[12px] font-light leading-relaxed text-stone">Delivering to {view.to}</p>}
-              <p className="eyebrow mt-10 text-[9px] text-stone">Preview · delivery details and payment arrive in the next phase</p>
+              <p className="eyebrow mt-10 text-[9px] text-stone">{formatINR(view.total)} · payment to be confirmed by KNAK</p>
               <button onClick={done} className="text-action mt-12 text-ink">
                 Return to the room <span className="arrow">→</span>
               </button>
@@ -325,7 +356,7 @@ function TableView({ total, onBack, onComplete }: { total: number; onBack: () =>
         </div>
         <DeliverTo />
         <div className="mt-8 flex items-center justify-between gap-6">
-          <p className="max-w-[16rem] font-sans text-[11px] font-light leading-relaxed text-stone">Prepared fresh and delivered hot. Payment follows.</p>
+          <p className="max-w-[16rem] font-sans text-[11px] font-light leading-relaxed text-stone">Prepared fresh and delivered hot. Pay by UPI on the next page.</p>
           <button onClick={onComplete} disabled={cart.length === 0} className="text-action text-bordeaux">
             Complete order <span className="arrow">→</span>
           </button>
@@ -353,5 +384,82 @@ function DeliverTo() {
         Change
       </button>
     </div>
+  );
+}
+
+/**
+ * Paying: the guest's phone, held out with KNAK's UPI code on screen. For now the code is a sample that pays no one;
+ * the owner's real QR replaces it. The order is saved only when the guest says they have paid.
+ */
+function PayView({ total, busy, error, onBack, onPaid }: { total: number; busy: boolean; error: string | null; onBack: () => void; onPaid: () => void }) {
+  return (
+    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-6 pt-8 sm:px-16 sm:pt-12">
+      <button onClick={onBack} disabled={busy} className="text-action self-start text-[10px] text-stone hover:text-ink">
+        <span className="arrow">←</span> Your table
+      </button>
+      <p className="eyebrow mt-10 text-stone">Payment</p>
+      <h2 className="mt-4 font-display text-[38px] italic leading-none">Scan to pay</h2>
+      <div className="flex flex-1 flex-col items-center py-8">
+        {/* the phone */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, ease: EASE, delay: 0.1 }}
+          className="w-[210px] rounded-[30px] bg-ink p-[9px] shadow-[0_18px_40px_rgba(0,0,0,0.25)]"
+        >
+          <div className="flex flex-col items-center rounded-[22px] bg-paper px-5 pb-6 pt-5">
+            <span className="h-1 w-10 rounded-full bg-ink/15" />
+            <p className="mt-4 font-display text-[15px] tracking-[0.4em] text-ink">KNAK</p>
+            <p className="eyebrow mt-1 text-[7px] text-stone">Grand Café</p>
+            <SampleQR className="mt-4 h-[150px] w-[150px]" />
+            <p className="mt-4 font-sans text-xl tabular-nums text-ink">{formatINR(total)}</p>
+            <p className="eyebrow mt-2 text-[7px] text-stone">Any UPI app</p>
+          </div>
+        </motion.div>
+        <p className="mt-6 max-w-xs text-center font-sans text-[11px] font-light leading-relaxed text-stone">
+          Scan with GPay, PhonePe or Paytm and pay {formatINR(total)}. This is a sample code for now, so no money is taken.
+        </p>
+      </div>
+      <footer className="border-t border-ink/10 py-6">
+        {error && <p className="mb-4 font-sans text-[12px] leading-relaxed text-bordeaux">{error}</p>}
+        <div className="flex items-center justify-between gap-6">
+          <p className="max-w-[15rem] font-sans text-[11px] font-light leading-relaxed text-stone">Your order goes to the kitchen once you confirm.</p>
+          <button onClick={onPaid} disabled={busy} className="text-action shrink-0 text-bordeaux">
+            {busy ? "Sending to the kitchen" : "I have paid"} <span className="arrow">→</span>
+          </button>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+/** A stand-in QR code: the three corner squares and a fixed scatter of modules. It encodes nothing, so nobody can pay a stranger by mistake. */
+function SampleQR({ className }: { className?: string }) {
+  const N = 29;
+  const cells: [number, number][] = [];
+  let seed = 20261007;
+  const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const finder = (x: number, y: number) => (x < 8 && y < 8) || (x > N - 9 && y < 8) || (x < 8 && y > N - 9);
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (!finder(x, y) && rand() < 0.48) cells.push([x, y]);
+  const eye = (x: number, y: number) => (
+    <g key={`${x}-${y}`}>
+      <rect x={x + 0.5} y={y + 0.5} width={6} height={6} fill="none" stroke="#14110f" strokeWidth={1} />
+      <rect x={x + 2} y={y + 2} width={3} height={3} fill="#14110f" />
+    </g>
+  );
+  return (
+    <svg viewBox={`-1 -1 ${N + 2} ${N + 2}`} className={className} shapeRendering="crispEdges" aria-label="Sample UPI code">
+      <rect x={-1} y={-1} width={N + 2} height={N + 2} fill="#fbf8f2" />
+      {cells.map(([x, y]) => (
+        <rect key={`${x}.${y}`} x={x} y={y} width={1} height={1} fill="#14110f" />
+      ))}
+      {eye(0, 0)}
+      {eye(N - 7, 0)}
+      {eye(0, N - 7)}
+      <rect x={N / 2 - 3} y={N / 2 - 3} width={6} height={6} fill="#fbf8f2" />
+      <text x={N / 2} y={N / 2 + 1.6} textAnchor="middle" fontSize={4.4} fontFamily="serif" fill="#6e1423">
+        K
+      </text>
+    </svg>
   );
 }
