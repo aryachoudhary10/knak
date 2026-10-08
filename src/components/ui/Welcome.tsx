@@ -6,7 +6,7 @@ import { motion } from "motion/react";
 import { useGame } from "@/game/store";
 import { portrait, useLook } from "@/game/look";
 import { requestLook } from "@/components/game/Experience";
-import { startAudio } from "@/game/audio";
+import { startAudio, unlockSpeech } from "@/game/audio";
 import { useAuth } from "@/game/auth";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
@@ -37,6 +37,7 @@ export default function Welcome() {
 
   const go = () => {
     startAudio();
+    unlockSpeech();
     // Load voices early so the first greeting has a good one.
     if (typeof speechSynthesis !== "undefined") speechSynthesis.getVoices();
     enter();

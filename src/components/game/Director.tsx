@@ -7,25 +7,15 @@ import { useGame } from "@/game/store";
 import { SPAWN } from "@/game/layout";
 import { peers } from "@/game/live";
 import { runtime } from "@/game/runtime";
-import { setInsideAmount, setMuted, speak } from "@/game/audio";
-import { useAuth } from "@/game/auth";
+import { prepareLine, setInsideAmount, setMuted, speak } from "@/game/audio";
+import { cashierGreeting, hostGreeting } from "@/game/host";
 
 const INTRO_SECONDS = 8.5;
-/** KNAK is in India: guests are welcomed with Namaste at any hour. */
-const salut = () => "Namaste";
-
-/** Amélie greets a signed-in guest by the first name in their profile, anyone else warmly but generically. */
-function hostLine() {
-  const first = useAuth.getState().profile?.name.trim().split(/\s+/)[0];
-  const rest = "I'm Amélie. Please, take any table you like, or see Louis at the counter whenever you're ready to order.";
-  return first ? `${salut()}, ${first}! Welcome to KNAK. ${rest}` : `${salut()}, and welcome to KNAK! ${rest}`;
-}
-const cashierLine = () => `${salut()}! Here is our menu. Everything is cooked fresh and sent out hot for delivery. Take your time.`;
 
 /** Amélie's welcome: she waves, speaks and the line appears above her head. Also what "Speak" replays. */
 export function greetGuest() {
   runtime.greetAt = runtime.now;
-  const HOST_LINE = hostLine();
+  const HOST_LINE = hostGreeting();
   const ms = speak(HOST_LINE, { prefer: "female", pitch: 1.1 });
   useGame.getState().say("host", "Amélie", HOST_LINE, ms);
 }
@@ -92,7 +82,7 @@ export default function Director() {
       useGame.subscribe((s, prev) => {
         if (s.menuOpen && !prev.menuOpen && runtime.cashierAt < 0) {
           runtime.cashierAt = runtime.now;
-          const line = cashierLine();
+          const line = cashierGreeting();
           const ms = speak(line, { prefer: "male", pitch: 0.95 });
           s.say("cashier", "Louis", line, ms);
         }
@@ -123,6 +113,8 @@ export default function Director() {
         path.updateArcLengths();
         arrival.current = null;
         lookFrom.copy(look);
+        // Fetch Amélie's welcome while the guest walks up, so she speaks the moment they arrive.
+        prepareLine(hostGreeting(), "female");
       }
       const t = Math.min(1, (clock.elapsedTime - start.current) / INTRO_SECONDS);
       // Each guest ends the walk at a free spot on the carpet, so two people arriving together never stand inside

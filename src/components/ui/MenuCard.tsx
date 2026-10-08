@@ -7,6 +7,7 @@ import { CATEGORIES, MENU, formatINR, menuById, type MenuItem } from "@/data/men
 import { requestLook } from "@/components/game/Experience";
 import { profileComplete, useAuth } from "@/game/auth";
 import { placeOrder } from "@/game/orders";
+import { rememberGuest } from "@/game/host";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 const swap = {
@@ -112,6 +113,7 @@ function Carte() {
     }
     setPaying({ busy: false, error: null });
     clearCart();
+    void rememberGuest(true);
     setView({ name: "sent", ref: String(res.order.number), to: `${p.address}, ${p.pincode}`, total: res.order.total });
   };
 

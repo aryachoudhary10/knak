@@ -440,26 +440,113 @@ export function isMuted() {
   return muted;
 }
 
-/** Speak a line in a warm voice, if the browser has one. Returns roughly how long it will take (ms). */
+/**
+ * The staff's voices. A natural recorded-quality voice comes from /api/voice (Google's Indian English voices); when
+ * that isn't set up or can't be reached, the browser's own voice speaks instead, choosing its most natural one.
+ */
+let naturalOff = false;
+const clips = new Map<string, Promise<AudioBuffer | null>>();
+
+function clip(text: string, who: "f" | "m") {
+  const key = `${who}:${text}`;
+  let p = clips.get(key);
+  if (!p) {
+    p = (async () => {
+      if (naturalOff || !engine) return null;
+      try {
+        const res = await fetch(`/api/voice?v=${who}&t=${encodeURIComponent(text)}`);
+        if (res.status === 404) naturalOff = true;
+        if (!res.ok) return null;
+        return await engine.ctx.decodeAudioData(await res.arrayBuffer());
+      } catch {
+        return null;
+      }
+    })();
+    clips.set(key, p);
+    // A failed line can be tried again next time.
+    void p.then((b) => b || clips.delete(key));
+  }
+  return p;
+}
+
+/** Fetch a line ahead of time, so it plays the instant it is needed. */
+export function prepareLine(text: string, prefer: "female" | "male" = "female") {
+  if (engine && !muted) void clip(text, prefer === "male" ? "m" : "f");
+}
+
+let playing: AudioBufferSourceNode | null = null;
+
+/**
+ * Phones only allow speech that starts from a tap. Called from the "Enter" tap: speaking a silent line there unlocks
+ * the browser voice for the rest of the visit.
+ */
+export function unlockSpeech() {
+  if (typeof speechSynthesis === "undefined") return;
+  try {
+    const u = new SpeechSynthesisUtterance(" ");
+    u.volume = 0;
+    speechSynthesis.speak(u);
+    speechSynthesis.getVoices();
+  } catch {}
+}
+
+/** The most natural-sounding English voice this browser has, preferring Indian English. */
+function bestVoice(prefer: "female" | "male") {
+  const voices = speechSynthesis.getVoices().filter((v) => v.lang.toLowerCase().startsWith("en"));
+  const femaleHint = /female|samantha|victoria|karen|moira|serena|zira|susan|kate|fiona|veena|heera|neerja|aria|jenny|libby|sonia|swara/i;
+  const maleHint = /\bmale|daniel|alex|arthur|george|guy|ryan|david|rishi|ravi|prabhat|madhur/i;
+  const hint = prefer === "male" ? maleHint : femaleHint;
+  const score = (v: SpeechSynthesisVoice) =>
+    (/natural|neural|enhanced|premium|online/i.test(v.name) ? 8 : 0) +
+    (/google/i.test(v.name) ? 3 : 0) +
+    (v.lang.toLowerCase() === "en-in" ? 4 : v.lang.toLowerCase() === "en-gb" ? 2 : 0) +
+    (hint.test(v.name) ? 3 : 0) +
+    (v.localService ? 0 : 1);
+  return voices.sort((a, b) => score(b) - score(a))[0];
+}
+
+function browserSpeak(text: string, opts: { pitch?: number; rate?: number; prefer?: "female" | "male" }) {
+  if (typeof speechSynthesis === "undefined") return;
+  const u = new SpeechSynthesisUtterance(text);
+  const voice = bestVoice(opts.prefer ?? "female");
+  if (voice) {
+    u.voice = voice;
+    u.lang = voice.lang;
+  }
+  u.rate = opts.rate ?? 0.97;
+  u.pitch = opts.pitch ?? 1.02;
+  u.volume = 1;
+  // Android drops a line spoken straight after cancel(), so only cancel when something is actually speaking.
+  if (speechSynthesis.speaking || speechSynthesis.pending) {
+    speechSynthesis.cancel();
+    setTimeout(() => speechSynthesis.speak(u), 80);
+  } else speechSynthesis.speak(u);
+}
+
+/** Speak a line. Returns roughly how long it will take (ms), for the caption above the speaker. */
 export function speak(text: string, opts: { pitch?: number; rate?: number; prefer?: "female" | "male" } = {}) {
   const ms = Math.max(2500, text.length * 65);
-  if (muted || typeof speechSynthesis === "undefined") return ms;
-  const voices = speechSynthesis.getVoices();
-  const english = voices.filter((v) => v.lang.startsWith("en"));
-  const femaleHint = /female|samantha|victoria|karen|moira|serena|zira|susan|kate|fiona|google uk english female|aria|jenny|libby|sonia/i;
-  const maleHint = /male|daniel|alex|arthur|george|guy|ryan|david|google uk english male/i;
-  const hint = opts.prefer === "male" ? maleHint : femaleHint;
-  const voice =
-    english.find((v) => hint.test(v.name) && v.lang === "en-GB") ??
-    english.find((v) => hint.test(v.name)) ??
-    english.find((v) => v.lang === "en-GB") ??
-    english[0];
-  const u = new SpeechSynthesisUtterance(text);
-  if (voice) u.voice = voice;
-  u.rate = opts.rate ?? 0.95;
-  u.pitch = opts.pitch ?? 1.05;
-  u.volume = 0.9;
-  speechSynthesis.cancel();
-  speechSynthesis.speak(u);
+  if (muted) return ms;
+  const e = engine;
+  if (!e || naturalOff) {
+    browserSpeak(text, opts);
+    return ms;
+  }
+  void clip(text, opts.prefer === "male" ? "m" : "f").then((buf) => {
+    if (muted) return;
+    if (!buf) {
+      browserSpeak(text, opts);
+      return;
+    }
+    playing?.stop();
+    const src = e.ctx.createBufferSource();
+    src.buffer = buf;
+    const g = e.ctx.createGain();
+    g.gain.value = 1.1;
+    src.connect(g).connect(e.ctx.destination);
+    if (e.ctx.state === "suspended") void e.ctx.resume();
+    src.start();
+    playing = src;
+  });
   return ms;
 }
