@@ -11,6 +11,7 @@ import { chairTakenLive, peers } from "@/game/live";
 import { openChat, useChat } from "@/game/chat";
 import { CHAIRS, CHAIR_BY_ID, COUNTER, COUNTER_SPOT, OCCUPIED_CHAIRS, SPAWN, STAFF, TABLES, tableInfo } from "@/game/layout";
 import { greetGuest } from "./Director";
+import { FILM } from "@/game/film";
 
 const HOST = STAFF.find((n) => n.id === "host")!;
 
@@ -95,7 +96,7 @@ export default function Player() {
 
   useFrame((_, rawDt) => {
     const rb = body.current;
-    if (!rb) return;
+    if (!rb || FILM) return; // the film's own camera is in charge
     const dt = Math.min(rawDt, 0.05);
     const s = useGame.getState();
 
