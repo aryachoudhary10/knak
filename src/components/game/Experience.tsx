@@ -116,9 +116,11 @@ export default function Experience() {
             onIncline={() => setDpr((d) => Math.min(window.devicePixelRatio, isTouch ? 2 : 1.5, d + 0.15))}
           />
           )}
-          {build && <Lighting />}
+          {/* Everything that may load files sits inside this boundary: anything that suspends outside it would
+              blank the whole page back to the loading screen and replay the invitation from the start. */}
           {build && (
           <Suspense fallback={null}>
+            <Lighting />
             <Physics gravity={[0, -9.81, 0]} timeStep="vary">
               <Street />
               <Facade />
