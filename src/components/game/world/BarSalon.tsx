@@ -7,7 +7,7 @@ import { CuboidCollider, RigidBody } from "@react-three/rapier";
 import * as THREE from "three";
 import { useMats } from "@/game/materials";
 import { frescoTexture, luxuryMats } from "@/game/luxury";
-import { bottlesTexture } from "@/game/textures";
+import { BottleSet, GLASS, LABELS, type Bottle, type Shape } from "./BackBar";
 import { BAR_ARCH, ISLAND, SALON, WINTER, archSpans } from "@/game/layout";
 
 const { x0: X0, x1: X1, z0: Z0, z1: Z1, stepFrom: S0, stepTo: S1, floor: F } = SALON;
@@ -47,6 +47,33 @@ function ellipseTube(rx: number, rz: number, radius: number) {
   return new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, true), 96, radius, 6, true);
 }
 
+/** Bottles in rings on the island's tower, labels facing out, a different family on each tier. */
+const TOWER_TIERS = [1.32, 2.02, 2.72];
+const TOWER = (() => {
+  let rnd = 11;
+  const rand = () => (rnd = (rnd * 16807) % 2147483647) / 2147483647;
+  const out: Record<Shape, Bottle[]> = { wine: [], cognac: [], square: [], slim: [] };
+  const fam: Shape[][] = [["cognac", "square"], ["slim", "wine"], ["square", "slim"]];
+  TOWER_TIERS.forEach((y, ti) => {
+    const n = 14;
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2 + ti * 0.2;
+      const shape = fam[ti][i % 2];
+      const r = 0.42;
+      out[shape].push({
+        x: Math.sin(a) * r,
+        z: Math.cos(a) * r,
+        y: y + 0.012,
+        ry: a,
+        s: 0.95 + rand() * 0.1,
+        glass: GLASS[shape][Math.floor(rand() * GLASS[shape].length)],
+        label: LABELS[Math.floor(rand() * LABELS.length)],
+      });
+    }
+  });
+  return out;
+})();
+
 /** The oval island bar: dark marble body, white marble top with a brass edge, a brass foot rail, and a lit bottle tower at its heart. */
 function IslandBar() {
   const m = useMats();
@@ -62,25 +89,37 @@ function IslandBar() {
     [rx, rz, h],
   );
   const nero = useMemo(() => lux.nero(3, 2), [lux]);
-  const bottles = useMemo(() => {
-    const t = bottlesTexture().clone();
-    t.wrapS = THREE.RepeatWrapping;
-    t.repeat.set(3, 1);
-    t.needsUpdate = true;
-    return t;
-  }, []);
   return (
     <group position={[ISLAND.x, F, ISLAND.z]}>
       <mesh geometry={geo.body} material={nero} castShadow />
       <mesh geometry={geo.top} position={[0, h - 0.05, 0]} material={m.marble} />
       <mesh geometry={geo.edge} position={[0, h - 0.04, 0]} material={m.brass} />
       <mesh geometry={geo.rail} position={[0, 0.2, 0]} material={m.brass} />
-      {/* bottle tower: three lit tiers ringed in brass, rising to a canopy */}
+      {/* bottle tower: a lit core, round glass tiers with brass rims, and real bottles standing round each tier */}
       <mesh position={[0, 2.2, 0]}>
-        <cylinderGeometry args={[0.55, 0.55, 2.2, 24, 1, true]} />
-        <meshStandardMaterial ref={barGlow} map={bottles} emissive="#ffffff" emissiveMap={bottles} emissiveIntensity={0.7} roughness={0.4} side={THREE.DoubleSide} />
+        <cylinderGeometry args={[0.16, 0.16, 2.2, 16, 1, true]} />
+        <meshStandardMaterial color="#2a1d14" metalness={0.85} roughness={0.2} emissive="#5a3416" emissiveIntensity={0.3} />
       </mesh>
-      {[1.1, 1.85, 2.6, 3.3].map((y) => (
+      <mesh position={[0, 2.2, 0]} material={m.brass}>
+        <cylinderGeometry args={[0.035, 0.035, 2.3, 8]} />
+      </mesh>
+      {TOWER_TIERS.map((y) => (
+        <group key={y}>
+          <mesh position={[0, y, 0]}>
+            <cylinderGeometry args={[0.56, 0.56, 0.02, 32]} />
+            <meshStandardMaterial color="#3a332c" metalness={0.4} roughness={0.08} transparent opacity={0.55} />
+          </mesh>
+          {/* warm light washing up the bottles from each tier */}
+          <mesh position={[0, y - 0.015, 0]} rotation={[Math.PI / 2, 0, 0]}>
+            <ringGeometry args={[0.5, 0.54, 48]} />
+            <meshStandardMaterial ref={barGlow} color="#000000" emissive="#ffc27a" emissiveIntensity={1.4} side={THREE.DoubleSide} />
+          </mesh>
+        </group>
+      ))}
+      {(Object.keys(TOWER) as Shape[]).map((sh) => (
+        <BottleSet key={sh} shape={sh} items={TOWER[sh]} glow={0.9} />
+      ))}
+      {[...TOWER_TIERS, 3.3].map((y) => (
         <mesh key={y} position={[0, y, 0]} rotation={[Math.PI / 2, 0, 0]} material={m.brass}>
           <torusGeometry args={[0.57, 0.025, 6, 32]} />
         </mesh>

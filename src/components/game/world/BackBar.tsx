@@ -21,7 +21,7 @@ const SHELVES = [1.74, 2.32, 2.9, 3.48];
 const SHELF_D = 0.3;
 const BOTTLE_Z = WALL + 0.17;
 
-type Shape = "wine" | "cognac" | "square" | "slim";
+export type Shape = "wine" | "cognac" | "square" | "slim";
 
 /** Bottle profiles (radius, height in metres), turned on a lathe. */
 const PROFILES: Record<Shape, { pts: [number, number][]; segs: number; r: number; label: [number, number] }> = {
@@ -33,15 +33,16 @@ const PROFILES: Record<Shape, { pts: [number, number][]; segs: number; r: number
 };
 
 /** Glass and what is inside it: cognac amber, whisky gold, dark wine green, clear gin, the odd cobalt or ruby liqueur. */
-const GLASS: Record<Shape, string[]> = {
+export const GLASS: Record<Shape, string[]> = {
   wine: ["#1d2a17", "#24331c", "#3a1015", "#1a2416"],
   cognac: ["#7a3a0e", "#8f4a14", "#5e2a0a", "#a35a1c"],
   square: ["#a8681c", "#8a5214", "#c58a2e", "#6e3c10"],
   slim: ["#d9d6cb", "#c9d2c8", "#1f2b55", "#5c1018", "#d8cfa8"],
 };
-const LABELS = ["#efe6d2", "#f3ecdd", "#141210", "#e9dcc0", "#2a1a12", "#c9b27a"];
+export const LABELS = ["#efe6d2", "#f3ecdd", "#141210", "#e9dcc0", "#2a1a12", "#c9b27a"];
 
-type Bottle = { x: number; y: number; s: number; glass: string; label: string };
+/** A bottle standing somewhere: z defaults to the back bar's shelves, ry turns its label (default: facing the room). */
+export type Bottle = { x: number; y: number; z?: number; ry?: number; s: number; glass: string; label: string };
 
 /** Where every bottle stands: the same arrangement on every visit. */
 const BOTTLES = (() => {
@@ -75,7 +76,8 @@ const BOTTLES = (() => {
   }
 })();
 
-function BottleSet({ shape, items }: { shape: Shape; items: Bottle[] }) {
+/** `glow` lights the bottles from within, as if backlit through the glass, for displays without a lamp of their own. */
+export function BottleSet({ shape, items, glow = 0 }: { shape: Shape; items: Bottle[]; glow?: number }) {
   const body = useRef<THREE.InstancedMesh>(null);
   const label = useRef<THREE.InstancedMesh>(null);
   const cap = useRef<THREE.InstancedMesh>(null);
@@ -101,8 +103,8 @@ function BottleSet({ shape, items }: { shape: Shape; items: Bottle[] }) {
     const q = new THREE.Quaternion();
     const c = new THREE.Color();
     items.forEach((b, i) => {
-      q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), (i % 5) * 0.04 - 0.08);
-      mtx.compose(new THREE.Vector3(b.x, b.y, BOTTLE_Z), q, new THREE.Vector3(1, b.s, 1));
+      q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), (b.ry ?? 0) + (i % 5) * 0.04 - 0.08);
+      mtx.compose(new THREE.Vector3(b.x, b.y, b.z ?? BOTTLE_Z), q, new THREE.Vector3(1, b.s, 1));
       body.current?.setMatrixAt(i, mtx);
       label.current?.setMatrixAt(i, mtx);
       cap.current?.setMatrixAt(i, mtx);
@@ -121,10 +123,10 @@ function BottleSet({ shape, items }: { shape: Shape; items: Bottle[] }) {
   return (
     <>
       <instancedMesh ref={body} args={[geo, undefined, items.length]}>
-        <meshStandardMaterial roughness={0.08} metalness={0.1} envMapIntensity={1.6} />
+        <meshStandardMaterial roughness={0.08} metalness={0.1} envMapIntensity={1.6} emissive="#8a4f1c" emissiveIntensity={glow} />
       </instancedMesh>
       <instancedMesh ref={label} args={[labelGeo, undefined, items.length]}>
-        <meshStandardMaterial roughness={0.7} side={THREE.DoubleSide} />
+        <meshStandardMaterial roughness={0.7} side={THREE.DoubleSide} emissive="#fff2dc" emissiveIntensity={glow * 0.35} />
       </instancedMesh>
       <instancedMesh ref={cap} args={[capGeo, undefined, items.length]}>
         <meshStandardMaterial roughness={0.35} metalness={0.6} />

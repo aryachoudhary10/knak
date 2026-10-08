@@ -5,10 +5,30 @@ import { useMemo } from "react";
 import { CuboidCollider, RigidBody } from "@react-three/rapier";
 import { useMats } from "@/game/materials";
 import { signTexture } from "@/game/textures";
-import BackBar from "./BackBar";
+import BackBar, { BottleSet, type Bottle } from "./BackBar";
 import { COUNTER, ROOM } from "@/game/layout";
 
 const { z: CZ, halfWidth: HW, depth: DEP, height: HT } = COUNTER;
+
+/** Bottles in use: a few open on the counter by the till, and the barman's working row along the back bar top. */
+const IN_USE: { wine: Bottle[]; cognac: Bottle[]; slim: Bottle[] } = {
+  wine: [
+    { x: 2.55, y: HT + 0.035, z: CZ + 0.12, s: 1, glass: "#3a1015", label: "#efe6d2" },
+    { x: 2.68, y: HT + 0.035, z: CZ - 0.05, s: 1, glass: "#1d2a17", label: "#f3ecdd" },
+    { x: 0.6, y: 1.04, z: ROOM.minZ + 0.5, s: 1, glass: "#24331c", label: "#e9dcc0" },
+    { x: 0.75, y: 1.04, z: ROOM.minZ + 0.5, s: 1, glass: "#3a1015", label: "#141210" },
+  ],
+  cognac: [
+    { x: 1.1, y: 1.04, z: ROOM.minZ + 0.5, s: 1, glass: "#8f4a14", label: "#efe6d2" },
+    { x: 1.27, y: 1.04, z: ROOM.minZ + 0.5, s: 1, glass: "#7a3a0e", label: "#2a1a12" },
+  ],
+  slim: [
+    { x: 1.55, y: 1.04, z: ROOM.minZ + 0.5, s: 1, glass: "#d9d6cb", label: "#c9b27a" },
+    { x: 1.66, y: 1.04, z: ROOM.minZ + 0.5, s: 1, glass: "#1f2b55", label: "#efe6d2" },
+    { x: 1.77, y: 1.04, z: ROOM.minZ + 0.5, s: 1, glass: "#5c1018", label: "#f3ecdd" },
+    { x: 2.85, y: HT + 0.035, z: CZ + 0.08, s: 1, glass: "#d8cfa8", label: "#141210" },
+  ],
+};
 
 function EspressoMachine({ x }: { x: number }) {
   const m = useMats();
@@ -126,6 +146,9 @@ export default function Counter() {
         <boxGeometry args={[9.3, 0.04, 0.74]} />
       </mesh>
       <EspressoMachine x={-2.2} />
+      <BottleSet shape="wine" items={IN_USE.wine} />
+      <BottleSet shape="cognac" items={IN_USE.cognac} />
+      <BottleSet shape="slim" items={IN_USE.slim} />
 
       {/* glass shelves of real bottles before a bronze mirror */}
       <BackBar />
