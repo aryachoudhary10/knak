@@ -22,6 +22,7 @@ import { runtime } from "@/game/runtime";
 import { useGame } from "@/game/store";
 import { useAuth } from "@/game/auth";
 import { setTable, startChat, stopChat } from "@/game/chat";
+import { startService, stopService } from "@/game/service";
 import { GUEST_AVATARS, Human, type Clip } from "./Human";
 
 /** Feet sit this far below the player's capsule centre (see Player). */
@@ -168,6 +169,7 @@ function LiveSync() {
     if (phase !== "playing" || status !== "signedIn" || !uid) return;
     connectLive({ id: uid, name: firstRef.current });
     startChat(uid);
+    startService(uid);
     // Sitting at a table joins its table talk; standing up leaves it.
     const seat = (chair: string | null) => void setTable(chair ? chair.split("-")[0] : null);
     seat(useGame.getState().seatedChairId);
@@ -177,6 +179,7 @@ function LiveSync() {
     return () => {
       off();
       stopChat();
+      stopService();
       disconnectLive();
     };
   }, [phase, status, uid]);

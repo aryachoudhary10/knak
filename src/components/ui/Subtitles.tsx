@@ -6,7 +6,7 @@ import { runtime } from "@/game/runtime";
 import { Reveal } from "./Reveal";
 
 /** The same role lines the prompts use, so a speaker reads exactly like their label. */
-const ROLE: Record<string, string> = { host: "Your host", cashier: "Maître de comptoir" };
+const ROLE: Record<string, string> = { host: "Your host", cashier: "Maître de comptoir", waiter: "Your waiter" };
 
 /**
  * What staff say, set like their name labels: a dot by the speaker's head and a hairline out to the name in the

@@ -41,6 +41,8 @@ import TouchControls from "@/components/ui/TouchControls";
 import { useGame } from "@/game/store";
 import { runtime } from "@/game/runtime";
 import { useClock } from "@/game/clock";
+import { captureRef } from "@/game/ref";
+import { useService } from "@/game/service";
 
 function usePointerLook() {
   useEffect(() => {
@@ -88,8 +90,9 @@ export default function Experience() {
   useEffect(() => {
     useGame.getState().setTouch(window.matchMedia("(pointer: coarse)").matches);
     useAuth.getState().init();
+    captureRef();
     // Handy for debugging and automated screenshots in development.
-    if (process.env.NODE_ENV !== "production") Object.assign(window, { __knak: useGame, __runtime: runtime, __clock: useClock, __live: { peers, addSample }, __chat: useChat, __auth: useAuth });
+    if (process.env.NODE_ENV !== "production") Object.assign(window, { __knak: useGame, __runtime: runtime, __clock: useClock, __live: { peers, addSample }, __chat: useChat, __auth: useAuth, __service: useService });
   }, []);
 
   return (

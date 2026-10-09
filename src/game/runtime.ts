@@ -17,4 +17,6 @@ export const runtime = {
   promptEl: null as HTMLElement | null,
   /** The spoken line's DOM node, held above the speaker's head every frame. */
   speechEl: null as HTMLElement | null,
+  /** Where Théo the waiter is, so his spoken line can follow him. */
+  waiterPos: new THREE.Vector3(0.5, 0, -2.5),
 };

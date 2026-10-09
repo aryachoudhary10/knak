@@ -26,6 +26,8 @@ export type Order = {
   status: Status;
   payment: Payment;
   created_at: string;
+  /** the creator code whose link brought this guest */
+  ref?: string | null;
 };
 
 const ACTIVE: { status: Status; title: string; next?: { to: Status; label: string } }[] = [
@@ -123,7 +125,7 @@ function Note({ title, body, children }: { title: string; body?: string; childre
 function Board() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [tab, setTab] = useState<"active" | "done" | "team">("active");
+  const [tab, setTab] = useState<"active" | "done" | "creators" | "team">("active");
   const [now, setNow] = useState(() => Date.now());
   const seen = useRef(new Set<string>());
 
@@ -191,6 +193,7 @@ function Board() {
           [
             ["active", `Tonight · ${active.length}`],
             ["done", `Finished · ${done.length}`],
+            ["creators", "Creators"],
             ["team", "Team"],
           ] as const
         ).map(([k, label]) => (
@@ -238,6 +241,7 @@ function Board() {
         </div>
       )}
 
+      {tab === "creators" && <Creators />}
       {tab === "team" && <Team />}
     </div>
   );
@@ -273,6 +277,7 @@ function Ticket({ o, now, next, update }: { o: Order; now: number; next?: { to: 
         <p>
           {o.address}, {o.pincode}
         </p>
+        {o.ref && <p className="eyebrow mt-1.5 text-[9px] text-bordeaux/80">Via {o.ref}</p>}
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-2 font-sans text-[12px]">
@@ -377,6 +382,72 @@ function Team() {
         </form>
       )}
       {msg && <p className="mt-3 font-sans text-[13px] text-stone">{msg}</p>}
+    </div>
+  );
+}
+
+type CreatorRow = { ref: string; visits: number; orders: number; revenue: number; last_order: string | null };
+
+/** Which creators' links bring visits and real orders. Each creator shares knak.vercel.app/?ref=theirname. */
+function Creators() {
+  const [rows, setRows] = useState<CreatorRow[] | null>(null);
+  const [code, setCode] = useState("");
+  const [copied, setCopied] = useState(false);
+  useEffect(() => {
+    let live = true;
+    void supabase()
+      ?.rpc("creator_stats")
+      .then(({ data }) => live && setRows((data as CreatorRow[]) ?? []));
+    return () => {
+      live = false;
+    };
+  }, []);
+  const clean = code.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "").slice(0, 32);
+  const link = `${location.origin}/?ref=${clean}`;
+  return (
+    <div className="mt-6 max-w-2xl">
+      <p className="font-sans text-[14px] text-stone">Give each creator their own link. Every visit and order that comes through it is counted here, for 30 days after their visit.</p>
+      <div className="mt-5 flex flex-wrap items-center gap-3">
+        <input
+          value={code}
+          onChange={(e) => {
+            setCode(e.target.value);
+            setCopied(false);
+          }}
+          placeholder="Their name, e.g. priya"
+          className="min-w-0 flex-1 border-b border-ink/25 bg-transparent py-2 font-sans text-[15px] outline-none focus:border-bordeaux"
+        />
+        <button
+          disabled={clean.length < 2}
+          onClick={() => void navigator.clipboard?.writeText(link).then(() => setCopied(true))}
+          className="cursor-pointer border border-ink px-4 py-2 font-sans text-[11px] uppercase tracking-[0.2em] hover:bg-ink hover:text-paper disabled:opacity-30"
+        >
+          {copied ? "Copied" : "Copy link"}
+        </button>
+      </div>
+      {clean.length >= 2 && <p className="mt-2 break-all font-sans text-[13px] text-ink/70">{link}</p>}
+
+      <table className="mt-8 w-full font-sans text-[14px]">
+        <thead>
+          <tr className="eyebrow border-b border-ink/15 text-left text-[9px] text-stone">
+            <th className="pb-2 font-normal">Creator</th>
+            <th className="pb-2 text-right font-normal">Visits</th>
+            <th className="pb-2 text-right font-normal">Orders</th>
+            <th className="pb-2 text-right font-normal">Sales</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-ink/10">
+          {rows?.map((r) => (
+            <tr key={r.ref}>
+              <td className="py-3">{r.ref}</td>
+              <td className="py-3 text-right">{r.visits}</td>
+              <td className="py-3 text-right">{r.orders}</td>
+              <td className="py-3 text-right">{formatINR(r.revenue)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {rows?.length === 0 && <p className="mt-6 font-display text-xl italic text-stone">No creator visits yet. Share a link above to start.</p>}
     </div>
   );
 }

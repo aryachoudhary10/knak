@@ -126,7 +126,8 @@ export function Human({ avatar, pick, seed = 0 }: HumanProps) {
   );
 }
 
-export function preloadPeople() {
-  (Object.keys(AVATARS) as AvatarId[]).forEach((id) => useGLTF.preload(avatarUrl(id), false, true));
+/** Start fetching these people (all of them by default) and both sets of movements. */
+export function preloadPeople(ids = Object.keys(AVATARS) as AvatarId[]) {
   (["female", "male"] as Gender[]).forEach((g) => useGLTF.preload(animUrl(g), false, true));
+  ids.forEach((id) => useGLTF.preload(avatarUrl(id), false, true));
 }

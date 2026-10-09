@@ -25,8 +25,9 @@ export default function PromptTracker() {
     const speech = runtime.speechEl;
     const who = useGame.getState().subtitle?.who;
     const npc = who ? STAFF.find((n) => n.id === who) : undefined;
-    if (speech && npc) {
-      head.set(npc.x, (npc.y ?? 0) + HEAD, npc.z);
+    if (speech && (npc || who === "waiter")) {
+      if (npc) head.set(npc.x, (npc.y ?? 0) + HEAD, npc.z);
+      else head.copy(runtime.waiterPos).setY(HEAD);
       const far = head.distanceTo(camera.position);
       head.project(camera);
       // Beside the head on the side with more room, the way the name labels sit beside a person.

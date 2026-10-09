@@ -17,9 +17,15 @@ const sans = Jost({
   weight: ["300", "400", "500"],
 });
 
+const DESCRIPTION = "Walk into KNAK, take a seat, and order from the counter for home delivery.";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://knak.vercel.app"),
   title: "KNAK · Grand Café",
-  description: "Walk into KNAK, take a seat, and order from the counter for home delivery.",
+  description: DESCRIPTION,
+  // The preview card when the link is shared on WhatsApp, Instagram or X; the image is opengraph-image.jpg beside this file.
+  openGraph: { title: "KNAK · Grand Café", description: DESCRIPTION, siteName: "KNAK", type: "website", locale: "en_IN" },
+  twitter: { card: "summary_large_image", title: "KNAK · Grand Café", description: DESCRIPTION },
 };
 
 export const viewport: Viewport = {
