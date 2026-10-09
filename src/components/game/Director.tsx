@@ -15,9 +15,9 @@ const INTRO_SECONDS = 8.5;
 /** Amélie's welcome: she waves, speaks and the line appears above her head. Also what "Speak" replays. */
 export function greetGuest() {
   runtime.greetAt = runtime.now;
-  const HOST_LINE = hostGreeting();
-  const ms = speak(HOST_LINE, { prefer: "female", pitch: 1.1 });
-  useGame.getState().say("host", "Amélie", HOST_LINE, ms);
+  const line = hostGreeting();
+  const ms = speak(line.text, { prefer: "female", pitch: 1.1, clip: line.clip });
+  useGame.getState().say("host", "Amélie", line.text, ms);
 }
 
 /** Places along the red carpet and pavement in front of the doors, nearest first. */
@@ -83,8 +83,8 @@ export default function Director() {
         if (s.menuOpen && !prev.menuOpen && runtime.cashierAt < 0) {
           runtime.cashierAt = runtime.now;
           const line = cashierGreeting();
-          const ms = speak(line, { prefer: "male", pitch: 0.95 });
-          s.say("cashier", "Louis", line, ms);
+          const ms = speak(line.text, { prefer: "male", pitch: 0.95, clip: line.clip });
+          s.say("cashier", "Louis", line.text, ms);
         }
         if (s.soundOn !== prev.soundOn) setMuted(!s.soundOn);
       }),
@@ -114,7 +114,8 @@ export default function Director() {
         arrival.current = null;
         lookFrom.copy(look);
         // Fetch Amélie's welcome while the guest walks up, so she speaks the moment they arrive.
-        prepareLine(hostGreeting(), "female");
+        const line = hostGreeting();
+        prepareLine(line.text, "female", line.clip);
       }
       const t = Math.min(1, (clock.elapsedTime - start.current) / INTRO_SECONDS);
       // Each guest ends the walk at a free spot on the carpet, so two people arriving together never stand inside

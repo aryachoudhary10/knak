@@ -441,21 +441,22 @@ export function isMuted() {
 }
 
 /**
- * The staff's voices. A natural recorded-quality voice comes from /api/voice (Google's Indian English voices); when
+ * The staff's voices. Every regular line is recorded ahead of time in public/voice (see scripts/voice); a line can
+ * name its recording with `clip`. Otherwise a natural voice comes from /api/voice (Google's Indian English voices); when
  * that isn't set up or can't be reached, the browser's own voice speaks instead, choosing its most natural one.
  */
 let naturalOff = false;
 const clips = new Map<string, Promise<AudioBuffer | null>>();
 
-function clip(text: string, who: "f" | "m") {
-  const key = `${who}:${text}`;
+function clip(text: string, who: "f" | "m", recorded?: string) {
+  const key = recorded ? `rec:${recorded}` : `${who}:${text}`;
   let p = clips.get(key);
   if (!p) {
     p = (async () => {
-      if (naturalOff || !engine) return null;
+      if (!engine || (!recorded && naturalOff)) return null;
       try {
-        const res = await fetch(`/api/voice?v=${who}&t=${encodeURIComponent(text)}`);
-        if (res.status === 404) naturalOff = true;
+        const res = await fetch(recorded ? `/voice/${recorded}.mp3` : `/api/voice?v=${who}&t=${encodeURIComponent(text)}`);
+        if (res.status === 404 && !recorded) naturalOff = true;
         if (!res.ok) return null;
         return await engine.ctx.decodeAudioData(await res.arrayBuffer());
       } catch {
@@ -470,8 +471,8 @@ function clip(text: string, who: "f" | "m") {
 }
 
 /** Fetch a line ahead of time, so it plays the instant it is needed. */
-export function prepareLine(text: string, prefer: "female" | "male" = "female") {
-  if (engine && !muted) void clip(text, prefer === "male" ? "m" : "f");
+export function prepareLine(text: string, prefer: "female" | "male" = "female", recorded?: string) {
+  if (engine && !muted) void clip(text, prefer === "male" ? "m" : "f", recorded);
 }
 
 let playing: AudioBufferSourceNode | null = null;
@@ -555,15 +556,18 @@ function say(text: string, opts: { pitch?: number; rate?: number; prefer?: "fema
 }
 
 /** Speak a line. Returns roughly how long it will take (ms), for the caption above the speaker. */
-export function speak(text: string, opts: { pitch?: number; rate?: number; prefer?: "female" | "male" } = {}) {
+export function speak(text: string, opts: { pitch?: number; rate?: number; prefer?: "female" | "male"; clip?: string } = {}) {
   const ms = Math.max(2500, text.length * 65);
   if (muted) return ms;
   const e = engine;
-  if (!e || naturalOff) {
+  if (!e || (naturalOff && !opts.clip)) {
     browserSpeak(text, opts);
     return ms;
   }
-  void clip(text, opts.prefer === "male" ? "m" : "f").then((buf) => {
+  const who = opts.prefer === "male" ? "m" : "f";
+  // The recording first; failing that a natural voice for the exact words, then the browser's own.
+  const recorded = opts.clip ? clip(text, who, opts.clip) : Promise.resolve(null);
+  void recorded.then((r) => r ?? (naturalOff ? null : clip(text, who))).then((buf) => {
     if (muted) return;
     if (!buf) {
       browserSpeak(text, opts);

@@ -31,28 +31,34 @@ function favourite() {
   return items.reduce<(typeof items)[number] | null>((best, it) => (!best || it.qty > best.qty ? it : best), null);
 }
 
-const firstName = () => useAuth.getState().profile?.name.trim().split(/\s+/)[0] || null;
+export const firstName = () => useAuth.getState().profile?.name.trim().split(/\s+/)[0] || null;
+
+/**
+ * A spoken line: the words shown in the caption, and the recording that says them (public/voice/<clip>.mp3). The
+ * recordings leave out the guest's name, which only the caption carries; per-dish lines are recorded for every dish.
+ */
+export type Line = { text: string; clip: string };
 
 /** Amélie's welcome: short, by name, and mindful of their last visit. */
-export function hostGreeting() {
+export function hostGreeting(): Line {
   const name = firstName();
-  if (!name) return "Hi, welcome to KNAK!";
+  if (!name) return { text: "Hi, welcome to KNAK!", clip: "host-welcome" };
   if (last && Date.now() - last.at < 1000 * 60 * 60 * 6) {
-    if (last.status === "out_for_delivery") return `Hi ${name}! Your order is on its way to you.`;
-    if (last.status === "placed" || last.status === "preparing") return `Hi ${name}! The kitchen is preparing your order right now.`;
-    if (last.status === "prepared") return `Hi ${name}! Your order is ready and leaving us shortly.`;
+    if (last.status === "out_for_delivery") return { text: `Hi ${name}! Your order is on its way to you.`, clip: "host-on-way" };
+    if (last.status === "placed" || last.status === "preparing") return { text: `Hi ${name}! The kitchen is preparing your order right now.`, clip: "host-preparing" };
+    if (last.status === "prepared") return { text: `Hi ${name}! Your order is ready and leaving us shortly.`, clip: "host-ready" };
   }
   const fav = favourite();
-  if (fav) return `Hi ${name}, welcome back! How was the ${fav.name} last time?`;
-  return `Hi ${name}, welcome to KNAK!`;
+  if (fav) return { text: `Hi ${name}, welcome back! How was the ${fav.name} last time?`, clip: `host-fav-${fav.id}` };
+  return { text: `Hi ${name}, welcome to KNAK!`, clip: "host-welcome" };
 }
 
 /** Louis at the counter, offering the usual to a returning guest. */
-export function cashierGreeting() {
+export function cashierGreeting(): Line {
   const fav = favourite();
   const name = firstName();
-  if (name && fav) return `Hello again, ${name}. The ${fav.name} again, or something new tonight?`;
-  return "Hello! Here is our menu. Everything is cooked fresh for delivery.";
+  if (name && fav) return { text: `Hello again, ${name}. The ${fav.name} again, or something new tonight?`, clip: `cashier-again-${fav.id}` };
+  return { text: "Hello! Here is our menu. Everything is cooked fresh for delivery.", clip: "cashier-menu" };
 }
 
 // Remember whoever signs in; forget them on sign-out.
