@@ -31,14 +31,15 @@ function frame(boxes: Box[], cx: number, cz: number, w: number, d: number, t: nu
 }
 
 /**
- * Great ceiling paintings set into the three bays of the vault, from the doors inward: dawn over the entrance,
- * Michelangelo in the middle, and Venus over the counter. Fetched at build time (scripts/fetch-paintings.mjs); until
+ * Famous skies set into the three bays of the vault, from the doors inward: Constable's clouds over the entrance, Van
+ * Gogh's starry night in the middle, and Monet's water-lily clouds over the counter. No figures, so nothing a family
+ * would mind looking up at. Fetched at build time (scripts/fetch-paintings.mjs); until
  * one arrives, or if it can't, its bay keeps the painted sky.
  */
 const CEILING_ART = [
-  { id: "aurora", title: "Aurora", artist: "Guido Reni, 1614" },
-  { id: "creation-of-adam", title: "The Creation of Adam", artist: "Michelangelo, c. 1512" },
-  { id: "triumph-of-venus", title: "The Triumph of Venus", artist: "François Boucher, 1740" },
+  { id: "cloud-study", title: "Cloud Study", artist: "John Constable, 1822" },
+  { id: "starry-night", title: "The Starry Night", artist: "Vincent van Gogh, 1889" },
+  { id: "water-lily-clouds", title: "Reflections of Clouds on the Water-Lily Pond", artist: "Claude Monet, c. 1920" },
 ];
 const CEILING_SIZES = { computer: 1280, phone: 960 };
 

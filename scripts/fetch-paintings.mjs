@@ -15,9 +15,9 @@ export const PAINTINGS = {
   "cafe-terrace": ["8/86/Van_Gogh_-_Terrace_of_a_Caf%C3%A9_at_Night_%28Place_du_Forum%29_1888.jpg", [960, 500]],
   "the-kiss": ["4/40/The_Kiss_-_Gustav_Klimt_-_Google_Cultural_Institute.jpg", [960, 500]],
   // the ceiling frescoes, larger because they span the room: 1280 px for computers, 960 px for phones
-  aurora: ["0/0b/Guido_Reni_-_L%27Aurora_di_Guido_Reni_nelle_arti_decorative.jpg", [1280, 960]],
-  "creation-of-adam": ["5/5b/Michelangelo_-_Creation_of_Adam_%28cropped%29.jpg", [1280, 960]],
-  "triumph-of-venus": ["a/a3/The_Triumph_of_Venus%2C_by_Fran%C3%A7ois_Boucher.jpg", [1280, 960]],
+  "cloud-study": ["f/fb/John_Constable_-_Cloud_Study_-_Google_Art_Project.jpg", [1280, 960]],
+  "starry-night": ["e/ea/Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg", [1280, 960]],
+  "water-lily-clouds": ["4/4b/Reflections_of_Clouds_on_the_Water-Lily_Pond.jpg", [1280, 960]],
 };
 
 mkdirSync(OUT, { recursive: true });
