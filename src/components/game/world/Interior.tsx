@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { CuboidCollider, CylinderCollider, RigidBody } from "@react-three/rapier";
 import * as THREE from "three";
 import { windowGlass } from "@/game/glass";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { useMats } from "@/game/materials";
+import { usePainting } from "@/game/paintings";
 import { luxuryMats } from "@/game/luxury";
 import { backWallGeometry, sideWallGeometry } from "@/game/wall";
 import { curtainGeo } from "@/game/geometry";
@@ -68,6 +69,8 @@ function Pilaster({ side, z }: { side: "left" | "right"; z: number }) {
   );
 }
 
+const WALL_SIZES = { computer: 960, phone: 500 };
+
 type Art = { id: string; title: string; artist: string; /** height ÷ width of the canvas */ aspect: number };
 
 /** World-famous paintings in the arches of the left wall, fetched at build time (scripts/fetch-paintings.mjs). */
@@ -76,35 +79,10 @@ const ARCH_ART: Record<number, Art> = {
   [-11.6]: { id: "the-kiss", title: "The Kiss", artist: "Gustav Klimt, 1908", aspect: 1.003 },
 };
 
-/** Loads a painting without holding up the room; null until it arrives, and for good if it can't be found. */
-function usePainting(id: string | undefined) {
-  const [tex, setTex] = useState<THREE.Texture | null>(null);
-  useEffect(() => {
-    if (!id) return;
-    const phone = window.matchMedia("(pointer: coarse)").matches;
-    let live = true;
-    new THREE.TextureLoader().load(
-      `/paintings/${id}-${phone ? 500 : 960}.jpg`,
-      (t) => {
-        t.colorSpace = THREE.SRGBColorSpace;
-        t.anisotropy = 4;
-        if (live) setTex(t);
-        else t.dispose();
-      },
-      undefined,
-      () => {},
-    );
-    return () => {
-      live = false;
-    };
-  }, [id]);
-  return tex;
-}
-
 function Mirror({ side, z, width, height, y }: { side: "left" | "right"; z: number; width: number; height: number; y: number }) {
   const m = useMats();
   const art = side === "left" ? ARCH_ART[z] : undefined;
-  const tex = usePainting(art?.id);
+  const tex = usePainting(art?.id, WALL_SIZES);
   // With a painting, the arch is lined in dark velvet and the canvas hangs in its own frame, lit from above.
   const lining = useMemo(() => new THREE.MeshStandardMaterial({ color: "#2b1517", roughness: 0.95 }), []);
   const fill = tex ? lining : m.mirror;

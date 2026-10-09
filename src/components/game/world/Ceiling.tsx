@@ -6,6 +6,7 @@ import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js
 import { useMats } from "@/game/materials";
 import { luxuryMats } from "@/game/luxury";
 import { ROOM } from "@/game/layout";
+import { usePainting } from "@/game/paintings";
 
 const H = ROOM.height;
 const X0 = ROOM.minX, X1 = ROOM.maxX;
@@ -27,6 +28,47 @@ function merged(boxes: Box[]) {
 function frame(boxes: Box[], cx: number, cz: number, w: number, d: number, t: number, depth: number, y: number) {
   boxes.push([w, depth, t, cx, y, cz - d / 2], [w, depth, t, cx, y, cz + d / 2]);
   boxes.push([t, depth, d, cx - w / 2, y, cz], [t, depth, d, cx + w / 2, y, cz]);
+}
+
+/**
+ * Great ceiling paintings set into the three bays of the vault, from the doors inward: dawn over the entrance,
+ * Michelangelo in the middle, and Venus over the counter. Fetched at build time (scripts/fetch-paintings.mjs); until
+ * one arrives, or if it can't, its bay keeps the painted sky.
+ */
+const CEILING_ART = [
+  { id: "aurora", title: "Aurora", artist: "Guido Reni, 1614" },
+  { id: "creation-of-adam", title: "The Creation of Adam", artist: "Michelangelo, c. 1512" },
+  { id: "triumph-of-venus", title: "The Triumph of Venus", artist: "François Boucher, 1740" },
+];
+const CEILING_SIZES = { computer: 1280, phone: 960 };
+
+function Fresco({ z, w, d, fallback, art }: { z: number; w: number; d: number; fallback: THREE.Material; art?: { id: string } }) {
+  const tex = usePainting(art?.id, CEILING_SIZES);
+  const mat = useMemo(() => {
+    if (!tex) return null;
+    const img = tex.image as { width: number; height: number };
+    const a = img.width / img.height;
+    const panel = w / d;
+    // Fill the bay, trimming the painting's edges to fit. The top of the painting lies toward the doors, so a guest
+    // walking in and looking up sees it the right way up.
+    const t = tex.clone();
+    if (a < panel) {
+      const f = a / panel;
+      t.repeat.set(1, f);
+      t.offset.set(0, (1 - f) / 2);
+    } else {
+      const f = panel / a;
+      t.repeat.set(f, 1);
+      t.offset.set((1 - f) / 2, 0);
+    }
+    t.needsUpdate = true;
+    return new THREE.MeshStandardMaterial({ map: t, emissiveMap: t, emissive: "#ffffff", emissiveIntensity: 0.32, roughness: 1 });
+  }, [tex, w, d]);
+  return (
+    <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, H - 0.005, z]} material={mat ?? fallback}>
+      <planeGeometry args={[w, d]} />
+    </mesh>
+  );
 }
 
 /**
@@ -116,6 +158,7 @@ export default function Ceiling() {
         z: (z + CROSS[i + 1]) / 2,
         d: Math.abs(CROSS[i + 1] - z) - 1.42,
         mat: lux.fresco(i + 1),
+        art: CEILING_ART[i],
       })),
     [lux],
   );
@@ -126,9 +169,7 @@ export default function Ceiling() {
         <planeGeometry args={[X1 - X0, Z1 - Z0 + 0.4]} />
       </mesh>
       {frescoes.map((f) => (
-        <mesh key={f.z} rotation={[Math.PI / 2, 0, 0]} position={[0, H - 0.005, f.z]} material={f.mat}>
-          <planeGeometry args={[CX * 2 - 1.42, f.d]} />
-        </mesh>
+        <Fresco key={f.z} z={f.z} w={CX * 2 - 1.42} d={f.d} fallback={f.mat} art={f.art} />
       ))}
       <mesh geometry={geo.cream} material={lux.cream} />
       <mesh geometry={geo.gilt} material={m.gilt} />
