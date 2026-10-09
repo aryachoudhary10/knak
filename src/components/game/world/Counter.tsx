@@ -4,11 +4,16 @@ import GroupLight from "../GroupLight";
 import { useMemo } from "react";
 import { CuboidCollider, RigidBody } from "@react-three/rapier";
 import { useMats } from "@/game/materials";
+import { luxuryMats } from "@/game/luxury";
 import { signTexture } from "@/game/textures";
 import BackBar, { BottleSet, type Bottle } from "./BackBar";
 import { COUNTER, ROOM } from "@/game/layout";
 
 const { z: CZ, halfWidth: HW, depth: DEP, height: HT } = COUNTER;
+const FRONT = CZ + DEP / 2;
+const PANELS = 6;
+const PANEL_W = (HW * 2 - 0.14) / PANELS;
+const panelX = (i: number) => -HW + 0.14 + PANEL_W / 2 + i * PANEL_W;
 
 /** Bottles in use: a few open on the counter by the till, and the barman's working row along the back bar top. */
 const IN_USE: { wine: Bottle[]; cognac: Bottle[]; slim: Bottle[] } = {
@@ -94,6 +99,7 @@ function MenuStand({ x }: { x: number }) {
 
 export default function Counter() {
   const m = useMats();
+  const lux = luxuryMats();
   const sign = useMemo(() => signTexture(), []);
   return (
     <group>
@@ -112,12 +118,40 @@ export default function Counter() {
           <cylinderGeometry args={[DEP / 2, DEP / 2, HT, 24, 1, false, s > 0 ? 0 : Math.PI, Math.PI]} />
         </mesh>
       ))}
-      {/* fluted panels */}
-      {Array.from({ length: 14 }, (_, i) => (
-        <mesh key={i} position={[-HW + 0.25 + i * ((HW * 2 - 0.5) / 13), HT / 2 + 0.05, CZ + DEP / 2 + 0.01]} material={m.darkWood}>
-          <boxGeometry args={[0.04, HT - 0.4, 0.02]} />
+      {/* front: walnut pilasters framing raised panels picked out in gilt */}
+      {Array.from({ length: PANELS + 1 }, (_, i) => (
+        <mesh key={`p${i}`} position={[panelX(i) - PANEL_W / 2 - 0.07, HT / 2, FRONT + 0.03]} material={m.darkWood}>
+          <boxGeometry args={[0.14, HT - 0.12, 0.06]} />
         </mesh>
       ))}
+      {Array.from({ length: PANELS }, (_, i) => (
+        <group key={`r${i}`} position={[panelX(i), HT / 2 + 0.04, FRONT]}>
+          <mesh position={[0, 0, 0.02]} material={m.darkWood}>
+            <boxGeometry args={[PANEL_W - 0.16, HT - 0.46, 0.04]} />
+          </mesh>
+          {[-1, 1].map((e) => (
+            <group key={e}>
+              <mesh position={[0, e * (HT / 2 - 0.2), 0.045]} material={m.gilt}>
+                <boxGeometry args={[PANEL_W - 0.12, 0.02, 0.012]} />
+              </mesh>
+              <mesh position={[e * (PANEL_W / 2 - 0.06), 0, 0.045]} material={m.gilt}>
+                <boxGeometry args={[0.02, HT - 0.38, 0.012]} />
+              </mesh>
+            </group>
+          ))}
+          {/* a small gilt lozenge at the centre of each panel */}
+          <mesh position={[0, 0, 0.05]} rotation={[0, 0, Math.PI / 4]} material={m.gilt}>
+            <boxGeometry args={[0.07, 0.07, 0.01]} />
+          </mesh>
+        </group>
+      ))}
+      {/* plinth with a warm glow along the floor */}
+      <mesh position={[0, 0.06, FRONT + 0.04]} material={m.darkWood}>
+        <boxGeometry args={[HW * 2, 0.12, 0.08]} />
+      </mesh>
+      <mesh position={[0, 0.125, FRONT + 0.09]} material={lux.cove}>
+        <boxGeometry args={[HW * 2 - 0.1, 0.012, 0.012]} />
+      </mesh>
       {/* zinc top with brass edge */}
       <mesh position={[0, HT + 0.015, CZ + 0.03]} material={m.zinc}>
         <boxGeometry args={[HW * 2 + DEP + 0.1, 0.04, DEP + 0.14]} />
@@ -129,6 +163,11 @@ export default function Counter() {
       <mesh position={[0, 0.18, CZ + DEP / 2 + 0.16]} rotation={[0, 0, Math.PI / 2]} material={m.brass}>
         <cylinderGeometry args={[0.025, 0.025, HW * 2, 10]} />
       </mesh>
+      {Array.from({ length: PANELS + 1 }, (_, i) => (
+        <mesh key={`b${i}`} position={[panelX(i) - PANEL_W / 2 - 0.07, 0.18, FRONT + 0.11]} rotation={[Math.PI / 2, 0, 0]} material={m.brass}>
+          <cylinderGeometry args={[0.012, 0.012, 0.12, 8]} />
+        </mesh>
+      ))}
 
       <CakeDome x={-1.6} />
       <CakeDome x={-1.05} />

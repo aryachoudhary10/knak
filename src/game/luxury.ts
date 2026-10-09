@@ -154,6 +154,95 @@ export function runnerTexture() {
   });
 }
 
+/**
+ * The rug that receives the runner at the counter: burgundy wool, a broad gold-bordered frame, the runner's lozenge
+ * field, and a gold oval medallion in the middle where guests stand to order. Drawn 2048 x 452 for a 6.8 x 1.5 m rug.
+ */
+export function counterRugTexture() {
+  return canvasTexture("counter-rug", 2048, 452, (ctx) => {
+    const w = 2048, h = 452;
+    const r = rng(19);
+    ctx.fillStyle = "#56131d";
+    ctx.fillRect(0, 0, w, h);
+    for (let i = 0; i < 26000; i++) {
+      ctx.fillStyle = r() > 0.5 ? "rgba(255,200,190,0.05)" : "rgba(0,0,0,0.08)";
+      ctx.fillRect(r() * w, r() * h, 2, 2);
+    }
+    const gold = "#c9a050";
+    // dark outer band between two gold lines, then a fine inner line
+    ctx.strokeStyle = "#3d0c14";
+    ctx.lineWidth = 44;
+    ctx.strokeRect(22, 22, w - 44, h - 44);
+    ctx.strokeStyle = gold;
+    ctx.lineWidth = 6;
+    ctx.strokeRect(6, 6, w - 12, h - 12);
+    ctx.strokeRect(46, 46, w - 92, h - 92);
+    ctx.lineWidth = 2;
+    ctx.strokeRect(62, 62, w - 124, h - 124);
+    // a gold Greek-key-like row of small squares in the dark band
+    ctx.fillStyle = "rgba(201,160,80,0.6)";
+    for (let x = 40; x < w - 30; x += 32) for (const y of [24, h - 24]) ctx.fillRect(x - 4, y - 4, 8, 8);
+    for (let y = 40; y < h - 30; y += 32) for (const x of [24, w - 24]) ctx.fillRect(x - 4, y - 4, 8, 8);
+    // lozenge field, as on the runner
+    ctx.strokeStyle = "rgba(201,160,80,0.45)";
+    ctx.lineWidth = 3;
+    for (let x = 140; x < w - 100; x += 128) {
+      for (let y = 140; y < h - 100; y += 128) {
+        if (Math.abs(x - w / 2) < 330) continue;
+        ctx.beginPath();
+        ctx.moveTo(x, y - 30);
+        ctx.lineTo(x + 20, y);
+        ctx.lineTo(x, y + 30);
+        ctx.lineTo(x - 20, y);
+        ctx.closePath();
+        ctx.stroke();
+      }
+    }
+    // central medallion: dark oval in a double gold ring, with a gold rosette
+    const cx = w / 2, cy = h / 2;
+    ctx.fillStyle = "#3d0c14";
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, 290, 150, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = gold;
+    ctx.lineWidth = 6;
+    ctx.stroke();
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, 266, 128, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fillStyle = gold;
+    for (let k = 0; k < 12; k++) {
+      const a = (k / 12) * Math.PI * 2;
+      ctx.save();
+      ctx.translate(cx + Math.cos(a) * 52, cy + Math.sin(a) * 52);
+      ctx.rotate(a);
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 38, 11, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+    ctx.beginPath();
+    ctx.arc(cx, cy, 16, 0, Math.PI * 2);
+    ctx.fillStyle = "#56131d";
+    ctx.fill();
+    ctx.strokeStyle = gold;
+    ctx.lineWidth = 4;
+    ctx.stroke();
+    // scrolls either side of the medallion
+    ctx.strokeStyle = gold;
+    ctx.lineWidth = 4;
+    for (const s of [-1, 1]) {
+      ctx.beginPath();
+      ctx.moveTo(cx + s * 300, cy);
+      ctx.bezierCurveTo(cx + s * 360, cy - 70, cx + s * 420, cy - 20, cx + s * 400, cy + 20);
+      ctx.moveTo(cx + s * 300, cy);
+      ctx.bezierCurveTo(cx + s * 360, cy + 70, cx + s * 420, cy + 20, cx + s * 400, cy - 20);
+      ctx.stroke();
+    }
+  });
+}
+
 /** A painted evening sky with soft clouds, for the ceiling coffers. */
 export function frescoTexture(seed: number) {
   return canvasTexture(`fresco-${seed}`, 1024, 640, (ctx) => {
@@ -206,6 +295,7 @@ function build() {
       new THREE.MeshStandardMaterial({ map: repeat(cabochonTexture(), fieldW, fieldD), roughness: 0.2, metalness: 0 }),
     nero: (w: number, d: number) => new THREE.MeshStandardMaterial({ map: repeat(neroTexture(), w / 1.5, d / 1.5), roughness: 0.32, metalness: 0 }),
     runner: (len: number) => new THREE.MeshStandardMaterial({ map: repeat(runnerTexture(), 1, len / 3.2), roughness: 1, metalness: 0 }),
+    counterRug: new THREE.MeshStandardMaterial({ map: counterRugTexture(), roughness: 1, metalness: 0 }),
     fresco: (seed: number) => {
       const t = frescoTexture(seed);
       return new THREE.MeshStandardMaterial({ map: t, emissiveMap: t, emissive: "#ffffff", emissiveIntensity: 0.2, roughness: 1 });

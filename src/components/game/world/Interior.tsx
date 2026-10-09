@@ -277,10 +277,13 @@ function Banquette() {
 
 const BORDER = 0.6;
 const RUNNER = { w: 1.6, z0: -0.45, z1: -13.7 } as const;
+/** The rug the runner opens into at the counter, spanning its whole front. */
+const COUNTER_RUG = { w: 6.8, z0: -13.6, z1: -15.1 } as const;
 
 /**
- * Cabochon marble edged in brass inside a Nero Marquina border, with a burgundy runner from the door to the
- * counter. Satin, not mirror-polished: a live reflection would cost a second render of the room every frame.
+ * Cabochon marble edged in brass inside a Nero Marquina border, with a burgundy runner from the door that opens into
+ * a medallion rug along the counter. Satin, not mirror-polished: a live reflection would cost a second render of the
+ * room every frame.
  */
 function Floor() {
   const m = useMats();
@@ -314,6 +317,9 @@ function Floor() {
       ))}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.009, (RUNNER.z0 + RUNNER.z1) / 2]} receiveShadow material={runner}>
         <planeGeometry args={[RUNNER.w, runLen]} />
+      </mesh>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.011, (COUNTER_RUG.z0 + COUNTER_RUG.z1) / 2]} receiveShadow material={lux.counterRug}>
+        <planeGeometry args={[COUNTER_RUG.w, COUNTER_RUG.z0 - COUNTER_RUG.z1]} />
       </mesh>
     </group>
   );
