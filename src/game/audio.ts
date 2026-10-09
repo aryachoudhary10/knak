@@ -490,31 +490,62 @@ export function unlockSpeech() {
   } catch {}
 }
 
-/** The most natural-sounding English voice this browser has, preferring Indian English. */
+/** Voice names that say who is speaking, across Windows, macOS, iOS, Android and Chrome. */
+const FEMALE_VOICE = /female|woman|samantha|victoria|karen|moira|serena|zira|susan|kate|fiona|tessa|veena|isha|lekha|heera|neerja|kalpana|swara|aria|jenny|libby|sonia|hazel|ava|allison|zoe|nicky|kathy|vicki|flo|sandy|shelley|grandma|catherine|martha|emma|olivia|amelie|amélie/i;
+const MALE_VOICE = /\bmale|\bman\b|daniel|alex\b|arthur|george|guy|ryan|david|mark\b|rishi|ravi|prabhat|madhur|hemant|aaron|fred|oliver|tom\b|evan|nathan|thomas|james|reed|rocko|eddy|grandpa|ralph|junior|albert|gordon|lee\b/i;
+
+/**
+ * The most natural-sounding English voice this browser has, preferring Indian English. Who is speaking comes first:
+ * a woman's voice for Amélie even if a man's is more natural, so a voice named for the other gender is never chosen
+ * while any other English voice exists.
+ */
 function bestVoice(prefer: "female" | "male") {
   const voices = speechSynthesis.getVoices().filter((v) => v.lang.toLowerCase().startsWith("en"));
-  const femaleHint = /female|samantha|victoria|karen|moira|serena|zira|susan|kate|fiona|veena|heera|neerja|aria|jenny|libby|sonia|swara/i;
-  const maleHint = /\bmale|daniel|alex|arthur|george|guy|ryan|david|rishi|ravi|prabhat|madhur/i;
-  const hint = prefer === "male" ? maleHint : femaleHint;
+  const [want, avoid] = prefer === "male" ? [MALE_VOICE, FEMALE_VOICE] : [FEMALE_VOICE, MALE_VOICE];
+  // "Female" contains "male", so a female name only counts as male when nothing marks it as female.
+  const isAvoid = (n: string) => (prefer === "male" ? avoid.test(n) : avoid.test(n) && !want.test(n));
   const score = (v: SpeechSynthesisVoice) =>
+    (isAvoid(v.name) ? -40 : 0) +
+    (want.test(v.name) && !(prefer === "male" && FEMALE_VOICE.test(v.name)) ? 14 : 0) +
     (/natural|neural|enhanced|premium|online/i.test(v.name) ? 8 : 0) +
     (/google/i.test(v.name) ? 3 : 0) +
     (v.lang.toLowerCase() === "en-in" ? 4 : v.lang.toLowerCase() === "en-gb" ? 2 : 0) +
-    (hint.test(v.name) ? 3 : 0) +
     (v.localService ? 0 : 1);
   return voices.sort((a, b) => score(b) - score(a))[0];
 }
 
 function browserSpeak(text: string, opts: { pitch?: number; rate?: number; prefer?: "female" | "male" }) {
   if (typeof speechSynthesis === "undefined") return;
+  // Phones list their voices a moment after the page asks; speaking before then uses the phone's default voice,
+  // which is often a man's. Wait briefly for the list rather than risk Amélie speaking in the wrong voice.
+  if (speechSynthesis.getVoices().length === 0) {
+    let done = false;
+    const go = () => {
+      if (done) return;
+      done = true;
+      speechSynthesis.removeEventListener("voiceschanged", go);
+      say(text, opts);
+    };
+    speechSynthesis.addEventListener("voiceschanged", go);
+    setTimeout(go, 900);
+    return;
+  }
+  say(text, opts);
+}
+
+function say(text: string, opts: { pitch?: number; rate?: number; prefer?: "female" | "male" }) {
+  const prefer = opts.prefer ?? "female";
   const u = new SpeechSynthesisUtterance(text);
-  const voice = bestVoice(opts.prefer ?? "female");
+  const voice = bestVoice(prefer);
+  let pitch = opts.pitch ?? 1.02;
   if (voice) {
     u.voice = voice;
     u.lang = voice.lang;
-  }
+    // A voice whose name doesn't say who it is gets nudged toward the speaker's register.
+    if (!(prefer === "male" ? MALE_VOICE : FEMALE_VOICE).test(voice.name)) pitch = prefer === "male" ? Math.min(pitch, 0.9) : Math.max(pitch, 1.2);
+  } else if (prefer === "female") pitch = Math.max(pitch, 1.2);
   u.rate = opts.rate ?? 0.97;
-  u.pitch = opts.pitch ?? 1.02;
+  u.pitch = pitch;
   u.volume = 1;
   // Android drops a line spoken straight after cancel(), so only cancel when something is actually speaking.
   if (speechSynthesis.speaking || speechSynthesis.pending) {
