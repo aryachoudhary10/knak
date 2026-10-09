@@ -28,6 +28,8 @@ export type Order = {
   created_at: string;
   /** the creator code whose link brought this guest */
   ref?: string | null;
+  /** the 12-digit UPI reference the guest entered as proof of payment */
+  pay_ref?: string | null;
 };
 
 const ACTIVE: { status: Status; title: string; next?: { to: Status; label: string } }[] = [
@@ -283,7 +285,15 @@ function Ticket({ o, now, next, update }: { o: Order; now: number; next?: { to: 
       <div className="mt-3 flex flex-wrap items-center gap-2 font-sans text-[12px]">
         {o.payment === "claimed" ? (
           <>
-            <span className="text-bordeaux">Guest says paid. Check UPI:</span>
+            <span className="text-bordeaux">
+              {o.pay_ref ? (
+                <>
+                  Guest says paid, UPI ref <span className="font-medium tabular-nums text-ink">{o.pay_ref}</span>. Check it in your UPI app:
+                </>
+              ) : (
+                "Guest says paid. Check UPI:"
+              )}
+            </span>
             <button onClick={() => update(o, { payment: "confirmed" })} className="cursor-pointer border border-[#3f6b3a] px-2.5 py-1 text-[#3f6b3a] hover:bg-[#3f6b3a] hover:text-paper">
               Received
             </button>
@@ -292,7 +302,7 @@ function Ticket({ o, now, next, update }: { o: Order; now: number; next?: { to: 
             </button>
           </>
         ) : o.payment === "confirmed" ? (
-          <span className="text-[#3f6b3a]">Paid ✓</span>
+          <span className="text-[#3f6b3a]">Paid ✓{o.pay_ref && <span className="ml-2 tabular-nums text-stone">UPI ref {o.pay_ref}</span>}</span>
         ) : (
           <>
             <span className="text-bordeaux">Payment not received</span>

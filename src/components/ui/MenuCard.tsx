@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import QRCode from "qrcode";
 import { AnimatePresence, motion } from "motion/react";
 import { useGame } from "@/game/store";
 import { CATEGORIES, MENU, formatINR, menuById, type MenuItem } from "@/data/menu";
 import { requestLook } from "@/components/game/Experience";
 import { profileComplete, useAuth } from "@/game/auth";
 import { placeOrder } from "@/game/orders";
+import { UPI_ID, UPI_NAME, cleanUtr, upiLink } from "@/game/upi";
 import { rememberGuest } from "@/game/host";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
@@ -96,7 +98,7 @@ function Carte() {
     setView({ name: "pay" });
   };
   const [paying, setPaying] = useState<{ busy: boolean; error: string | null }>({ busy: false, error: null });
-  const confirmPaid = async () => {
+  const confirmPaid = async (utr?: string) => {
     const auth = useAuth.getState();
     const p = auth.profile;
     if (auth.status === "off" || !p) {
@@ -106,7 +108,7 @@ function Carte() {
       return;
     }
     setPaying({ busy: true, error: null });
-    const res = await placeOrder(cart, p);
+    const res = await placeOrder(cart, p, utr);
     if ("error" in res) {
       setPaying({ busy: false, error: res.error });
       return;
@@ -183,7 +185,7 @@ function Carte() {
 
           {view.name === "pay" && (
             <motion.div key="pay" {...swap} className="flex min-h-0 flex-1 flex-col">
-              <PayView total={total} busy={paying.busy} error={paying.error} onBack={() => setView({ name: "table" })} onPaid={confirmPaid} />
+              <PayView total={total} busy={paying.busy} error={paying.error} onBack={() => setView({ name: "table" })} onPaid={(utr) => void confirmPaid(utr)} />
             </motion.div>
           )}
 
@@ -390,17 +392,39 @@ function DeliverTo() {
 }
 
 /**
- * Paying: the guest's phone, held out with KNAK's UPI code on screen. For now the code is a sample that pays no one;
- * the owner's real QR replaces it. The order is saved only when the guest says they have paid.
+ * Paying: the guest's phone, held out with KNAK's UPI code on screen. With KNAK's UPI ID set, the code is real, a
+ * button opens the guest's UPI app with the amount filled in, and the guest enters the 12-digit UPI reference their app
+ * shows as proof; the kitchen matches it to the payment. Without it, the code is a sample that pays no one. The order
+ * is saved only when the guest says they have paid.
  */
-function PayView({ total, busy, error, onBack, onPaid }: { total: number; busy: boolean; error: string | null; onBack: () => void; onPaid: () => void }) {
+function PayView({ total, busy, error, onBack, onPaid }: { total: number; busy: boolean; error: string | null; onBack: () => void; onPaid: (utr?: string) => void }) {
+  const real = !!UPI_ID;
+  const link = real ? upiLink(total) : "";
+  const [qr, setQr] = useState<string | null>(null);
+  const [utr, setUtr] = useState("");
+  const [copied, setCopied] = useState(false);
+  useEffect(() => {
+    if (!link) return;
+    let live = true;
+    QRCode.toDataURL(link, { margin: 1, width: 300, color: { dark: "#14110f", light: "#fbf8f2" } }).then((u) => live && setQr(u), () => {});
+    return () => {
+      live = false;
+    };
+  }, [link]);
+  const copyId = () => {
+    void navigator.clipboard?.writeText(UPI_ID).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1600);
+    });
+  };
+  const ready = !real || utr.length === 12;
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-6 pt-8 sm:px-16 sm:pt-12">
       <button onClick={onBack} disabled={busy} className="text-action self-start text-[10px] text-stone hover:text-ink">
         <span className="arrow">←</span> Your table
       </button>
       <p className="eyebrow mt-10 text-stone">Payment</p>
-      <h2 className="mt-4 font-display text-[38px] italic leading-none">Scan to pay</h2>
+      <h2 className="mt-4 font-display text-[38px] italic leading-none">{real ? "Pay by UPI" : "Scan to pay"}</h2>
       <div className="flex flex-1 flex-col items-center py-8">
         {/* the phone */}
         <motion.div
@@ -413,20 +437,60 @@ function PayView({ total, busy, error, onBack, onPaid }: { total: number; busy: 
             <span className="h-1 w-10 rounded-full bg-ink/15" />
             <p className="mt-4 font-display text-[15px] tracking-[0.4em] text-ink">KNAK</p>
             <p className="eyebrow mt-1 text-[7px] text-stone">Grand Café</p>
-            <SampleQR className="mt-4 h-[150px] w-[150px]" />
+            {real ? (
+              qr ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={qr} alt={`UPI code to pay ${UPI_NAME}`} className="mt-4 h-[150px] w-[150px]" draggable={false} />
+              ) : (
+                <div className="mt-4 h-[150px] w-[150px] bg-ink/5" />
+              )
+            ) : (
+              <SampleQR className="mt-4 h-[150px] w-[150px]" />
+            )}
             <p className="mt-4 font-sans text-xl tabular-nums text-ink">{formatINR(total)}</p>
             <p className="eyebrow mt-2 text-[7px] text-stone">Any UPI app</p>
           </div>
         </motion.div>
-        <p className="mt-6 max-w-xs text-center font-sans text-[11px] font-light leading-relaxed text-stone">
-          Scan with GPay, PhonePe or Paytm and pay {formatINR(total)}. This is a sample code for now, so no money is taken.
-        </p>
+        {real ? (
+          <div className="mt-6 flex w-full max-w-xs flex-col items-center text-center">
+            <a href={link} className="w-full bg-ink px-4 py-3 font-sans text-[11px] uppercase tracking-[0.2em] text-paper hover:bg-bordeaux">
+              Pay {formatINR(total)} in GPay or any UPI app
+            </a>
+            <p className="mt-3 font-sans text-[11px] font-light leading-relaxed text-stone">
+              On a computer, scan the code with your phone. Or pay to{" "}
+              <button onClick={copyId} className="cursor-pointer text-ink underline decoration-ink/30 underline-offset-2">
+                {UPI_ID}
+              </button>
+              {copied ? " (copied)" : ""}.
+            </p>
+            <label className="mt-6 w-full text-left">
+              <span className="eyebrow text-[9px] text-stone">After paying: UPI reference number</span>
+              <input
+                value={utr}
+                onChange={(e) => setUtr(cleanUtr(e.target.value))}
+                inputMode="numeric"
+                autoComplete="off"
+                placeholder="12 digits, e.g. 412345678901"
+                className="mt-2 w-full border-b border-ink/25 bg-transparent py-2 font-sans text-[16px] tabular-nums tracking-wider text-ink outline-none placeholder:text-ink/30 focus:border-ink"
+              />
+            </label>
+            <p className="mt-2 text-left font-sans text-[10.5px] font-light leading-relaxed text-stone">
+              Find it in your app&rsquo;s payment details: &ldquo;UPI transaction ID&rdquo; in GPay, &ldquo;UTR&rdquo; in PhonePe, &ldquo;UPI Ref No.&rdquo; in Paytm. We check it before cooking.
+            </p>
+          </div>
+        ) : (
+          <p className="mt-6 max-w-xs text-center font-sans text-[11px] font-light leading-relaxed text-stone">
+            Scan with GPay, PhonePe or Paytm and pay {formatINR(total)}. This is a sample code for now, so no money is taken.
+          </p>
+        )}
       </div>
       <footer className="border-t border-ink/10 py-6">
         {error && <p className="mb-4 font-sans text-[12px] leading-relaxed text-bordeaux">{error}</p>}
         <div className="flex items-center justify-between gap-6">
-          <p className="max-w-[15rem] font-sans text-[11px] font-light leading-relaxed text-stone">Your order goes to the kitchen once you confirm.</p>
-          <button onClick={onPaid} disabled={busy} className="text-action shrink-0 text-bordeaux">
+          <p className="max-w-[15rem] font-sans text-[11px] font-light leading-relaxed text-stone">
+            {real && !ready ? "Enter the UPI reference to send your order." : "Your order goes to the kitchen once you confirm."}
+          </p>
+          <button onClick={() => onPaid(real ? utr : undefined)} disabled={busy || !ready} className="text-action shrink-0 text-bordeaux disabled:opacity-40">
             {busy ? "Sending to the kitchen" : "I have paid"} <span className="arrow">→</span>
           </button>
         </div>
