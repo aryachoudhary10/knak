@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CuboidCollider, CylinderCollider, RigidBody } from "@react-three/rapier";
 import * as THREE from "three";
 import { windowGlass } from "@/game/glass";
@@ -68,8 +68,49 @@ function Pilaster({ side, z }: { side: "left" | "right"; z: number }) {
   );
 }
 
+type Art = { id: string; title: string; artist: string; /** height ÷ width of the canvas */ aspect: number };
+
+/** World-famous paintings in the arches of the left wall, fetched at build time (scripts/fetch-paintings.mjs). */
+const ARCH_ART: Record<number, Art> = {
+  [-5.6]: { id: "cafe-terrace", title: "Café Terrace at Night", artist: "Vincent van Gogh, 1888", aspect: 1.247 },
+  [-11.6]: { id: "the-kiss", title: "The Kiss", artist: "Gustav Klimt, 1908", aspect: 1.003 },
+};
+
+/** Loads a painting without holding up the room; null until it arrives, and for good if it can't be found. */
+function usePainting(id: string | undefined) {
+  const [tex, setTex] = useState<THREE.Texture | null>(null);
+  useEffect(() => {
+    if (!id) return;
+    const phone = window.matchMedia("(pointer: coarse)").matches;
+    let live = true;
+    new THREE.TextureLoader().load(
+      `/paintings/${id}-${phone ? 500 : 960}.jpg`,
+      (t) => {
+        t.colorSpace = THREE.SRGBColorSpace;
+        t.anisotropy = 4;
+        if (live) setTex(t);
+        else t.dispose();
+      },
+      undefined,
+      () => {},
+    );
+    return () => {
+      live = false;
+    };
+  }, [id]);
+  return tex;
+}
+
 function Mirror({ side, z, width, height, y }: { side: "left" | "right"; z: number; width: number; height: number; y: number }) {
   const m = useMats();
+  const art = side === "left" ? ARCH_ART[z] : undefined;
+  const tex = usePainting(art?.id);
+  // With a painting, the arch is lined in dark velvet and the canvas hangs in its own frame, lit from above.
+  const lining = useMemo(() => new THREE.MeshStandardMaterial({ color: "#2b1517", roughness: 0.95 }), []);
+  const fill = tex ? lining : m.mirror;
+  const pw = width - 0.28;
+  const ph = art ? Math.min(height - 0.5, pw * art.aspect) : 0;
+  const cy = height * 0.46;
   return (
     <OnWall side={side} z={z} y={y}>
       <mesh position={[0, height / 2, 0.02]} material={m.gilt}>
@@ -78,12 +119,43 @@ function Mirror({ side, z, width, height, y }: { side: "left" | "right"; z: numb
       <mesh position={[0, height, 0.02]} rotation={[Math.PI / 2, 0, 0]} material={m.gilt}>
         <cylinderGeometry args={[width / 2 + 0.11, width / 2 + 0.11, 0.06, 40, 1, false, Math.PI / 2, Math.PI]} />
       </mesh>
-      <mesh position={[0, height / 2, 0.055]} material={m.mirror}>
+      <mesh position={[0, height / 2, 0.055]} material={fill}>
         <planeGeometry args={[width, height]} />
       </mesh>
-      <mesh position={[0, height, 0.055]} material={m.mirror}>
+      <mesh position={[0, height, 0.055]} material={fill}>
         <circleGeometry args={[width / 2, 32, 0, Math.PI]} />
       </mesh>
+      {tex && art && (
+        <group position={[0, cy, 0.06]}>
+          {/* gilt frame, a dark sight edge, then the canvas */}
+          <mesh position={[0, 0, 0.04]} material={m.gilt}>
+            <boxGeometry args={[pw + 0.16, ph + 0.16, 0.08]} />
+          </mesh>
+          <mesh position={[0, 0, 0.081]}>
+            <planeGeometry args={[pw + 0.03, ph + 0.03]} />
+            <meshStandardMaterial color="#1a1210" roughness={0.9} />
+          </mesh>
+          <mesh position={[0, 0, 0.083]}>
+            <planeGeometry args={[pw, ph]} />
+            <meshStandardMaterial map={tex} roughness={0.75} emissive="#ffffff" emissiveMap={tex} emissiveIntensity={0.16} />
+          </mesh>
+          {/* brass picture light */}
+          <mesh position={[0, ph / 2 + 0.16, 0.2]} rotation={[0, 0, Math.PI / 2]} material={m.brass}>
+            <cylinderGeometry args={[0.035, 0.035, pw * 0.6, 16]} />
+          </mesh>
+          <mesh position={[0, ph / 2 + 0.12, 0.1]} material={m.brass}>
+            <boxGeometry args={[0.03, 0.1, 0.2]} />
+          </mesh>
+          <mesh position={[0, ph / 2 + 0.135, 0.22]} rotation={[Math.PI / 2, 0, 0]}>
+            <planeGeometry args={[pw * 0.56, 0.03]} />
+            <meshBasicMaterial color="#ffe6b8" toneMapped={false} />
+          </mesh>
+          {/* the name plate */}
+          <mesh position={[0, -ph / 2 - 0.17, 0.02]} material={m.brass}>
+            <boxGeometry args={[0.3, 0.07, 0.01]} />
+          </mesh>
+        </group>
+      )}
       {/* carved crest */}
       <mesh position={[0, height + width / 2 + 0.16, 0.04]} material={m.gilt} scale={[1.6, 1, 0.5]}>
         <sphereGeometry args={[0.1, 16, 10]} />
