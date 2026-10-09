@@ -80,7 +80,7 @@ export default function Kitchen() {
   }, [status, user?.id]);
 
   return (
-    <div className="h-full overflow-y-auto bg-paper text-ink">
+    <div className="allow-copy h-full overflow-y-auto bg-paper text-ink">
       <header className="sticky top-0 z-10 flex items-center justify-between border-b border-ink/10 bg-paper/95 px-5 py-4 backdrop-blur sm:px-10">
         <div>
           <p className="font-display text-[22px] leading-none tracking-[0.45em]">KNAK</p>

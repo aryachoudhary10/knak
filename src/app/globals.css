@@ -25,6 +25,23 @@ body {
   overscroll-behavior: none;
 }
 
+/* No accidental text selection or long-press copy menu on the site; form fields, and the kitchen, stay selectable. */
+body {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+input,
+textarea,
+[contenteditable="true"],
+.allow-copy,
+.allow-copy * {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
+
 @keyframes slideDown {
   from { transform: translateY(-100%); }
   to { transform: translateY(0); }
