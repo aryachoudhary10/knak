@@ -345,10 +345,10 @@ function TableView({ total, onBack, onComplete }: { total: number; onBack: () =>
           const m = menuById[l.itemId];
           if (!m) return null;
           return (
-            <li key={l.itemId} className="grid grid-cols-[1fr_auto_auto] items-baseline gap-x-8 py-5">
-              <span className="font-display text-[16px] uppercase tracking-[0.12em]">{m.name}</span>
+            <li key={l.itemId} className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-baseline gap-x-4 py-5 sm:gap-x-8">
+              <span className="break-words font-display text-[16px] uppercase tracking-[0.12em]">{m.name}</span>
               <Qty value={l.qty} name={m.name} onLess={() => remove(m.id)} onMore={() => add(m.id)} />
-              <span className="w-20 text-right font-sans text-sm tabular-nums">{formatINR(m.price * l.qty)}</span>
+              <span className="w-16 text-right font-sans text-sm tabular-nums sm:w-20">{formatINR(m.price * l.qty)}</span>
             </li>
           );
         })}

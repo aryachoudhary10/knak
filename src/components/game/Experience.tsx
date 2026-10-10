@@ -21,7 +21,7 @@ import LiveGuests from "./world/LiveGuests";
 import { addSample, peers } from "@/game/live";
 import Director from "./Director";
 import FilmDirector, { FilmCard } from "./FilmDirector";
-import { FILM } from "@/game/film";
+import { FILM, FILM_TOUR } from "@/game/film";
 import PromptTracker from "./PromptTracker";
 import Effects from "./Effects";
 import Lighting from "./Lighting";
@@ -99,7 +99,7 @@ export default function Experience() {
     <MotionConfig reducedMotion="user">
       <div className="fixed inset-0 bg-ink">
         <Canvas
-          dpr={FILM ? 1 : dpr}
+          dpr={FILM ? (FILM_TOUR ? 2 : 1) : dpr}
           frameloop={FILM ? "never" : "always"}
           camera={{ fov: 72, near: 0.05, far: 400, position: [0, 1.6, 7.5] }}
           shadows={isHighQuality()}
@@ -152,7 +152,7 @@ export default function Experience() {
         {phase === "playing" && !intro && !FILM && <ChatPanel />}
         {phase === "playing" && !FILM && <TimeDebug />}
         {FILM && <FilmCard />}
-        <Subtitles />
+        {!FILM_TOUR && <Subtitles />}
         {phase === "playing" && !intro && isTouch && !FILM && <TouchControls />}
         <MenuCard />
         <AuthPanel />
